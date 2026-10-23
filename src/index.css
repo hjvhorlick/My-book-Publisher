@@ -64,6 +64,19 @@ body {
   font-size: 1.08em; font-weight: 700; line-height: 1.3; margin: 0.3em 0 0.3em;
 }
 .document-editor-surface { color: #292524; caret-color: #92400E; }
+
+/* Image loading shimmer: frames look finished while a photo downloads,
+   then the complete picture fades in (see BookImage). */
+@keyframes fq-img-shimmer {
+  0% { background-position: 180% 0; }
+  100% { background-position: -80% 0; }
+}
+.fq-img-skeleton {
+  background:
+    linear-gradient(110deg, rgba(30, 41, 59, 0.14) 35%, rgba(255, 255, 255, 0.38) 50%, rgba(30, 41, 59, 0.14) 65%);
+  background-size: 220% 100%;
+  animation: fq-img-shimmer 1.25s linear infinite;
+}
 .dark .document-editor-surface, .dark .document-editor-paper { color: #E7E5E4; }
 .document-editor-surface:empty::before {
   content: attr(data-placeholder);

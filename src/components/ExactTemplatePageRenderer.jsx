@@ -5,7 +5,9 @@ import { getTemplatePageStructures } from '../data/templatePageStructures';
 import { apiRequest } from '../api/client';
 import { migrateLegacyPageStructuredData } from '../utils/legacyPageMigration';
 import TemplateStructurePageRenderer from './TemplateStructurePageRenderer';
-import PageStructureMiniPreview from './PageStructureMiniPreview';
+import PageStructureMiniPreview, { SAMPLE_ART_BY_CATEGORY } from './PageStructureMiniPreview';
+import BookImage from './BookImage';
+import { preloadImages } from '../utils/preloadImages';
 import StockImageSearchModal from './StockImageSearchModal';
 import ImageCropEditor from './ImageCropEditor';
 import { getImageSlotRule } from '../data/slotRules';
@@ -123,6 +125,16 @@ export default function ExactTemplatePageRenderer({
     pageDraftSaveRef.current = savePage;
     onRegisterSave?.(savePage);
   }, [onRegisterSave]);
+
+  useEffect(() => {
+    preloadImages([
+      ...defaultArtList,
+      ...(SAMPLE_ART_BY_CATEGORY[categoryId] || []),
+      ...(Array.isArray(pageData.captions) ? pageData.captions.map((slot) => slot?.imageUrl) : []),
+      pageData.heroImageUrl,
+      visualTemplate.previewImage
+    ]);
+  }, [categoryId, chapter?.id, pageIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setSelectedPageStructure(sourcePageStructureIndex);
@@ -353,7 +365,13 @@ export default function ExactTemplatePageRenderer({
     const targetWithRule = (event) => ({ ...target, slotRule: refineSlotRule(event, target, heightClass) });
     return (
       <div data-image-slot="true" className={`relative w-full ${heightClass} overflow-hidden group`} style={frameStyle}>
-        <img src={resolvedUrl} alt="Book page artwork" className="h-full w-full object-cover" />
+        <BookImage
+          src={resolvedUrl}
+          alt="Book page artwork"
+          eager={fallbackIndex === 0}
+          fetchPriority={fallbackIndex === 0 ? 'high' : 'auto'}
+          skeletonStyle={{ backgroundColor: `${visualTemplate.accentColor || '#B68745'}14` }}
+        />
         {editable && (
           <div className="absolute right-2 top-2 flex items-center gap-1 opacity-95">
             <button
