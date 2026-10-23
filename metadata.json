@@ -1,0 +1,8 @@
+{
+  "name": "Folio & Quill Book Publishing Studio",
+  "description": "Browser-based book writing, design, and publishing studio with living templates.",
+  "prompt": "",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

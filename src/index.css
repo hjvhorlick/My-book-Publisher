@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --studio-bg: #F8FAFC;
+  --studio-surface: #F1F5F9;
+  --studio-card: #FFFFFF;
+  --studio-border: #E2E8F0;
+  --studio-text: #0F172A;
+  --studio-muted: #64748B;
+  --studio-accent: #4F46E5;
+}
+
+.dark {
+  --studio-bg: #0F172A;
+  --studio-surface: #1E293B;
+  --studio-card: #1E293B;
+  --studio-border: #334155;
+  --studio-text: #F8FAFC;
+  --studio-muted: #94A3B8;
+  --studio-accent: #818CF8;
+}
+
+body {
+  background-color: var(--studio-bg);
+  color: var(--studio-text);
+  font-family: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+[contenteditable="true"][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: currentColor;
+  opacity: 0.52;
+  pointer-events: none;
+}
+
+/* Modern Page Editor Canvas */
+.manuscript-editor {
+  outline: none;
+  min-height: 55vh;
+  word-wrap: break-word;
+  font-family: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.manuscript-editor h1 {
+  font-size: 1.75em;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  letter-spacing: -0.02em;
+}
+
+.manuscript-editor h2 {
+  font-size: 1.35em;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 1.1em;
+  margin-bottom: 0.45em;
+  letter-spacing: -0.01em;
+}
+
+.manuscript-editor h3 {
+  font-size: 1.15em;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+}
+
+.manuscript-editor p {
+  margin-bottom: 0.85em;
+}
+
+.manuscript-editor blockquote {
+  border-left: 4px solid #4F46E5;
+  padding: 0.75rem 1.25rem;
+  margin: 1.25rem 0;
+  background: rgba(79, 70, 229, 0.05);
+  border-radius: 0 0.75rem 0.75rem 0;
+  font-weight: 500;
+}
+
+.manuscript-editor ul {
+  list-style-type: disc;
+  padding-left: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.manuscript-editor ol {
+  list-style-type: decimal;
+  padding-left: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.manuscript-editor li {
+  margin-bottom: 0.35rem;
+}
+
+.manuscript-editor a {
+  color: #4F46E5;
+  text-decoration: underline;
+}
+
+.manuscript-editor figure {
+  margin: 1.5rem auto;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+}
+
+.manuscript-editor figcaption {
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 0.5rem;
+  color: #64748B;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

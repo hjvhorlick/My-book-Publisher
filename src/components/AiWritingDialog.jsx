@@ -1,0 +1,154 @@
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { apiRequest } from '../api/client';
+
+const formatNumber = (value) => Number(value || 0).toLocaleString();
+
+export default function AiWritingDialog({ open, prompt: initialPrompt, context, onClose, onInsert }) {
+  const [prompt, setPrompt] = useState(initialPrompt || '');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [insertMode, setInsertMode] = useState('replace');
+
+  if (!open) return null;
+
+  const maxWords = Math.max(1, Math.min(500, Number(context?.maxWords) || 100));
+  const generate = async () => {
+    setLoading(true);
+    setError('');
+    setResult(null);
+    try {
+      const data = await apiRequest('/api/ai/generate', {
+        method: 'POST',
+        body: { prompt, maxWords }
+      });
+      setResult(data);
+    } catch (requestError) {
+      setError(requestError.message || 'Text generation failed. Check your AI provider settings and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const insert = () => {
+    if (!result?.text) return;
+    onInsert?.(result.text, insertMode);
+    onClose?.();
+  };
+
+  const dialog = (
+    <div
+      className="fixed inset-0 z-[70] bg-black/75 flex items-center justify-center p-3 sm:p-6"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !loading) onClose?.();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-writing-dialog-title"
+        className="w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl p-5 sm:p-7 space-y-4"
+        style={{ background: 'linear-gradient(155deg, #0D224A, #061128)', border: '2px solid rgba(229, 184, 75, 0.8)', boxShadow: '0 25px 80px rgba(0,0,0,0.85)', color: '#FDE08D' }}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="ai-writing-dialog-title" className="text-xl sm:text-2xl font-bold">
+              Write for {context?.fieldLabel || 'this field'}
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed sm:text-sm" style={{ color: '#F3D78B' }}>
+              No prompt writing is required. This draft is tailored to “{context?.bookTitle || 'your book'}”, its topic and reader, the chapter guidance and outline, this page and template, and the selected field. Nothing changes in your page until you review the draft and insert it.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            aria-label="Close AI writing window"
+            className="shrink-0 px-3 py-2 rounded-lg font-bold"
+            style={{ color: '#FDE08D', border: '1px solid rgba(229,184,75,.5)' }}
+          >
+            Close
+          </button>
+        </div>
+
+        <label className="block space-y-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#F5C451' }}>
+            Automatically prepared prompt · optional to edit
+          </span>
+          <textarea
+            aria-label="Generated AI prompt"
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            rows={8}
+            maxLength={16000}
+            className="w-full rounded-xl p-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#FDE08D]"
+            style={{ backgroundColor: '#030A18', color: '#F3D78B', border: '1px solid rgba(229,184,75,.45)' }}
+          />
+        </label>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-xs" style={{ color: '#F3D78B' }}>
+            Target: up to {maxWords} words · output is trimmed and counted before insertion.
+          </span>
+          <button
+            type="button"
+            onClick={generate}
+            disabled={loading || prompt.trim().length < 20}
+            aria-busy={loading}
+            className="px-5 py-2.5 rounded-xl font-bold disabled:opacity-50"
+            style={{ background: 'linear-gradient(180deg, #FCE38A, #E5B84B 60%, #C89629)', color: '#061128', border: '1px solid #FFF3B8' }}
+          >
+            {loading ? 'Generating…' : result ? 'Generate again' : 'Generate text'}
+          </button>
+        </div>
+
+        {error && (
+          <p role="alert" className="rounded-xl p-3 text-sm font-semibold" style={{ color: '#FFE3E8', backgroundColor: 'rgba(104, 20, 38, 0.55)', border: '1px solid rgba(248,113,133,.55)' }}>
+            {error}
+          </p>
+        )}
+
+        {result && (
+          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: '#030A18', border: '1px solid rgba(229,184,75,.45)' }}>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs" style={{ color: '#F3D78B' }}>
+              <span>Generated by {result.providerName} · {result.model}</span>
+              <span>{formatNumber(result.wordCount)} / {formatNumber(result.maxWords)} words</span>
+            </div>
+            {result.fallbackProviders?.length > 0 && (
+              <p className="text-xs" style={{ color: '#F5C451' }}>
+                Fallback used after {result.fallbackProviders.join(', ')} reached an error or quota limit.
+              </p>
+            )}
+            <div className="max-h-64 overflow-y-auto rounded-xl p-3 whitespace-pre-wrap text-sm leading-relaxed" style={{ backgroundColor: '#081838', color: '#FDE08D' }}>
+              {result.text}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <label htmlFor="ai-insert-mode" className="text-xs" style={{ color: '#F3D78B' }}>Insert as</label>
+                <select
+                  id="ai-insert-mode"
+                  value={insertMode}
+                  onChange={(event) => setInsertMode(event.target.value)}
+                  className="rounded-lg px-2 py-1.5 text-xs"
+                  style={{ backgroundColor: '#07142E', color: '#FDE08D', border: '1px solid rgba(229,184,75,.5)' }}
+                >
+                  <option value="replace">Replace this field</option>
+                  <option value="append">Add after existing text</option>
+                </select>
+              </div>
+              <span className="text-[11px]" style={{ color: '#F3D78B' }}>
+                Usage: {formatNumber(result.usage?.promptTokens)} prompt + {formatNumber(result.usage?.completionTokens)} output tokens
+              </span>
+              <button type="button" onClick={insert} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ background: 'linear-gradient(180deg, #FCE38A, #E5B84B 60%, #C89629)', color: '#061128', border: '1px solid #FFF3B8' }}>
+                Insert into this field
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+  return typeof document === 'undefined' ? dialog : createPortal(dialog, document.body);
+}
