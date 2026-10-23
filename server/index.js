@@ -27,6 +27,13 @@ function createApp() {
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
+  // Built-in artwork never changes under a given filename. Serve it with
+  // long-lived immutable caching so each template/page photo downloads
+  // once per browser instead of trickling in on every layout switch.
+  const immutableStatic = { immutable: true, maxAge: '1y', etag: false, fallthrough: true };
+  app.use('/sample-artwork', express.static(path.join(__dirname, '..', 'public', 'sample-artwork'), immutableStatic));
+  app.use('/template-previews', express.static(path.join(__dirname, '..', 'public', 'template-previews'), immutableStatic));
+
   // Health endpoint
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', service: 'Folio & Quill Book Publishing Studio', timestamp: new Date().toISOString() });
@@ -66,7 +73,13 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, {
+      setHeaders(res, filePath) {
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      }
+    }));
     app.get(/.*/, (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

@@ -98,12 +98,22 @@ async function fetchProviderJson(providerId, url, init = {}) {
   }
 }
 
-function makePixabayUrl(apiKey, query, count = 12) {
+const ORIENTATION_MAP = {
+  landscape: { pexels: 'landscape', pixabay: 'horizontal' },
+  portrait: { pexels: 'portrait', pixabay: 'vertical' },
+  square: { pexels: 'square', pixabay: 'all' }
+};
+
+function normalizeOrientation(value) {
+  return ORIENTATION_MAP[String(value || '').toLowerCase()] ? String(value).toLowerCase() : 'landscape';
+}
+
+function makePixabayUrl(apiKey, query, count = 12, orientation = 'landscape') {
   const url = new URL('https://pixabay.com/api/');
   url.searchParams.set('key', apiKey);
   url.searchParams.set('q', query);
   url.searchParams.set('image_type', 'photo');
-  url.searchParams.set('orientation', 'horizontal');
+  url.searchParams.set('orientation', ORIENTATION_MAP[normalizeOrientation(orientation)].pixabay);
   url.searchParams.set('safesearch', 'true');
   url.searchParams.set('per_page', String(count));
   return url;
@@ -127,11 +137,11 @@ async function verifyImageProviderKey(providerId, apiKey) {
   return { success: true, message: `${IMAGE_PROVIDERS[providerId].name} API key accepted.` };
 }
 
-async function searchPexels(apiKey, query, count) {
+async function searchPexels(apiKey, query, count, orientation = 'landscape') {
   const url = new URL('https://api.pexels.com/v1/search');
   url.searchParams.set('query', query);
   url.searchParams.set('per_page', String(count));
-  url.searchParams.set('orientation', 'landscape');
+  url.searchParams.set('orientation', ORIENTATION_MAP[normalizeOrientation(orientation)].pexels);
   url.searchParams.set('size', 'large');
   const data = await fetchProviderJson('pexels', url.toString(), {
     headers: { Authorization: apiKey, Accept: 'application/json' }
@@ -158,10 +168,19 @@ async function searchPexels(apiKey, query, count) {
   }).filter((photo) => photo.previewUrl && photo.imageUrl && photo.sourceUrl);
 }
 
-async function searchPixabay(apiKey, query, count) {
-  const url = makePixabayUrl(apiKey, query, count);
-  url.searchParams.set('min_width', '1920');
-  url.searchParams.set('min_height', '1080');
+async function searchPixabay(apiKey, query, count, orientation = 'landscape') {
+  const normalized = normalizeOrientation(orientation);
+  const url = makePixabayUrl(apiKey, query, count, normalized);
+  if (normalized === 'portrait') {
+    url.searchParams.set('min_width', '1200');
+    url.searchParams.set('min_height', '1500');
+  } else if (normalized === 'square') {
+    url.searchParams.set('min_width', '1400');
+    url.searchParams.set('min_height', '1400');
+  } else {
+    url.searchParams.set('min_width', '1920');
+    url.searchParams.set('min_height', '1080');
+  }
   const data = await fetchProviderJson('pixabay', url.toString(), {
     headers: { Accept: 'application/json' }
   });
@@ -187,7 +206,8 @@ async function searchPixabay(apiKey, query, count) {
   }).filter((photo) => photo.previewUrl && photo.imageUrl && photo.sourceUrl);
 }
 
-async function searchStockImages({ query, keys, provider = 'all', count = 12 }) {
+async function searchStockImages({ query, keys, provider = 'all', count = 12, orientation }) {
+  const slotOrientation = normalizeOrientation(orientation);
   const cleanQuery = String(query || '').trim().slice(0, 160);
   if (cleanQuery.length < 2) throw new Error('Enter at least two characters to search stock images.');
   if (provider !== 'all' && !IMAGE_PROVIDERS[provider]) throw new Error('Choose Pexels, Pixabay, or all providers.');
@@ -206,8 +226,8 @@ async function searchStockImages({ query, keys, provider = 'all', count = 12 }) 
     tasks.push((async () => {
       try {
         const images = providerId === 'pexels'
-          ? await searchPexels(apiKey, cleanQuery, perProviderCount)
-          : await searchPixabay(apiKey, cleanQuery, perProviderCount);
+          ? await searchPexels(apiKey, cleanQuery, perProviderCount, slotOrientation)
+          : await searchPixabay(apiKey, cleanQuery, perProviderCount, slotOrientation);
         providerStatus[providerId] = {
           status: 'ok',
           resultCount: images.length,
@@ -334,6 +354,8 @@ async function fetchStockImage(providerId, imageUrl) {
 }
 
 module.exports = {
+  normalizeOrientation,
+  ORIENTATION_MAP,
   IMAGE_PROVIDERS,
   MAX_IMAGE_BYTES,
   formatImageProviderSettings,

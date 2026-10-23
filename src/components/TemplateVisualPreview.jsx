@@ -1,4 +1,6 @@
 import React from 'react';
+import BookImage from './BookImage';
+import { templatePreviewThumb } from '../utils/preloadImages';
 
 const CLASSICAL_SERIF =
   '"Playfair Display", "Cinzel", "Cormorant Garamond", "Newsreader", "Lora", Georgia, "Times New Roman", serif';
@@ -25,10 +27,12 @@ export default function TemplateVisualPreview({
       }}
     >
       {previewSrc ? (
-        <img
-          src={previewSrc}
+        <BookImage
+          src={templatePreviewThumb(previewSrc)}
+          srcSet={`${templatePreviewThumb(previewSrc)} 640w, ${previewSrc} 1376w`}
+          sizes="(max-width: 768px) 92vw, 600px"
           alt={template?.name || 'Template Tablet Preview'}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="group-hover:scale-105"
         />
       ) : (
         <div

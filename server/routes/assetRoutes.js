@@ -84,7 +84,8 @@ router.get('/search', requireAuth, async (req, res) => {
       query: req.query.q,
       provider: req.query.provider || 'all',
       keys: getImageProviderKeys(req.user.id),
-      count: 12
+      count: 12,
+      orientation: req.query.orientation
     });
     return res.json(result);
   } catch (error) {

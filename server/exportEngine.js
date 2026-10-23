@@ -1,3 +1,6 @@
+const fs = require('node:fs');
+const zlib = require('node:zlib');
+const path = require('node:path');
 const {
   Document,
   Packer,
@@ -8,7 +11,10 @@ const {
   PageBreak,
   Header,
   Footer,
-  PageNumber
+  PageNumber,
+  ImageRun,
+  Bookmark,
+  InternalHyperlink
 } = require('docx');
 const PDFDocument = require('pdfkit');
 const JSZip = require('jszip');
@@ -82,7 +88,7 @@ function enrichSinglePageHtmlForExport(ch) {
   }
 
   if (sectionType === 'magazine_article') {
-    if (sd.kicker) extra.push(`<p><strong>[${sd.kicker}]</strong></p>`);
+    if (sd.kicker) extra.push(`<p><strong>${sd.kicker}</strong></p>`);
     if (sd.byline) extra.push(`<p><em>${sd.byline}</em></p>`);
     if (sd.pullQuote && !baseHtml.includes(sd.pullQuote)) extra.push(`<blockquote>${sd.pullQuote}</blockquote>`);
     if (Array.isArray(sd.sidebarItems) && sd.sidebarItems.length > 0) {
@@ -113,9 +119,8 @@ function enrichSinglePageHtmlForExport(ch) {
   }
 
   if (sectionType === 'storybook_spread') {
-    if (sd.illustrationPrompt) {
-      extra.push(`<figure><figcaption>[Illustration Plate: ${sd.illustrationPrompt}]</figcaption></figure>`);
-    }
+    // sd.illustrationPrompt is an author/illustrator production note. It is
+    // deliberately excluded from every published format.
     if (sd.storyText && !baseHtml.includes(sd.storyText)) {
       extra.push(`<p>${sd.storyText}</p>`);
     }
@@ -370,11 +375,190 @@ function collectOrderedSections({ project, chapters = [], metadata = {} }) {
   };
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Page images for published exports                                   */
+/* The published book contains the author's words, page numbers,       */
+/* images, and Index links — nothing from the editing process. These   */
+/* helpers collect the photos placed in template frames and resolve    */
+/* them (uploaded assets, built-in sample art) for embedding.          */
+/* ------------------------------------------------------------------ */
+
+function stripHtmlToText(value = '') {
+  return decodeHtmlEntities(String(value || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
+function parsedStructuredData(ch) {
+  if (ch?.structuredData && typeof ch.structuredData === 'object') return ch.structuredData;
+  try { return JSON.parse(ch?.structured_data_json || '{}'); } catch { return {}; }
+}
+
+/** Every photo the author placed in a template frame for this chapter. */
+function collectChapterImages(ch) {
+  const structuredData = parsedStructuredData(ch);
+  const pages = Array.isArray(structuredData.pages) && structuredData.pages.length > 0
+    ? structuredData.pages.map((page) => page?.structuredData || {})
+    : [structuredData];
+  const seen = new Set();
+  const images = [];
+  pages.forEach((pageData, pageIndex) => {
+    const slots = [];
+    if (pageData.heroImageUrl) slots.push({ imageUrl: pageData.heroImageUrl });
+    if (Array.isArray(pageData.captions)) slots.push(...pageData.captions);
+    slots.forEach((slot) => {
+      const src = String(slot?.imageUrl || '').trim();
+      if (!src || seen.has(src)) return;
+      seen.add(src);
+      images.push({
+        src,
+        caption: stripHtmlToText(slot.title || slot.caption || ''),
+        alt: stripHtmlToText(slot.altText || slot.title || slot.description || ''),
+        location: stripHtmlToText(slot.location || ''),
+        pageIndex
+      });
+    });
+  });
+  return images;
+}
+
+/** Minimal header parser for PNG/JPEG/GIF/WebP pixel dimensions. */
+function getImageDimensions(buffer) {
+  try {
+    if (!Buffer.isBuffer(buffer) || buffer.length < 24) return null;
+    if (buffer.subarray(1, 4).toString() === 'PNG') {
+      return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+    }
+    if (buffer.subarray(0, 3).toString() === 'GIF') {
+      return { width: buffer.readUInt16LE(6), height: buffer.readUInt16LE(8) };
+    }
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
+      let offset = 2;
+      while (offset + 9 < buffer.length) {
+        if (buffer[offset] !== 0xFF) { offset += 1; continue; }
+        const marker = buffer[offset + 1];
+        if (marker >= 0xC0 && marker <= 0xCF && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+          return { height: buffer.readUInt16BE(offset + 5), width: buffer.readUInt16BE(offset + 7) };
+        }
+        offset += 2 + buffer.readUInt16BE(offset + 2);
+      }
+      return null;
+    }
+    if (buffer.subarray(0, 4).toString() === 'RIFF' && buffer.subarray(8, 12).toString() === 'WEBP') {
+      const kind = buffer.subarray(12, 16).toString();
+      if (kind === 'VP8X') {
+        return {
+          width: 1 + (buffer[24] | (buffer[25] << 8) | (buffer[26] << 16)),
+          height: 1 + (buffer[27] | (buffer[28] << 8) | (buffer[29] << 16))
+        };
+      }
+      if (kind === 'VP8L') {
+        const b0 = buffer[21], b1 = buffer[22], b2 = buffer[23], b3 = buffer[24];
+        return {
+          width: 1 + (((b1 & 0x3F) << 8) | b0),
+          height: 1 + (((b3 & 0x0F) << 10) | (b2 << 2) | ((b1 & 0xC0) >> 6))
+        };
+      }
+      if (kind === 'VP8 ') {
+        return {
+          width: buffer.readUInt16LE(26) & 0x3FFF,
+          height: buffer.readUInt16LE(28) & 0x3FFF
+        };
+      }
+    }
+  } catch { /* fall through */ }
+  return null;
+}
+
+const MIME_EXTENSION = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp', 'image/bmp': 'bmp' };
+const EXTENSION_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' };
+
+async function resolveImageBuffer(src) {
+  const source = String(src || '').trim();
+  if (!source) return null;
+  try {
+    if (source.startsWith('data:')) {
+      const match = source.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/s);
+      if (!match) return null;
+      const buffer = Buffer.from(match[2], 'base64');
+      return { buffer, mimeType: match[1].toLowerCase(), extension: MIME_EXTENSION[match[1].toLowerCase()] || 'jpg', ...getImageDimensions(buffer) };
+    }
+    if (source.startsWith('/')) {
+      const publicRoot = path.join(__dirname, '..', 'public');
+      const filePath = path.normalize(path.join(publicRoot, source));
+      if (!filePath.startsWith(publicRoot) || !fs.existsSync(filePath)) return null;
+      const buffer = await fs.promises.readFile(filePath);
+      const extension = path.extname(filePath).slice(1).toLowerCase() || 'jpg';
+      return { buffer, mimeType: EXTENSION_MIME[extension] || 'image/jpeg', extension, ...getImageDimensions(buffer) };
+    }
+    if (/^https?:\/\//i.test(source)) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch(source, { signal: controller.signal });
+        if (!response.ok) return null;
+        const mimeType = (response.headers.get('content-type') || 'image/jpeg').split(';')[0].trim().toLowerCase();
+        if (!mimeType.startsWith('image/')) return null;
+        const buffer = Buffer.from(await response.arrayBuffer());
+        if (buffer.length === 0 || buffer.length > 12 * 1024 * 1024) return null;
+        return { buffer, mimeType, extension: MIME_EXTENSION[mimeType] || 'jpg', ...getImageDimensions(buffer) };
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  } catch { /* unresolvable images are skipped, never block the book */ }
+  return null;
+}
+
+/** pdfkit decodes PNGs through zlib; verify IDAT integrity up front so a
+ *  damaged PNG is skipped instead of failing the whole published book. */
+function isPngReadable(buffer) {
+  try {
+    if (!Buffer.isBuffer(buffer) || buffer.subarray(1, 4).toString() !== 'PNG') return false;
+    const idatChunks = [];
+    let offset = 8;
+    while (offset + 8 <= buffer.length) {
+      const length = buffer.readUInt32BE(offset);
+      const type = buffer.subarray(offset + 4, offset + 8).toString();
+      if (type === 'IDAT') idatChunks.push(buffer.subarray(offset + 8, offset + 8 + length));
+      offset += 12 + length;
+      if (type === 'IEND') break;
+    }
+    if (idatChunks.length === 0) return false;
+    zlib.inflateSync(Buffer.concat(idatChunks));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Resolve a chapter's placed photos to embeddable buffers (order preserved). */
+async function prepareChapterImages(ch) {
+  const placed = collectChapterImages(ch);
+  const resolved = await Promise.all(placed.map(async (image) => {
+    const data = await resolveImageBuffer(image.src);
+    if (!data) return null;
+    if (data.mimeType === 'image/png' && !isPngReadable(data.buffer)) return null;
+    return { ...image, ...data };
+  }));
+  return resolved.filter(Boolean);
+}
+
+function fitImageSize(image, maxWidth, maxHeight) {
+  const width = Number(image?.width) || 1200;
+  const height = Number(image?.height) || 900;
+  const scale = Math.min(1, maxWidth / width, maxHeight ? maxHeight / height : 1);
+  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
+}
+
 // 1. Generate Real DOCX Buffer
 async function generateDocxExport({ project, chapters = [], formatting = {}, metadata = {} }) {
   const trim = TRIM_DIMENSIONS_INCHES[formatting.trimSize || '5.5x8.5'] || TRIM_DIMENSIONS_INCHES['5.5x8.5'];
   const fontSizeHalfPt = Math.round((Number(formatting.fontSizePt) || 11.5) * 2);
   const { frontSections, bodyChapters, backSections } = collectOrderedSections({ project, chapters, metadata });
+  const chapterImageMap = new Map();
+  await Promise.all(bodyChapters.map(async (ch) => {
+    chapterImageMap.set(ch, await prepareChapterImages(ch));
+  }));
 
   const children = [];
 
@@ -444,15 +628,18 @@ async function generateDocxExport({ project, chapters = [], formatting = {}, met
         children: [new TextRun({ text: 'Contents', bold: true, size: 32 })]
       })
     );
-    frontSections.forEach(s => {
-      children.push(new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: s.title, italics: true, size: 22 })] }));
+    const tocEntry = (label, anchor, italics = false) => new Paragraph({
+      spacing: { after: 120 },
+      children: [
+        new InternalHyperlink({
+          anchor,
+          children: [new TextRun({ text: label, italics, size: 22, style: 'Hyperlink' })]
+        })
+      ]
     });
-    bodyChapters.forEach((ch, idx) => {
-      children.push(new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: `${idx + 1}. ${ch.title}`, size: 22 })] }));
-    });
-    backSections.forEach(s => {
-      children.push(new Paragraph({ spacing: { after: 120 }, children: [new TextRun({ text: s.title, italics: true, size: 22 })] }));
-    });
+    frontSections.forEach((s, idx) => children.push(tocEntry(s.title, `front-${idx + 1}`, true)));
+    bodyChapters.forEach((ch, idx) => children.push(tocEntry(`${idx + 1}. ${ch.title}`, `chapter-${idx + 1}`)));
+    backSections.forEach((s, idx) => children.push(tocEntry(s.title, `back-${idx + 1}`, true)));
   }
 
   const docxAlignment = (alignment) => ({
@@ -470,14 +657,18 @@ async function generateDocxExport({ project, chapters = [], formatting = {}, met
     size: defaults.size || fontSizeHalfPt
   }));
 
-  const appendSectionBlocks = (title, subtitle, htmlContent) => {
+  const contentWidthPx = Math.max(240, Math.round((trim.width - ((formatting.marginInnerMm || 22) + (formatting.marginOuterMm || 16)) / 25.4) * 96));
+  const DOCX_IMAGE_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/bmp': 'bmp' };
+
+  const appendSectionBlocks = (title, subtitle, htmlContent, { anchor = null, images = [] } = {}) => {
     children.push(new Paragraph({ children: [new PageBreak()] }));
+    const headingRun = new TextRun({ text: title, bold: true, size: 34 });
     children.push(
       new Paragraph({
         heading: HeadingLevel.HEADING_1,
         alignment: formatting.chapterOpeningStyle === 'modern_left' ? AlignmentType.LEFT : AlignmentType.CENTER,
         spacing: { before: 600, after: subtitle ? 120 : 360 },
-        children: [new TextRun({ text: title, bold: true, size: 34 })]
+        children: anchor ? [new Bookmark({ id: anchor, children: [headingRun] })] : [headingRun]
       })
     );
     if (subtitle) {
@@ -489,6 +680,24 @@ async function generateDocxExport({ project, chapters = [], formatting = {}, met
         })
       );
     }
+
+    images.forEach((image) => {
+      const docxType = DOCX_IMAGE_TYPES[image.mimeType];
+      if (!docxType || !image.buffer) return;
+      const size = fitImageSize(image, contentWidthPx, Math.round(trim.height * 96 * 0.5));
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 160, after: image.caption ? 60 : 200 },
+        children: [new ImageRun({ type: docxType, data: image.buffer, transformation: size, altText: { title: image.caption || title, description: image.alt || image.caption || '', name: image.caption || 'Book photo' } })]
+      }));
+      if (image.caption) {
+        children.push(new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 220 },
+          children: [new TextRun({ text: image.location ? `${image.caption} — ${image.location}` : image.caption, italics: true, size: 18 })]
+        }));
+      }
+    });
 
     const blocks = parseHtmlBlocks(htmlContent);
     if (blocks.length === 0) {
@@ -546,9 +755,9 @@ async function generateDocxExport({ project, chapters = [], formatting = {}, met
     });
   };
 
-  frontSections.forEach(s => appendSectionBlocks(s.title, '', s.contentHtml));
-  bodyChapters.forEach(ch => appendSectionBlocks(ch.title, '', enrichChapterHtmlForExport(ch)));
-  backSections.forEach(s => appendSectionBlocks(s.title, '', s.contentHtml));
+  frontSections.forEach((s, idx) => appendSectionBlocks(s.title, '', s.contentHtml, { anchor: `front-${idx + 1}` }));
+  bodyChapters.forEach((ch, idx) => appendSectionBlocks(ch.title, '', enrichChapterHtmlForExport(ch), { anchor: `chapter-${idx + 1}`, images: chapterImageMap.get(ch) || [] }));
+  backSections.forEach((s, idx) => appendSectionBlocks(s.title, '', s.contentHtml, { anchor: `back-${idx + 1}` }));
 
   const doc = new Document({
     creator: project.author_name || 'Folio & Quill Studio',
@@ -600,7 +809,7 @@ async function generateDocxExport({ project, chapters = [], formatting = {}, met
 
 // 2. Generate Real Typeset PDF Buffer
 async function generatePdfExport({ project, chapters = [], formatting = {}, metadata = {} }) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const trim = TRIM_DIMENSIONS_INCHES[formatting.trimSize || '5.5x8.5'] || TRIM_DIMENSIONS_INCHES['5.5x8.5'];
       const pageWidthPt = Math.round(trim.width * 72);
@@ -617,6 +826,10 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
       const fontSize = Number(formatting.fontSizePt) || 11.5;
       const lineGap = Math.max(2, Math.round((Number(formatting.lineSpacing || 1.45) - 1) * fontSize));
       const { frontSections, bodyChapters, backSections } = collectOrderedSections({ project, chapters, metadata });
+      const chapterImageMap = new Map();
+      await Promise.all(bodyChapters.map(async (ch) => {
+        chapterImageMap.set(ch, await prepareChapterImages(ch));
+      }));
 
       const doc = new PDFDocument({
         size: [pageWidthPt, pageHeightPt],
@@ -742,7 +955,33 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
         });
       }
 
-      const renderSection = (title, subtitle, htmlContent, destName = null) => {
+      const renderSectionImages = (images = []) => {
+        const contentWidth = pageWidthPt - margins.left - margins.right;
+        const maxHeight = Math.round(pageHeightPt * 0.45);
+        images.forEach((image) => {
+          // pdfkit embeds JPEG and PNG; other formats are skipped gracefully.
+          if (!image.buffer || !['image/jpeg', 'image/png'].includes(image.mimeType)) return;
+          const size = fitImageSize(image, contentWidth, maxHeight);
+          if (doc.y + size.height > pageHeightPt - margins.bottom) doc.addPage();
+          const x = margins.left + (contentWidth - size.width) / 2;
+          try {
+            doc.image(image.buffer, x, doc.y, { width: size.width, height: size.height });
+          } catch {
+            return;
+          }
+          doc.y += size.height + 4;
+          doc.x = margins.left;
+          if (image.caption) {
+            doc.font('Times-Italic').fontSize(9).text(
+              image.location ? `${image.caption} — ${image.location}` : image.caption,
+              { align: 'center' }
+            );
+          }
+          doc.moveDown(0.6);
+        });
+      };
+
+      const renderSection = (title, subtitle, htmlContent, destName = null, images = []) => {
         doc.addPage();
         if (destName && typeof doc.addNamedDestination === 'function') {
           doc.addNamedDestination(destName);
@@ -764,6 +1003,7 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
           doc.font('Times-Italic').fontSize(12).text(subtitle, { align: headerAlign });
         }
         doc.moveDown(1.2);
+        renderSectionImages(images);
 
         const blocks = parseHtmlBlocks(htmlContent);
         blocks.forEach((block) => {
@@ -793,7 +1033,7 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
       };
 
       frontSections.forEach(s => renderSection(s.title, '', s.contentHtml));
-      bodyChapters.forEach((ch, idx) => renderSection(ch.title, '', enrichChapterHtmlForExport(ch), `chapter-dest-${idx + 1}`));
+      bodyChapters.forEach((ch, idx) => renderSection(ch.title, '', enrichChapterHtmlForExport(ch), `chapter-dest-${idx + 1}`, chapterImageMap.get(ch) || []));
       backSections.forEach(s => renderSection(s.title, '', s.contentHtml));
 
       const range = doc.bufferedPageRange();
@@ -962,6 +1202,22 @@ a {
   text-indent: 0;
   text-align: center;
 }
+figure.page-photo {
+  margin: 1em 0;
+  text-align: center;
+  text-indent: 0;
+}
+figure.page-photo img {
+  max-width: 100%;
+  height: auto;
+}
+figure.page-photo figcaption {
+  font-size: 0.85em;
+  font-style: italic;
+  text-align: center;
+  text-indent: 0;
+  margin-top: 0.4em;
+}
 `;
   oebps.file('styles.css', css);
 
@@ -973,6 +1229,7 @@ a {
   const spineItems = [];
   const navLinks = [];
 
+  const assetHrefByDataUrl = new Map();
   assets.forEach((asset, idx) => {
     const match = (asset.data_url || '').match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
     if (match) {
@@ -981,6 +1238,7 @@ a {
       const safeFile = `images/asset-${idx + 1}-${asset.filename.replace(/[^a-zA-Z0-9._-]/g, '')}`;
       oebps.file(safeFile, Buffer.from(base64Data, 'base64'));
       manifestItems.push(`<item id="img-${idx + 1}" href="${safeFile}" media-type="${mime}"/>`);
+      assetHrefByDataUrl.set(asset.data_url, safeFile);
     }
   });
 
@@ -1011,10 +1269,13 @@ a {
   navLinks.push({ id: 'title-page', href: 'title.xhtml', title: 'Title Page' });
 
   const allOrdered = [
-    ...frontSections.map((s, i) => ({ file: `front-${i + 1}.xhtml`, id: `front-${i + 1}`, anchor: `start-front-${i + 1}`, title: s.title, subtitle: '', html: s.contentHtml })),
-    ...bodyChapters.map((c, i) => ({ file: `chapter-${i + 1}.xhtml`, id: `chapter-${i + 1}`, anchor: `start-chapter-${i + 1}`, title: c.title, subtitle: subtitlePlainText(c.subtitle), subtitleInBody: true, html: enrichChapterHtmlForExport(c) })),
-    ...backSections.map((s, i) => ({ file: `back-${i + 1}.xhtml`, id: `back-${i + 1}`, anchor: `start-back-${i + 1}`, title: s.title, subtitle: '', html: s.contentHtml }))
+    ...frontSections.map((s, i) => ({ kind: 'front', file: `front-${i + 1}.xhtml`, id: `front-${i + 1}`, anchor: `start-front-${i + 1}`, title: s.title, subtitle: '', html: s.contentHtml, images: [] })),
+    ...bodyChapters.map((c, i) => ({ kind: 'chapter', chapterNumber: i + 1, chapterRef: c, file: `chapter-${i + 1}.xhtml`, id: `chapter-${i + 1}`, anchor: `start-chapter-${i + 1}`, title: c.title, subtitle: subtitlePlainText(c.subtitle), subtitleInBody: true, html: enrichChapterHtmlForExport(c), images: [] })),
+    ...backSections.map((s, i) => ({ kind: 'back', file: `back-${i + 1}.xhtml`, id: `back-${i + 1}`, anchor: `start-back-${i + 1}`, title: s.title, subtitle: '', html: s.contentHtml, images: [] }))
   ];
+  await Promise.all(allOrdered
+    .filter((sec) => sec.kind === 'chapter')
+    .map(async (sec) => { sec.images = await prepareChapterImages(sec.chapterRef); }));
 
   // Clickable Chapter Index (Table of Contents) inserted right after the Title Page
   const indexPageXhtml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1031,7 +1292,7 @@ a {
     </div>
     <p class="subtitle">Select a chapter to jump to its opening page</p>
     <ol>
-      ${allOrdered.map((sec, idx) => `<li><a href="${sec.file}#${sec.anchor}">Chapter ${idx + 1}: ${escapeXml(sec.title)}</a>${sec.subtitle ? ` — <em>${escapeXml(sec.subtitle)}</em>` : ''}</li>`).join('\n      ')}
+      ${allOrdered.map((sec) => `<li><a href="${sec.file}#${sec.anchor}">${sec.kind === 'chapter' ? `Chapter ${sec.chapterNumber}: ` : ''}${escapeXml(sec.title)}</a>${sec.subtitle ? ` — <em>${escapeXml(sec.subtitle)}</em>` : ''}</li>`).join('\n      ')}
     </ol>
   </section>
 </body>
@@ -1041,7 +1302,19 @@ a {
   spineItems.push(`<itemref idref="index-toc"/>`);
   navLinks.push({ id: 'index-toc', href: 'index-toc.xhtml', title: 'Index & Contents' });
 
+  let pagePhotoCounter = 0;
   allOrdered.forEach(sec => {
+    const figuresHtml = (sec.images || []).map((image) => {
+      let href = assetHrefByDataUrl.get(image.src);
+      if (!href) {
+        pagePhotoCounter += 1;
+        href = `images/page-photo-${pagePhotoCounter}.${image.extension || 'jpg'}`;
+        oebps.file(href, image.buffer);
+        manifestItems.push(`<item id="page-photo-${pagePhotoCounter}" href="${href}" media-type="${image.mimeType || 'image/jpeg'}"/>`);
+      }
+      const caption = image.location ? `${image.caption} — ${image.location}` : image.caption;
+      return `<figure class="page-photo"><img src="${href}" alt="${escapeXml(image.alt || caption || sec.title)}"/>${caption ? `<figcaption>${escapeXml(caption)}</figcaption>` : ''}</figure>`;
+    }).join('\n    ');
     const xhtml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${escapeXml(metadata?.language || 'en')}">
@@ -1055,6 +1328,7 @@ a {
       <h1>${escapeXml(sec.title)}</h1>
     </div>
     ${sec.subtitle && !sec.subtitleInBody ? `<p class="subtitle">${escapeXml(sec.subtitle)}</p>` : ''}
+    ${figuresHtml}
     ${sanitizeXhtmlBody(sec.html)}
     <p style="margin-top:2em; text-align:center; text-indent:0;"><a href="index-toc.xhtml#book-index">&#8593; Back to Index</a></p>
   </section>
@@ -1229,6 +1503,9 @@ function calculatePublishingSpecs({ project, chapters = [], formatting = {}, met
 }
 
 module.exports = {
+  collectChapterImages,
+  getImageDimensions,
+  isPngReadable,
   generateDocxExport,
   generatePdfExport,
   generateEpubExport,

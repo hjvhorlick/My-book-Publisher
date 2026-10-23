@@ -180,6 +180,10 @@ export default function WizardView({
     const finalTitle = bookTitle.trim();
     if (!finalTitle) {
       setTitleError('Enter a book title before saving. Titled books appear in Saved Books so you can return and finish them.');
+      // Take the author straight to the flashing title box.
+      const titleInput = document.getElementById('new-book-title');
+      titleInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      titleInput?.focus({ preventScroll: true });
       return;
     }
 
@@ -448,10 +452,18 @@ export default function WizardView({
               <div>
                 <label
                   htmlFor="new-book-title"
-                  className="block text-xs font-bold uppercase tracking-widest mb-2"
+                  className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-widest mb-2"
                   style={{ color: '#F5C451' }}
                 >
-                  Your {activeCategory.shortName} Title
+                  <span>Your {activeCategory.shortName} Title</span>
+                  {!bookTitle.trim() && (
+                    <span
+                      className="title-attention-chip rounded-full px-2 py-0.5 text-[9px] font-black normal-case tracking-normal"
+                      style={{ backgroundColor: '#FDE047', color: '#713F12' }}
+                    >
+                      ★ Start here — name your book
+                    </span>
+                  )}
                 </label>
                 <input
                   id="new-book-title"
@@ -465,7 +477,7 @@ export default function WizardView({
                     if (e.target.value.trim()) setTitleError('');
                   }}
                   placeholder={`e.g. The ${activeCategory.shortName} Collection`}
-                  className="w-full px-4 py-3.5 rounded-xl font-bold text-base focus:outline-none"
+                  className={`w-full px-4 py-3.5 rounded-xl font-bold text-base focus:outline-none${bookTitle.trim() ? '' : ' title-attention'}`}
                   style={{
                     backgroundColor: '#061128',
                     color: '#FDE08D',
