@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlipHorizontal, LoaderCircle, Search, Upload } from 'lucide-react';
+import { Crop, FlipHorizontal, LoaderCircle, Search, Upload } from 'lucide-react';
 import { getVisualTemplateForProject } from '../data/visualTemplatesCatalog';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
 import { apiRequest } from '../api/client';
@@ -7,6 +7,8 @@ import { migrateLegacyPageStructuredData } from '../utils/legacyPageMigration';
 import TemplateStructurePageRenderer from './TemplateStructurePageRenderer';
 import PageStructureMiniPreview from './PageStructureMiniPreview';
 import StockImageSearchModal from './StockImageSearchModal';
+import ImageCropEditor from './ImageCropEditor';
+import { getImageSlotRule } from '../data/slotRules';
 
 const DEFAULT_ARTWORK_BY_TEMPLATE = {
   // Photo Books
@@ -89,6 +91,8 @@ export default function ExactTemplatePageRenderer({
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [savingPageLayout, setSavingPageLayout] = useState(false);
   const [stockSearchOpen, setStockSearchOpen] = useState(false);
+  const [stockSlotRule, setStockSlotRule] = useState(null);
+  const [cropSession, setCropSession] = useState(null);
   const [stockSearchInitialQuery, setStockSearchInitialQuery] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [layoutError, setLayoutError] = useState('');
@@ -206,6 +210,79 @@ export default function ExactTemplatePageRenderer({
     }
   };
 
+  // The frame's exact designed shape, refined by measuring the rendered slot.
+  const refineSlotRule = (event, target, heightClass) => {
+    let measuredAspect;
+    try {
+      const slotElement = event?.currentTarget?.closest?.('[data-image-slot]');
+      if (slotElement?.clientWidth > 0 && slotElement?.clientHeight > 0) {
+        measuredAspect = slotElement.clientWidth / slotElement.clientHeight;
+      }
+    } catch { /* recorded registry values still apply */ }
+    return getImageSlotRule({ heightClass: heightClass || 'h-48', shape: target?.shape || 'rect', measuredAspect });
+  };
+
+  const closeCropSession = () => {
+    setCropSession((session) => {
+      if (session?.objectUrl) URL.revokeObjectURL(session.objectUrl);
+      return null;
+    });
+  };
+
+  const uploadImageFile = async (fileOrBlob, displayName, target) => {
+    const formData = new FormData();
+    if (fileOrBlob instanceof File) {
+      formData.append('file', fileOrBlob);
+    } else {
+      formData.append('file', new File([fileOrBlob], `${(displayName || 'photo').replace(/\.[^.]+$/, '')}-framed.jpg`, { type: 'image/jpeg' }));
+    }
+    formData.append('title', (displayName || 'photo').replace(/\.[^.]+$/, ''));
+    formData.append('assetType', 'illustration');
+    formData.append('chapterId', chapter.id);
+    const created = await apiRequest(`/api/projects/${project.id}/assets`, {
+      method: 'POST',
+      body: formData
+    });
+    await onAssetsChanged?.();
+    const image = created?.asset?.dataUrl || created?.asset?.fileUrl;
+    if (image) applyPhotoToTarget(image, target);
+    return image;
+  };
+
+  const finishCropWithUpload = async (blob) => {
+    const session = cropSession;
+    if (!session) return;
+    setUploadingPhoto(true);
+    setUploadError('');
+    try {
+      await uploadImageFile(blob, session.displayName || 'framed-photo.jpg', session.target);
+      closeCropSession();
+    } catch (error) {
+      setUploadError(error.message || 'Could not save the framed image. Please try again.');
+      closeCropSession();
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const finishCropWithOriginal = async () => {
+    const session = cropSession;
+    if (!session) return;
+    if (session.kind === 'upload' && session.file) {
+      setUploadingPhoto(true);
+      try {
+        await uploadImageFile(session.file, session.file.name, session.target);
+      } catch (error) {
+        setUploadError(error.message || 'Could not upload this image. Please try again.');
+      } finally {
+        setUploadingPhoto(false);
+      }
+    } else if (session.originalUrl) {
+      applyPhotoToTarget(session.originalUrl, session.target);
+    }
+    closeCropSession();
+  };
+
   const triggerPhotoUpload = (target) => {
     if (!editable) return;
     activePhotoTargetRef.current = target;
@@ -216,6 +293,7 @@ export default function ExactTemplatePageRenderer({
   const openStockImageSearch = (target) => {
     if (!editable) return;
     activePhotoTargetRef.current = target;
+    setStockSlotRule(target?.slotRule || null);
     setUploadError('');
     setStockSearchInitialQuery([chapter?.title, chapter?.synopsis, project?.centralIdea]
       .map((value) => String(value || '').trim())
@@ -238,32 +316,23 @@ export default function ExactTemplatePageRenderer({
     void savePageControl('captions', nextCaptions);
   };
 
-  const handleFileChange = async (event) => {
+  const handleFileChange = (event) => {
     const file = event.target.files?.[0];
     const target = activePhotoTargetRef.current;
+    event.target.value = '';
     if (!file || !project?.id || !chapter?.id) return;
-    setUploadingPhoto(true);
     setUploadError('');
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', file.name.replace(/\.[^.]+$/, ''));
-      formData.append('assetType', 'illustration');
-      formData.append('chapterId', chapter.id);
-      const created = await apiRequest(`/api/projects/${project.id}/assets`, {
-        method: 'POST',
-        body: formData
-      });
-      await onAssetsChanged?.();
-      const uploadedImage = created?.asset?.dataUrl || created?.asset?.fileUrl;
-      if (uploadedImage) applyPhotoToTarget(uploadedImage, target);
-    } catch (error) {
-      setUploadError(error.message || 'Could not upload this image. Please try again.');
-    } finally {
-      setUploadingPhoto(false);
-      event.target.value = '';
-      activePhotoTargetRef.current = null;
-    }
+    // Fit first, upload second: the stored photo is the framed one.
+    const objectUrl = URL.createObjectURL(file);
+    setCropSession({
+      kind: 'upload',
+      src: objectUrl,
+      objectUrl,
+      file,
+      displayName: file.name,
+      rule: target?.slotRule || getImageSlotRule({}),
+      target
+    });
   };
 
   const getCuratedPhotoSlots = (requiredCount) => {
@@ -281,14 +350,15 @@ export default function ExactTemplatePageRenderer({
 
   const renderPhotoSlot = ({ imageUrl, fallbackIndex = 0, target, heightClass = 'h-48', frameStyle = {} }) => {
     const resolvedUrl = imageUrl || defaultArtList[fallbackIndex % defaultArtList.length] || '/sample-artwork/nature-waterfall.jpg';
+    const targetWithRule = (event) => ({ ...target, slotRule: refineSlotRule(event, target, heightClass) });
     return (
-      <div className={`relative w-full ${heightClass} overflow-hidden group`} style={frameStyle}>
+      <div data-image-slot="true" className={`relative w-full ${heightClass} overflow-hidden group`} style={frameStyle}>
         <img src={resolvedUrl} alt="Book page artwork" className="h-full w-full object-cover" />
         {editable && (
           <div className="absolute right-2 top-2 flex items-center gap-1 opacity-95">
             <button
               type="button"
-              onClick={() => triggerPhotoUpload(target)}
+              onClick={(event) => triggerPhotoUpload(targetWithRule(event))}
               className="inline-flex items-center gap-1 rounded-lg bg-slate-900/90 px-2.5 py-1 text-[10px] font-extrabold text-white shadow"
             >
               {uploadingPhoto ? <LoaderCircle className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
@@ -296,13 +366,33 @@ export default function ExactTemplatePageRenderer({
             </button>
             <button
               type="button"
-              onClick={() => openStockImageSearch(target)}
+              onClick={(event) => openStockImageSearch(targetWithRule(event))}
               aria-label="Search Pexels and Pixabay for a book photo"
               title="Search Pexels and Pixabay"
               className="inline-flex items-center gap-1 rounded-lg bg-amber-800/95 px-2.5 py-1 text-[10px] font-extrabold text-white shadow"
             >
               <Search className="h-3 w-3" />
               <span>Stock photos</span>
+            </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                const refinedTarget = targetWithRule(event);
+                setCropSession({
+                  kind: 'existing',
+                  src: resolvedUrl,
+                  originalUrl: resolvedUrl,
+                  displayName: 'page-photo.jpg',
+                  rule: refinedTarget.slotRule,
+                  target: refinedTarget
+                });
+              }}
+              aria-label="Edit image: crop and centre this photo for its frame"
+              title="Crop & centre this photo for its frame"
+              className="inline-flex items-center gap-1 rounded-lg bg-white/95 px-2.5 py-1 text-[10px] font-extrabold text-slate-900 shadow"
+            >
+              <Crop className="h-3 w-3" />
+              <span>Edit image</span>
             </button>
             {assets.length > 0 && (
               <select
@@ -327,14 +417,16 @@ export default function ExactTemplatePageRenderer({
 
   return (
     <div className="space-y-3">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-        aria-label="Upload an image for this page"
-      />
+      {editable && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+          aria-label="Upload an image for this page"
+        />
+      )}
       {editable && (
         <section
           className="space-y-3 rounded-2xl p-4 sm:p-5"
@@ -423,6 +515,7 @@ export default function ExactTemplatePageRenderer({
         isFlipped={isFlipped}
         editable={editable}
         aiConfigured={aiConfigured}
+        onOpenAiSettings={onOpenAiSettings}
         onSaveChapter={onSaveChapter}
         onRegisterSave={registerPageDraftSave}
         onBackToIndex={onBackToIndex}
@@ -434,14 +527,36 @@ export default function ExactTemplatePageRenderer({
         open={stockSearchOpen}
         projectId={project.id}
         initialQuery={stockSearchInitialQuery}
+        slotRule={stockSlotRule}
         onClose={() => setStockSearchOpen(false)}
         onImageSelected={(asset) => {
           const imageUrl = asset?.dataUrl || asset?.fileUrl;
-          if (imageUrl) applyPhotoToTarget(imageUrl, activePhotoTargetRef.current);
+          if (!imageUrl) return;
+          const target = activePhotoTargetRef.current;
+          setCropSession({
+            kind: 'stock',
+            src: imageUrl,
+            originalUrl: imageUrl,
+            displayName: asset?.title || asset?.originalName || 'stock-photo.jpg',
+            rule: stockSlotRule || target?.slotRule || getImageSlotRule({}),
+            target
+          });
         }}
         onAssetsChanged={onAssetsChanged}
         onOpenProviderSettings={onOpenAiSettings}
       />
+      {cropSession && (
+        <ImageCropEditor
+          open
+          src={cropSession.src}
+          rule={cropSession.rule}
+          title={cropSession.kind === 'existing' ? 'Crop & centre this photo' : 'Fit this photo to its frame'}
+          applying={uploadingPhoto}
+          onCancel={closeCropSession}
+          onUseOriginal={finishCropWithOriginal}
+          onApply={finishCropWithUpload}
+        />
+      )}
     </div>
   );
 }

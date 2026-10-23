@@ -91,3 +91,84 @@ export function richHtmlToPlainText(value = '') {
 export function countRichTextWords(value = '') {
   return richHtmlToPlainText(value).split(/\s+/).filter(Boolean).length;
 }
+
+/**
+ * Shorten rich HTML to at most `maxWords` words, keeping the allowed
+ * formatting tags balanced. Used by the block editor's "Trim to fit"
+ * action and when a long paste would overflow a template space, so the
+ * page always receives only the amount of text its design can hold.
+ */
+export function trimRichHtmlToWordLimit(value = '', maxWords = 100) {
+  const limit = Math.max(1, Math.floor(Number(maxWords) || 100));
+  const html = normalizeRichHtml(value);
+  if (countRichTextWords(html) <= limit) return html;
+
+  const tokens = html.split(/(<[^>]+>)/g);
+  const openTags = [];
+  let wordsLeft = limit;
+  let output = '';
+
+  for (const token of tokens) {
+    if (wordsLeft <= 0) break;
+    if (!token) continue;
+    if (token.startsWith('<')) {
+      const closing = /^<\//.test(token);
+      const nameMatch = token.match(/^<\/?([a-z0-9]+)/i);
+      const name = nameMatch ? nameMatch[1].toLowerCase() : '';
+      output += token;
+      if (name && name !== 'br') {
+        if (closing) {
+          const index = openTags.lastIndexOf(name);
+          if (index >= 0) openTags.splice(index, 1);
+        } else if (!/\/>$/.test(token)) {
+          openTags.push(name);
+        }
+      }
+      continue;
+    }
+    const words = token.match(/\S+\s*/g) || [];
+    if (words.length <= wordsLeft) {
+      output += token;
+      wordsLeft -= words.length;
+    } else {
+      // Keep one separating space when the cut lands between two words
+      // that were spaced apart, including across a closing inline tag.
+      const separator = /^\s/.test(token) && !/\s$/.test(output) ? ' ' : '';
+      output += separator + words.slice(0, wordsLeft).join('').trimEnd();
+      wordsLeft = 0;
+    }
+  }
+
+  output = output.replace(/(<br\s*\/?>\s*)+$/i, '');
+  while (openTags.length) output += `</${openTags.pop()}>`;
+  return sanitizeRichHtml(output);
+}
+
+/**
+ * Sentence-aware plain-text trimmer: prefers ending at the last complete
+ * sentence inside the word budget so a trimmed block still reads finished.
+ */
+export function trimPlainTextToWordLimit(value = '', maxWords = 100) {
+  const limit = Math.max(1, Math.floor(Number(maxWords) || 100));
+  const text = String(value || '').replace(/\r\n?/g, '\n').trim();
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length <= limit) return text;
+  const head = words.slice(0, limit);
+  for (let index = head.length - 1; index >= Math.floor(limit * 0.6); index -= 1) {
+    if (/[.!?]["”’)]?$/.test(head[index])) return head.slice(0, index + 1).join(' ');
+  }
+  return head.join(' ');
+}
+
+/** Writing stats shown in the block editor footer. */
+export function getRichTextStats(value = '') {
+  const text = richHtmlToPlainText(value);
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const sentences = (text.match(/[.!?]+(\s|$)/g) || []).length;
+  return {
+    words,
+    characters: text.length,
+    sentences,
+    readingSeconds: Math.max(0, Math.round((words / 200) * 60))
+  };
+}

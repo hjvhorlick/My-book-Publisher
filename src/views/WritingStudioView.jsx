@@ -245,15 +245,15 @@ export default function WritingStudioView({
           Write and design your pages
         </h1>
         <p className="text-xs sm:text-sm italic mt-1" style={{ color: '#F3D78B' }}>
-          Choose one of five page layouts, then edit its text and photos. Use Next Page to add a page to this chapter; the Index stays a chapter list.
+          Choose one of five page layouts, then use the small Edit button on any text block or photo frame. Each editor knows exactly how much its space holds, so the finished page matches the design. Use Next Page to add a page to this chapter; the Index stays a chapter list.
         </p>
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-amber-200/30 bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-2.5">
             {aiConfigured ? <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#F5C451]" /> : <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#F5C451]" />}
             <p className="text-[11px] leading-relaxed sm:text-xs" style={{ color: '#F3D78B' }}>
               {aiConfigured
-                ? 'AI writing is ready. Look for “Write with AI” in the formatting toolbar above each text field. Every draft uses this book, chapter guidance, page, field type, selected template and existing text; review it before inserting.'
-                : 'Connect Gemini to enable contextual AI in every page field. Paste and save your key in the header settings, test the connection, then “Write with AI” appears in each text field’s toolbar.'}
+                ? 'AI writing is ready. Open any block with its Edit button — “Write with AI” lives inside the editor, and every draft is written to fit that block’s exact space on the page before you review and place it.'
+                : 'Connect Gemini to enable contextual AI inside each block’s editor. Paste and save your key in the header settings, test the connection, then open any text block with its Edit button.'}
             </p>
           </div>
           <button

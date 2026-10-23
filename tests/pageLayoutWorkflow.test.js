@@ -66,7 +66,7 @@ describe('Step 4 chapter-page layout workflow', () => {
     expect(pathsChecked).toBe(240);
   });
 
-  it('exposes field-level AI actions on the shared editor only when a provider is configured', () => {
+  it('keeps AI and formatting tools inside block editors, off the designed page', () => {
     for (const category of BOOK_CATEGORIES) {
       const template = TEMPLATES_BY_CATEGORY[category.id][0];
       const project = {
@@ -92,12 +92,16 @@ describe('Step 4 chapter-page layout workflow', () => {
           assets: []
         })
       );
-      expect(markup).toContain('aria-label="Generate ');
-      expect(markup).toContain('Write with AI');
+      // Every block offers its small Edit button; the big inline toolbars and
+      // per-field AI buttons deliberately no longer exist on the page.
+      expect(markup).toContain('aria-label="Edit ');
+      expect(markup).not.toContain('aria-label="Generate ');
+      expect(markup).not.toContain('Write with AI');
+      expect(markup).not.toContain('contentEditable="true"');
     }
   });
 
-  it('provides an AI action for every rich-text field in every category and layout', () => {
+  it('provides an Edit button for every text block in every category and layout', () => {
     for (const category of BOOK_CATEGORIES) {
       for (const template of TEMPLATES_BY_CATEGORY[category.id]) {
         for (let structureIndex = 0; structureIndex < 5; structureIndex += 1) {
@@ -125,13 +129,50 @@ describe('Step 4 chapter-page layout workflow', () => {
               assets: []
             })
           );
-          const editorCount = (markup.match(/contentEditable="true"/g) || []).length;
-          const aiActionCount = (markup.match(/aria-label="Generate /g) || []).length;
-          expect(editorCount, `${category.id}/${template.id}/layout-${structureIndex + 1}`).toBeGreaterThan(0);
-          // Every rich field gets one AI button; the page heading also has its own button.
-          expect(aiActionCount, `${category.id}/${template.id}/layout-${structureIndex + 1}`).toBeGreaterThanOrEqual(editorCount + 1);
+          const editButtonCount = (markup.match(/aria-label="Edit /g) || []).length;
+          // Heading + subtitle + at least the page's main blocks are editable.
+          expect(editButtonCount, `${category.id}/${template.id}/layout-${structureIndex + 1}`).toBeGreaterThanOrEqual(3);
+          expect(markup).not.toContain('contentEditable="true"');
         }
       }
+    }
+  });
+
+  it('renders a clean published page: words and images only, no editing tools', () => {
+    for (const category of BOOK_CATEGORIES) {
+      const template = TEMPLATES_BY_CATEGORY[category.id][0];
+      const chapter = makePage(category, template);
+      const markup = renderToStaticMarkup(
+        React.createElement(ExactTemplatePageRenderer, {
+          project: {
+            id: `published-${category.id}`,
+            title: 'A Finished Book',
+            publicationType: category.id,
+            coverConfig: { visualTemplateId: template.id, fontFamily: template.fontFamily }
+          },
+          chapter,
+          chapterIndex: 0,
+          totalChapters: 1,
+          pageIndex: 0,
+          totalPages: 1,
+          editable: false,
+          aiConfigured: true,
+          assets: []
+        })
+      );
+      expect(markup, category.id).toContain('Sample Chapter Title');
+      expect(markup, category.id).not.toContain('aria-label="Edit ');
+      expect(markup, category.id).not.toContain('Tap Edit');
+      expect(markup, category.id).not.toContain('contentEditable');
+      expect(markup, category.id).not.toContain('Write with AI');
+      expect(markup, category.id).not.toContain('Generate ');
+      expect(markup, category.id).not.toContain('Layout 1 · Chapter');
+      expect(markup, category.id).not.toContain('CLASSICAL PAGE DESIGN');
+      expect(markup, category.id).not.toContain('Upload');
+      expect(markup, category.id).not.toContain('Stock photos');
+      // The running head carries the book title; the footer is just the page number.
+      expect(markup, category.id).toContain('A Finished Book');
+      expect(markup, category.id).toContain('— 1 —');
     }
   });
 
