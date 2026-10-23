@@ -82,6 +82,7 @@ export default function ExactTemplatePageRenderer({
   aiConfigured = false,
   onSaveChapter,
   onRegisterSave,
+  onRegisterPreview,
   onAssetsChanged,
   onBackToIndex,
   onOpenAiSettings
@@ -89,6 +90,8 @@ export default function ExactTemplatePageRenderer({
   const fileInputRef = useRef(null);
   const activePhotoTargetRef = useRef(null);
   const pageDraftSaveRef = useRef(null);
+  const pageDraftPreviewRef = useRef(null);
+  const previewContextRef = useRef(null);
   const migrationAttemptsRef = useRef(new Set());
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [savingPageLayout, setSavingPageLayout] = useState(false);
@@ -125,6 +128,45 @@ export default function ExactTemplatePageRenderer({
     pageDraftSaveRef.current = savePage;
     onRegisterSave?.(savePage);
   }, [onRegisterSave]);
+
+  const registerPageDraftPreview = useCallback((getPreviewPatch) => {
+    pageDraftPreviewRef.current = getPreviewPatch;
+  }, []);
+
+  // Keep the latest editor context readable by the Preview button. The
+  // getter combines the page renderer's unsaved draft patch with the layout
+  // currently chosen here, so the preview is the finished page as it stands.
+  previewContextRef.current = { chapter, pageData, pageStructures, selectedPageStructure, isFlipped };
+
+  const getPagePreviewPatch = useCallback(() => {
+    const context = previewContextRef.current || {};
+    const draftPatch = pageDraftPreviewRef.current?.() || null;
+    const structure = context.pageStructures?.[context.selectedPageStructure];
+    return {
+      ...(draftPatch || {}),
+      title: draftPatch?.title ?? context.chapter?.title ?? '',
+      subtitle: draftPatch?.subtitle ?? context.chapter?.subtitle ?? '',
+      contentHtml: draftPatch?.contentHtml ?? context.chapter?.contentHtml ?? '',
+      structuredData: {
+        ...(context.pageData || {}),
+        ...(draftPatch?.structuredData || {}),
+        pageStructure: context.selectedPageStructure ?? 0,
+        isFlipped: Boolean(context.isFlipped),
+        ...(structure ? {
+          structureName: structure.name,
+          borderElement: structure.borderName,
+          frameElement: structure.frameName,
+          cardElement: structure.cardName
+        } : {})
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!onRegisterPreview) return undefined;
+    onRegisterPreview(getPagePreviewPatch);
+    return () => onRegisterPreview(null);
+  }, [onRegisterPreview, getPagePreviewPatch]);
 
   useEffect(() => {
     preloadImages([
@@ -536,6 +578,7 @@ export default function ExactTemplatePageRenderer({
         onOpenAiSettings={onOpenAiSettings}
         onSaveChapter={onSaveChapter}
         onRegisterSave={registerPageDraftSave}
+        onRegisterPreview={registerPageDraftPreview}
         onBackToIndex={onBackToIndex}
         getCuratedPhotoSlots={getCuratedPhotoSlots}
         renderPhotoSlot={renderPhotoSlot}

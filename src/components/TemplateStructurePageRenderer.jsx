@@ -110,6 +110,7 @@ export default function TemplateStructurePageRenderer({
   onOpenAiSettings,
   onSaveChapter,
   onRegisterSave,
+  onRegisterPreview,
   onUpdateTitle,
   onUpdateBlock,
   onBackToIndex,
@@ -130,6 +131,7 @@ export default function TemplateStructurePageRenderer({
   const saveCallbackRef = useRef(onSaveChapter);
   const flushPromiseRef = useRef(null);
   const flushDraftRef = useRef(null);
+  const previewPatchRef = useRef(null);
   const sd = draftData;
   const palette = {
     pageBg: visualTemplate.pageBg || '#FCF8F1',
@@ -309,6 +311,17 @@ export default function TemplateStructurePageRenderer({
     onRegisterSave(() => flushDraftRef.current?.());
     return () => onRegisterSave(null);
   }, [onRegisterSave]);
+
+  // The Preview button beside Save Page reads the page through this getter.
+  // It returns the same patch a save would send — but nothing is written —
+  // so the preview shows the current unsaved words exactly as designed.
+  previewPatchRef.current = () => buildSavePatch(draftTitle, draftSubtitle, draftData);
+
+  useEffect(() => {
+    if (!onRegisterPreview) return undefined;
+    onRegisterPreview(() => previewPatchRef.current?.() || null);
+    return () => onRegisterPreview(null);
+  }, [onRegisterPreview]);
 
   useEffect(() => {
     if (!editable || !hasDraftChanges || !onSaveChapter || !chapter?.id) return undefined;

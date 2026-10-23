@@ -6,6 +6,7 @@ import {
   TEMPLATES_BY_CATEGORY
 } from '../src/data/visualTemplatesCatalog.js';
 import ExactTemplatePageRenderer from '../src/components/ExactTemplatePageRenderer.jsx';
+import PagePreviewModal from '../src/components/PagePreviewModal.jsx';
 import WritingStudioView from '../src/views/WritingStudioView.jsx';
 
 function makePage(category, template) {
@@ -201,9 +202,14 @@ describe('Step 4 chapter-page layout workflow', () => {
 
     const layoutPosition = markup.indexOf('Choose a layout for this page');
     const savePosition = markup.indexOf('Save Page');
+    const previewPosition = markup.indexOf('aria-label="Preview this page as readers will see it, before saving"');
     expect(layoutPosition).toBeGreaterThan(-1);
     expect(markup).toContain('Sample Chapter Title');
     expect(savePosition).toBeGreaterThan(layoutPosition);
+    // Preview sits right beside Save in the page tools, after the editor.
+    expect(previewPosition).toBeGreaterThan(layoutPosition);
+    expect(savePosition).toBeGreaterThan(previewPosition);
+    expect(markup).toContain('Preview Page');
     expect(markup).toContain('Previous Page');
     expect(markup).toContain('Next Page');
     expect(markup).toContain('Delete Page');
@@ -214,5 +220,66 @@ describe('Step 4 chapter-page layout workflow', () => {
     expect(markup).not.toContain('Step 4 of 5');
     expect(markup).not.toContain('Front of Book (1 Index Page)');
     expect(markup).not.toContain('Save This Page');
+  });
+
+  it('shows the current draft as a clean finished page inside the preview pop-up', () => {
+    const category = BOOK_CATEGORIES.find((item) => item.id === 'book') || BOOK_CATEGORIES[0];
+    const template = TEMPLATES_BY_CATEGORY[category.id][0];
+    const project = {
+      id: 'project-preview-test',
+      title: 'Harbour Book',
+      publicationType: category.id,
+      coverConfig: { visualTemplateId: template.id, fontFamily: template.fontFamily }
+    };
+    // This chapter stands in for the preview snapshot: what the editor's
+    // unsaved draft patch produces before anything is saved.
+    const previewChapter = {
+      ...makePage(category, template),
+      title: 'Harbour Draft Chapter',
+      structuredData: {
+        pageStructure: 0,
+        isFlipped: false,
+        chapterText: '<p>Unsaved harbour words glow at dusk.</p>'
+      }
+    };
+
+    const markup = renderToStaticMarkup(
+      React.createElement(
+        PagePreviewModal,
+        {
+          open: true,
+          heading: 'Preview this page',
+          subheading: 'Harbour Draft Chapter · Page 1 of 1',
+          onClose: () => {},
+          onSave: () => {}
+        },
+        React.createElement(ExactTemplatePageRenderer, {
+          project,
+          chapter: previewChapter,
+          chapterIndex: 0,
+          totalChapters: 1,
+          pageIndex: 0,
+          totalPages: 1,
+          editable: false,
+          assets: []
+        })
+      )
+    );
+
+    expect(markup).toContain('role="dialog"');
+    expect(markup).toContain('Preview this page');
+    expect(markup).toContain('Previewing has not saved');
+    expect(markup).toContain('Back to editing');
+    expect(markup).toContain('Save Page');
+    // The unsaved draft words are what the preview shows…
+    expect(markup).toContain('Harbour Draft Chapter');
+    expect(markup).toContain('Unsaved harbour words glow at dusk.');
+    // …and the preview page itself carries no editing tools.
+    expect(markup).not.toContain('aria-label="Edit ');
+    expect(markup).not.toContain('contentEditable');
+    expect(markup).not.toContain('Upload');
+    expect(markup).not.toContain('Stock photos');
+    expect(markup).not.toContain('Write with AI');
+    expect(markup).toContain('— 1 —');
   });
 });
