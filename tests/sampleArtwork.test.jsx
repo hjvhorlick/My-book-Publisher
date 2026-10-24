@@ -38,7 +38,7 @@ function jpegSize(buffer) {
 
 describe('bundled free sample artwork', () => {
   it('covers every book category the app offers', () => {
-    expect(SAMPLE_ARTWORK.length).toBeGreaterThanOrEqual(57);
+    expect(SAMPLE_ARTWORK.length).toBeGreaterThanOrEqual(67);
 
     const categoryIds = Object.keys(designData.categoryDefaults);
     for (const categoryId of categoryIds) {
