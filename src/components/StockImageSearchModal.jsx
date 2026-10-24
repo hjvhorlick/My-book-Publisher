@@ -67,6 +67,14 @@ export default function StockImageSearchModal({
     setError('');
   }, [open, initialQuery]);
 
+  const sampleCounts = useMemo(
+    () => SAMPLE_ARTWORK.reduce((counts, item) => {
+      counts[item.category] = (counts[item.category] || 0) + 1;
+      return counts;
+    }, {}),
+    []
+  );
+
   const sampleResults = useMemo(
     () => searchSampleArtwork({ query, category: sampleCategory, slotRule }),
     [query, sampleCategory, slotRule]
@@ -258,6 +266,7 @@ export default function StockImageSearchModal({
                 <div className="flex flex-wrap gap-1.5">
                   {SAMPLE_CATEGORIES.map((category) => {
                     const active = sampleCategory === category.id;
+                    const count = category.id === 'all' ? SAMPLE_ARTWORK.length : (sampleCounts[category.id] || 0);
                     return (
                       <button
                         key={category.id}
@@ -271,6 +280,7 @@ export default function StockImageSearchModal({
                         }`}
                       >
                         {category.label}
+                        <span className={`ml-1 text-[10px] font-semibold ${active ? 'text-white/75' : 'text-stone-500 dark:text-stone-400'}`}>{count}</span>
                       </button>
                     );
                   })}

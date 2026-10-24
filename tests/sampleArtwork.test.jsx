@@ -38,12 +38,13 @@ function jpegSize(buffer) {
 
 describe('bundled free sample artwork', () => {
   it('covers every book category the app offers', () => {
-    expect(SAMPLE_ARTWORK.length).toBeGreaterThanOrEqual(67);
+    // 27 original placeholders + 50 newly commissioned images.
+    expect(SAMPLE_ARTWORK.length).toBeGreaterThanOrEqual(77);
 
     const categoryIds = Object.keys(designData.categoryDefaults);
     for (const categoryId of categoryIds) {
       const owned = SAMPLE_ARTWORK.filter((item) => item.category === categoryId);
-      expect(owned.length, `no free artwork for the ${categoryId} category`).toBeGreaterThanOrEqual(2);
+      expect(owned.length, `no free artwork for the ${categoryId} category`).toBeGreaterThanOrEqual(4);
     }
 
     // Every designed template belongs to one of those categories, so the

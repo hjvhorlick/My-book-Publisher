@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-24.5",
+  "version": "2026-10-24.6",
   "license": {
     "id": "bundled_sample",
     "name": "Bundled free sample",
@@ -114,6 +114,42 @@
       "width": 2200,
       "height": 1200,
       "sizeBytes": 323903
+    },
+    {
+      "id": "book-city",
+      "file": "book-city.jpg",
+      "category": "book",
+      "collection": "book",
+      "title": "Rainy city street",
+      "tags": [
+        "city",
+        "rain",
+        "night",
+        "street",
+        "noir"
+      ],
+      "alt": "A rainy city street at night with wet cobbles reflecting shop lights.",
+      "width": 1643,
+      "height": 2200,
+      "sizeBytes": 569398
+    },
+    {
+      "id": "book-flowers",
+      "file": "book-flowers.jpg",
+      "category": "book",
+      "collection": "book",
+      "title": "Pressed flowers on a book",
+      "tags": [
+        "flowers",
+        "pressed",
+        "poetry",
+        "still life",
+        "paper"
+      ],
+      "alt": "Pressed dried flowers and eucalyptus sprigs laid on the open pages of a poetry book.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 386866
     },
     {
       "id": "dish-bakehouse",
@@ -581,6 +617,42 @@
       "sizeBytes": 236729
     },
     {
+      "id": "mag-chef",
+      "file": "mag-chef.jpg",
+      "category": "magazine",
+      "collection": "mag",
+      "title": "Plating at the pass",
+      "tags": [
+        "chef",
+        "kitchen",
+        "plating",
+        "restaurant",
+        "food"
+      ],
+      "alt": "A chef’s hands plating a dish with tweezers at a professional kitchen pass.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 329214
+    },
+    {
+      "id": "mag-dance",
+      "file": "mag-dance.jpg",
+      "category": "magazine",
+      "collection": "mag",
+      "title": "Dancer in the window",
+      "tags": [
+        "dance",
+        "studio",
+        "silhouette",
+        "culture",
+        "movement"
+      ],
+      "alt": "A dancer silhouetted against a tall studio window with dust in the light.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 398484
+    },
+    {
       "id": "nature-ferns",
       "file": "nature-ferns.jpg",
       "category": "photobook",
@@ -939,6 +1011,60 @@
       "sizeBytes": 460947
     },
     {
+      "id": "travel-road",
+      "file": "travel-road.jpg",
+      "category": "photobook",
+      "collection": "travel",
+      "title": "Road through the hills",
+      "tags": [
+        "road",
+        "hills",
+        "mountains",
+        "drive",
+        "travel"
+      ],
+      "alt": "An empty road winding through golden hills towards distant mountains.",
+      "width": 2200,
+      "height": 933,
+      "sizeBytes": 398621
+    },
+    {
+      "id": "nature-aurora",
+      "file": "nature-aurora.jpg",
+      "category": "photobook",
+      "collection": "nature",
+      "title": "Aurora over the lake",
+      "tags": [
+        "aurora",
+        "night",
+        "stars",
+        "lake",
+        "northern lights"
+      ],
+      "alt": "Green and violet aurora over a still lake with stars reflected in the water.",
+      "width": 2200,
+      "height": 1228,
+      "sizeBytes": 343120
+    },
+    {
+      "id": "family-beach",
+      "file": "family-beach.jpg",
+      "category": "photobook",
+      "collection": "family",
+      "title": "Beach picnic",
+      "tags": [
+        "beach",
+        "picnic",
+        "summer",
+        "holiday",
+        "sea"
+      ],
+      "alt": "A beach picnic under a striped umbrella with towels, fruit and a straw hat.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 499212
+    },
+    {
       "id": "story-balloon",
       "file": "story-balloon.jpg",
       "category": "storybook",
@@ -1136,6 +1262,24 @@
       "sizeBytes": 563724
     },
     {
+      "id": "story-snow",
+      "file": "story-snow.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Snowy village at night",
+      "tags": [
+        "snow",
+        "village",
+        "night",
+        "winter",
+        "moon"
+      ],
+      "alt": "A snow-covered village at night with warm glowing windows and a large moon.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 554947
+    },
+    {
       "id": "work-planner",
       "file": "work-planner.jpg",
       "category": "workbook",
@@ -1206,6 +1350,42 @@
       "width": 2200,
       "height": 1200,
       "sizeBytes": 256139
+    },
+    {
+      "id": "work-goals",
+      "file": "work-goals.jpg",
+      "category": "workbook",
+      "collection": "work",
+      "title": "Goals and habits desk",
+      "tags": [
+        "goals",
+        "calendar",
+        "habit tracker",
+        "planning",
+        "desk"
+      ],
+      "alt": "A goal-setting desk with a blank wall calendar, habit tracker, pens and a small plant.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 291915
+    },
+    {
+      "id": "work-review",
+      "file": "work-review.jpg",
+      "category": "workbook",
+      "collection": "work",
+      "title": "Dot-grid journal",
+      "tags": [
+        "journal",
+        "dot grid",
+        "tabs",
+        "sticky notes",
+        "review"
+      ],
+      "alt": "An open dot-grid journal with coloured index tabs, sticky notes and a fountain pen.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 345147
     }
   ]
 }

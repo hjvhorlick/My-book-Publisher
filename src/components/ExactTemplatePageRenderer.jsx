@@ -14,14 +14,14 @@ import { getImageSlotRule } from '../data/slotRules';
 
 const DEFAULT_ARTWORK_BY_TEMPLATE = {
   // Photo Books
-  'photo-warm-family': ['/sample-artwork/wedding-walk.jpg', '/sample-artwork/family-picnic.jpg', '/sample-artwork/family-birthday.jpg', '/sample-artwork/family-child.jpg', '/sample-artwork/family-garden.jpg', '/sample-artwork/family-grandparents.jpg', '/sample-artwork/family-dog.jpg'],
+  'photo-warm-family': ['/sample-artwork/family-picnic.jpg', '/sample-artwork/family-beach.jpg', '/sample-artwork/family-birthday.jpg', '/sample-artwork/family-child.jpg', '/sample-artwork/family-garden.jpg', '/sample-artwork/family-dog.jpg'],
   'photo-modern-minimal': ['/sample-artwork/nature-lake.jpg', '/sample-artwork/travel-cottage.jpg', '/sample-artwork/travel-desert.jpg', '/sample-artwork/nature-waterfall.jpg', '/sample-artwork/nature-stones.jpg'],
-  'photo-gallery-frame': ['/sample-artwork/travel-mountains.jpg', '/sample-artwork/nature-lake.jpg', '/sample-artwork/travel-desert.jpg', '/sample-artwork/travel-cottage.jpg', '/sample-artwork/nature-waterfall.jpg'],
-  'photo-vintage-polaroid': ['/sample-artwork/family-grandparents.jpg', '/sample-artwork/family-birthday.jpg', '/sample-artwork/wedding-walk.jpg', '/sample-artwork/travel-desert.jpg', '/sample-artwork/family-child.jpg'],
+  'photo-gallery-frame': ['/sample-artwork/travel-road.jpg', '/sample-artwork/nature-aurora.jpg', '/sample-artwork/travel-mountains.jpg', '/sample-artwork/nature-lake.jpg', '/sample-artwork/travel-desert.jpg'],
+  'photo-vintage-polaroid': ['/sample-artwork/family-beach.jpg', '/sample-artwork/family-grandparents.jpg', '/sample-artwork/family-birthday.jpg', '/sample-artwork/wedding-walk.jpg', '/sample-artwork/travel-desert.jpg'],
   'photo-botanical-sage': ['/sample-artwork/dish-herbs.jpg', '/sample-artwork/nature-lake.jpg', '/sample-artwork/nature-ferns.jpg', '/sample-artwork/nature-stones.jpg', '/sample-artwork/nature-mushrooms.jpg'],
   'photo-wedding-ivory': ['/sample-artwork/wedding-walk.jpg', '/sample-artwork/wedding-table.jpg', '/sample-artwork/wedding-bride.jpg', '/sample-artwork/wedding-dance.jpg', '/sample-artwork/wedding-confetti.jpg'],
   'photo-monochrome-noir': ['/sample-artwork/mag-architecture.jpg', '/sample-artwork/mag-sculpture.jpg', '/sample-artwork/travel-mountains.jpg', '/sample-artwork/book-harbor.jpg', '/sample-artwork/mag-portrait.jpg'],
-  'photo-sunset-terracotta': ['/sample-artwork/travel-desert.jpg', '/sample-artwork/nature-lake.jpg', '/sample-artwork/travel-coast.jpg', '/sample-artwork/family-picnic.jpg', '/sample-artwork/wedding-confetti.jpg'],
+  'photo-sunset-terracotta': ['/sample-artwork/travel-desert.jpg', '/sample-artwork/travel-road.jpg', '/sample-artwork/nature-lake.jpg', '/sample-artwork/family-beach.jpg', '/sample-artwork/travel-coast.jpg'],
   // Cookbooks
   'cook-warm-border': ['/sample-artwork/dish-roast.jpg', '/sample-artwork/dish-soup.jpg', '/sample-artwork/dish-pasta.jpg', '/sample-artwork/dish-bistro.jpg', '/sample-artwork/dish-market.jpg'],
   'cook-modern-spread': ['/sample-artwork/dish-citrus.jpg', '/sample-artwork/dish-breakfast.jpg', '/sample-artwork/dish-market.jpg', '/sample-artwork/dish-bistro.jpg'],
@@ -32,20 +32,20 @@ const DEFAULT_ARTWORK_BY_TEMPLATE = {
   'cook-fiesta-spice': ['/sample-artwork/dish-roast.jpg', '/sample-artwork/dish-market.jpg', '/sample-artwork/dish-mediterranean.jpg'],
   'cook-cozy-bakehouse': ['/sample-artwork/dish-dessert.jpg', '/sample-artwork/dish-breakfast.jpg', '/sample-artwork/dish-bakehouse.jpg', '/sample-artwork/dish-pasta.jpg'],
   // Magazines
-  'mag-bold-editorial': ['/sample-artwork/mag-architecture.jpg', '/sample-artwork/mag-sculpture.jpg', '/sample-artwork/mag-portrait.jpg'],
-  'mag-lifestyle-minimal': ['/sample-artwork/mag-interior.jpg', '/sample-artwork/travel-coast.jpg', '/sample-artwork/nature-ferns.jpg'],
+  'mag-bold-editorial': ['/sample-artwork/mag-chef.jpg', '/sample-artwork/mag-architecture.jpg', '/sample-artwork/mag-portrait.jpg'],
+  'mag-lifestyle-minimal': ['/sample-artwork/mag-interior.jpg', '/sample-artwork/mag-chef.jpg', '/sample-artwork/mag-dance.jpg'],
   'mag-indigo-digest': ['/sample-artwork/mag-streetfood.jpg', '/sample-artwork/info-studio.jpg', '/sample-artwork/wedding-confetti.jpg'],
-  'mag-art-culture': ['/sample-artwork/mag-music.jpg', '/sample-artwork/mag-sculpture.jpg', '/sample-artwork/mag-couture.jpg'],
+  'mag-art-culture': ['/sample-artwork/mag-dance.jpg', '/sample-artwork/mag-music.jpg', '/sample-artwork/mag-sculpture.jpg', '/sample-artwork/mag-couture.jpg'],
   'mag-tech-future': ['/sample-artwork/work-desk.jpg', '/sample-artwork/mag-architecture.jpg', '/sample-artwork/info-studio.jpg'],
   'mag-travel-wanderlust': ['/sample-artwork/travel-mountains.jpg', '/sample-artwork/travel-coast.jpg', '/sample-artwork/mag-portrait.jpg'],
   'mag-fashion-vogue': ['/sample-artwork/mag-couture.jpg', '/sample-artwork/mag-interior.jpg', '/sample-artwork/mag-portrait.jpg'],
   'mag-sports-action': ['/sample-artwork/mag-runner.jpg', '/sample-artwork/mag-music.jpg'],
   // Children's Picture Books
-  'story-starlight-frame': ['/sample-artwork/story-lantern.jpg', '/sample-artwork/story-castle.jpg', '/sample-artwork/story-sea.jpg'],
+  'story-starlight-frame': ['/sample-artwork/story-snow.jpg', '/sample-artwork/story-lantern.jpg', '/sample-artwork/story-castle.jpg', '/sample-artwork/story-sea.jpg'],
   'story-sunny-adventure': ['/sample-artwork/story-balloon.jpg', '/sample-artwork/story-castle.jpg'],
   'story-ocean-treasure': ['/sample-artwork/story-turtle.jpg'],
   'story-woodland-friends': ['/sample-artwork/story-woodland.jpg', '/sample-artwork/story-fox.jpg', '/sample-artwork/story-squirrel.jpg'],
-  'story-cosmic-rocket': ['/sample-artwork/story-rocket.jpg'],
+  'story-cosmic-rocket': ['/sample-artwork/story-rocket.jpg', '/sample-artwork/story-snow.jpg'],
   'story-fairy-castle': ['/sample-artwork/story-castle.jpg', '/sample-artwork/story-garden.jpg', '/sample-artwork/story-dragon.jpg'],
   'story-dino-jungle': ['/sample-artwork/story-dragon.jpg', '/sample-artwork/story-woodland.jpg', '/sample-artwork/story-fox.jpg'],
   'story-pastel-lullaby': ['/sample-artwork/story-garden.jpg', '/sample-artwork/story-lantern.jpg', '/sample-artwork/story-sea.jpg'],
@@ -56,20 +56,20 @@ const DEFAULT_ARTWORK_BY_TEMPLATE = {
   'info-purple-masterclass': ['/sample-artwork/info-diagrams.jpg', '/sample-artwork/work-journal.jpg', '/sample-artwork/info-studio.jpg'],
   'info-teal-wellness': ['/sample-artwork/nature-waterfall.jpg', '/sample-artwork/mag-runner.jpg'],
   'info-slate-business': ['/sample-artwork/info-books.jpg', '/sample-artwork/work-desk.jpg', '/sample-artwork/info-studio.jpg'],
-  'info-coral-parenting': ['/sample-artwork/family-child.jpg', '/sample-artwork/family-garden.jpg', '/sample-artwork/family-picnic.jpg'],
+  'info-coral-parenting': ['/sample-artwork/family-beach.jpg', '/sample-artwork/family-child.jpg', '/sample-artwork/family-garden.jpg'],
   'info-indigo-tech': ['/sample-artwork/info-diagrams.jpg', '/sample-artwork/info-studio.jpg', '/sample-artwork/info-workshop.jpg'],
   // Story, Memoir & Chapter Books
   'book-modern-clean': ['/sample-artwork/nature-lake.jpg', '/sample-artwork/travel-coast.jpg', '/sample-artwork/book-harbor.jpg'],
   'book-warm-classic': ['/sample-artwork/book-homestead.jpg', '/sample-artwork/book-typewriter.jpg', '/sample-artwork/book-reading.jpg', '/sample-artwork/family-grandparents.jpg'],
-  'book-vintage-memoir': ['/sample-artwork/book-letter.jpg', '/sample-artwork/book-typewriter.jpg', '/sample-artwork/book-desk.jpg', '/sample-artwork/family-grandparents.jpg'],
-  'book-thriller-noir': ['/sample-artwork/book-harbor.jpg', '/sample-artwork/travel-desert.jpg', '/sample-artwork/mag-architecture.jpg'],
-  'book-romance-blush': ['/sample-artwork/book-letter.jpg', '/sample-artwork/wedding-bride.jpg', '/sample-artwork/wedding-walk.jpg'],
+  'book-vintage-memoir': ['/sample-artwork/book-letter.jpg', '/sample-artwork/book-flowers.jpg', '/sample-artwork/book-typewriter.jpg', '/sample-artwork/family-grandparents.jpg'],
+  'book-thriller-noir': ['/sample-artwork/book-city.jpg', '/sample-artwork/book-harbor.jpg', '/sample-artwork/travel-desert.jpg', '/sample-artwork/mag-architecture.jpg'],
+  'book-romance-blush': ['/sample-artwork/book-letter.jpg', '/sample-artwork/book-flowers.jpg', '/sample-artwork/wedding-bride.jpg'],
   'book-scifi-cosmos': ['/sample-artwork/book-harbor.jpg', '/sample-artwork/travel-mountains.jpg'],
-  'book-poetry-ivory': ['/sample-artwork/book-letter.jpg', '/sample-artwork/nature-ferns.jpg', '/sample-artwork/dish-herbs.jpg'],
+  'book-poetry-ivory': ['/sample-artwork/book-flowers.jpg', '/sample-artwork/book-letter.jpg', '/sample-artwork/nature-ferns.jpg', '/sample-artwork/dish-herbs.jpg'],
   'book-historical-crest': ['/sample-artwork/book-homestead.jpg', '/sample-artwork/book-typewriter.jpg', '/sample-artwork/book-desk.jpg'],
   // Workbooks
-  'work-teal-planner': ['/sample-artwork/work-planner.jpg', '/sample-artwork/work-notes.jpg', '/sample-artwork/work-desk.jpg', '/sample-artwork/work-journal.jpg'],
-  'work-indigo-journal': ['/sample-artwork/work-journal.jpg', '/sample-artwork/work-desk.jpg', '/sample-artwork/work-planner.jpg']
+  'work-teal-planner': ['/sample-artwork/work-planner.jpg', '/sample-artwork/work-goals.jpg', '/sample-artwork/work-notes.jpg', '/sample-artwork/work-desk.jpg', '/sample-artwork/work-journal.jpg'],
+  'work-indigo-journal': ['/sample-artwork/work-journal.jpg', '/sample-artwork/work-review.jpg', '/sample-artwork/work-desk.jpg', '/sample-artwork/work-planner.jpg', '/sample-artwork/work-notes.jpg']
 };
 
 export default function ExactTemplatePageRenderer({
