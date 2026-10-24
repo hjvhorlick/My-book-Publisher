@@ -88,7 +88,8 @@ describe('template design system', () => {
     const find = (id) => ALL_TEMPLATES.find((entry) => entry.template.id === id).template;
 
     const crest = resolveTemplateDesign(find('book-historical-crest'));
-    expect(crest.pageBorderId).toBe('crest-corners');
+    // The crest sample is framed with printed scroll-work, not a plain rule.
+    expect(crest.pageBorderId).toBe('florentine');
     expect(crest.blockBorderId).toBe('parchment');
     expect(crest.headingStyleId).toBe('kicker-overline');
     expect(crest.dropCap).toBe(true);
@@ -97,7 +98,7 @@ describe('template design system', () => {
     expect(crest.fontFamily).toBe('Newsreader');
 
     const poetry = resolveTemplateDesign(find('book-poetry-ivory'));
-    expect(poetry.pageBorderId).toBe('inner-rule');
+    expect(poetry.pageBorderId).toBe('fleur-trellis');
     expect(poetry.blockBorderId).toBe('underline-only');
     expect(poetry.ornamentId).toBe('diamond');
 
@@ -107,7 +108,8 @@ describe('template design system', () => {
     expect(tech.kicker).toBe(true);
 
     const starlight = resolveTemplateDesign(find('story-starlight-frame'));
-    expect(starlight.pageBorderId).toBe('filigree');
+    // The sample shows a printed star band, so the frame is ornament, not a rule.
+    expect(starlight.pageBorderId).toBe('starlit-frame');
     expect(starlight.dropCap).toBe(true);
     expect(starlight.fontFamily).toBe('Lora');
   });
@@ -294,7 +296,10 @@ describe('template design system', () => {
         assets: []
       })
     );
-    expect(plainMarkup).toContain('data-page-border="crest-corners"');
+    // Without overrides the template's own printed frame applies.
+    expect(plainMarkup).toContain('data-page-border="florentine"');
+    expect(plainMarkup).toContain('data-border-scroll');
+    expect(plainMarkup).toContain('data-border-pattern');
     expect(plainMarkup).toContain('— Page I —');
     expect(plainMarkup).toContain('CHAPTER I');
   });
@@ -305,7 +310,7 @@ describe('template design system', () => {
       id: 'intro-design',
       title: 'A Warm Book',
       publicationType: 'book',
-      coverConfig: { visualTemplateId: template.id, design: { pageBorderId: 'gilded-arch', borderColor: '#8B1A1A' } }
+      coverConfig: { visualTemplateId: template.id, design: { pageBorderId: 'holographic-vortex', borderColor: '#8B1A1A' } }
     };
     const markup = renderToStaticMarkup(
       React.createElement(IntroductionPageEditor, {
@@ -319,7 +324,9 @@ describe('template design system', () => {
     // An unknown stored border id is repaired to a real ornament rather than
     // leaving the page undecorated.
     expect(markup).toContain('data-page-kind="introduction"');
-    expect(markup).not.toContain('data-page-border="gilded-arch"');
+    expect(markup).not.toContain('data-page-border="holographic-vortex"');
+    // A real ornamental border resolves to itself and draws its artwork.
+    expect(resolveTemplateDesign(template, { pageBorderId: 'gilded-arch' }).pageBorderId).toBe('gilded-arch');
     expect(markup).toContain('Before We Begin');
     expect(markup).toContain('For those who waited up.');
   });

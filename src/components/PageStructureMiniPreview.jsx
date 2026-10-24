@@ -183,6 +183,9 @@ export default function PageStructureMiniPreview({
       <div className={`w-full h-full rounded-xl bg-[#141619] ${compact ? 'p-1' : 'p-1.5'} shadow-inner flex flex-col`}>
         <div
           className={`w-full h-full rounded-lg ${compact ? 'p-1.5' : 'p-2.5'} relative overflow-hidden flex flex-col`}
+          data-page-border={design.pageBorderId}
+          data-page-texture={design.pageTextureId}
+          data-block-overlap={design.blockOverlap}
           style={{
             ...borderStyle,
             backgroundColor: pageBg,

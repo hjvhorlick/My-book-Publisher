@@ -6,8 +6,11 @@ import {
   headingTreatment,
   pageNumberLabel,
   pageTextureStyle,
-  withAlpha
+  resolveEdgePattern,
+  withAlpha,
+  SCROLL_CORNER
 } from '../data/designSystem';
+import { SCROLL_CORNER_ROTATIONS } from '../data/borderOrnaments';
 
 function layerColor(role, design) {
   switch (role) {
@@ -21,6 +24,79 @@ function layerColor(role, design) {
     default:
       return design.borderInk || design.borderColor;
   }
+}
+
+/**
+ * Printed scroll-work in one corner of the page.
+ *
+ * Drawn as vector paths rather than a typed glyph, so the curls stay crisp at
+ * every size — in the design swatch, on the studio page and in the PDF.
+ */
+function ScrollCorner({ color, size, opacity = 1, rotate = 0, style = {} }) {
+  return (
+    <svg
+      viewBox={SCROLL_CORNER.viewBox}
+      width={size}
+      height={size}
+      aria-hidden="true"
+      data-border-scroll={rotate}
+      style={{
+        position: 'absolute',
+        pointerEvents: 'none',
+        transform: `rotate(${rotate}deg)`,
+        transformOrigin: 'center',
+        color,
+        ...style
+      }}
+    >
+      {SCROLL_CORNER.paths.map((path, index) => (
+        <path
+          key={`scroll-path-${index}`}
+          d={path.d}
+          fill={path.fill ? color : 'none'}
+          stroke={path.fill ? 'none' : color}
+          strokeWidth={path.fill ? 0 : path.width}
+          strokeLinecap="round"
+          opacity={(path.opacity ?? 1) * opacity}
+        />
+      ))}
+      {SCROLL_CORNER.circles.map((circle, index) => (
+        <circle
+          key={`scroll-circle-${index}`}
+          cx={circle.cx}
+          cy={circle.cy}
+          r={circle.r}
+          fill={color}
+          opacity={(circle.opacity ?? 1) * opacity}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** One edge dressed with a repeated printed motif (leaves, scallops, stars…). */
+function EdgePattern({ layer, design, edge, artworkScale = 1 }) {
+  const css = resolveEdgePattern(layer, design, edge, artworkScale);
+  if (!css) return null;
+  const inset = (layer.inset || 0) * artworkScale;
+  const horizontal = edge === 'top' || edge === 'bottom';
+  return (
+    <span
+      aria-hidden="true"
+      data-border-pattern={`${layer.motif}:${edge}`}
+      style={{
+        position: 'absolute',
+        pointerEvents: 'none',
+        ...(horizontal
+          ? { left: inset, right: inset, [edge]: inset, height: css.height }
+          : { top: inset, bottom: inset, [edge]: inset, width: css.width }),
+        backgroundImage: css.backgroundImage,
+        backgroundRepeat: css.backgroundRepeat,
+        backgroundSize: css.backgroundSize,
+        backgroundPosition: css.backgroundPosition
+      }}
+    />
+  );
 }
 
 /**
@@ -40,6 +116,7 @@ export function PageFrame({
   as: Tag = 'div',
   role,
   dataPageKind,
+  artworkScale = 1,
   'aria-label': ariaLabel
 }) {
   const safeDesign = design || {};
@@ -130,6 +207,35 @@ export function PageFrame({
               }}
             />
           );
+        }
+        if (layer.kind === 'scroll') {
+          const size = (layer.size || 64) * artworkScale;
+          const inset = layer.inset || 0;
+          return SCROLL_CORNER_ROTATIONS.map((corner) => (
+            <ScrollCorner
+              key={`${key}-${corner.key}`}
+              color={color}
+              size={size}
+              opacity={layer.opacity ?? 1}
+              rotate={corner.rotate}
+              style={{
+                ...(corner.top !== undefined ? { top: inset } : { bottom: inset }),
+                ...(corner.left !== undefined ? { left: inset } : { right: inset })
+              }}
+            />
+          ));
+        }
+        if (layer.kind === 'pattern') {
+          const edges = layer.edges || ['top', 'bottom'];
+          return edges.map((edge) => (
+            <EdgePattern
+              key={`${key}-${edge}`}
+              layer={layer}
+              design={safeDesign}
+              edge={edge}
+              artworkScale={artworkScale}
+            />
+          ));
         }
         if (layer.kind === 'cartouche') {
           const edgeStyle = layer.edge === 'top'
@@ -347,6 +453,7 @@ export function BorderSwatch({ design, selected = false, height = 56, className 
     <span className={`block w-full ${className}`} style={{ height }} aria-hidden="true">
       <PageFrame
         design={preview}
+        artworkScale={0.34}
         style={{ height: '100%', width: '100%', border: selected ? '2px solid #FDE08D' : '1px solid rgba(229,184,75,0.45)' }}
         contentStyle={{ height: '100%' }}
         borderRadius={4}

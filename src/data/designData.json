@@ -1,0 +1,1528 @@
+{
+  "pageBorders": [
+    {
+      "id": "none",
+      "name": "No page border",
+      "blurb": "Clean edge \u2014 the design lives inside the page.",
+      "layers": []
+    },
+    {
+      "id": "hairline",
+      "name": "Single hairline",
+      "blurb": "One fine rule around the page, modern and quiet.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 10,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 2
+        }
+      ]
+    },
+    {
+      "id": "inner-rule",
+      "name": "Classic inner rule",
+      "blurb": "A fine outer rule and a second inset rule, like a printed book.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 2,
+          "opacity": 0.75
+        },
+        {
+          "kind": "border",
+          "inset": 16,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 1,
+          "opacity": 0.4
+        }
+      ]
+    },
+    {
+      "id": "double-rule",
+      "name": "Double rule",
+      "blurb": "The traditional double-ruled frame used by classic editions.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 3,
+          "style": "double",
+          "color": "border",
+          "radius": 2
+        }
+      ]
+    },
+    {
+      "id": "corner-flourish",
+      "name": "Corner flourish",
+      "blurb": "Double rule with printed leaf flourishes in each corner.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 3,
+          "style": "double",
+          "color": "border",
+          "radius": 2
+        },
+        {
+          "kind": "border",
+          "inset": 17,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 1,
+          "opacity": 0.45
+        },
+        {
+          "kind": "corners",
+          "glyph": "\u2767",
+          "color": "border",
+          "inset": 11,
+          "size": 17
+        }
+      ]
+    },
+    {
+      "id": "crest-corners",
+      "name": "Crest corners",
+      "blurb": "Bold rule with a crest ornament at every corner \u2014 for chronicles.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 7,
+          "width": 2,
+          "style": "solid",
+          "color": "border",
+          "radius": 3
+        },
+        {
+          "kind": "border",
+          "inset": 13,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 2,
+          "opacity": 0.55
+        },
+        {
+          "kind": "corners",
+          "glyph": "\u2766",
+          "color": "accent",
+          "inset": 8,
+          "size": 16
+        }
+      ]
+    },
+    {
+      "id": "filigree",
+      "name": "Filigree",
+      "blurb": "Double rule with decorative corner clusters and centre cartouches.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 7,
+          "width": 4,
+          "style": "double",
+          "color": "border",
+          "radius": 3
+        },
+        {
+          "kind": "border",
+          "inset": 16,
+          "width": 1,
+          "style": "solid",
+          "color": "accent",
+          "radius": 2,
+          "opacity": 0.65
+        },
+        {
+          "kind": "corners",
+          "glyph": "\u2767",
+          "color": "accent",
+          "inset": 9,
+          "size": 16
+        },
+        {
+          "kind": "cartouche",
+          "edge": "top",
+          "glyph": "\u2766",
+          "color": "border",
+          "size": 18
+        },
+        {
+          "kind": "cartouche",
+          "edge": "bottom",
+          "glyph": "\u2766",
+          "color": "border",
+          "size": 18
+        }
+      ]
+    },
+    {
+      "id": "gallery-matte",
+      "name": "Gallery matte",
+      "blurb": "Thick matte around the page with a fine silver rule \u2014 gallery print.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 6,
+          "width": 10,
+          "style": "solid",
+          "color": "matte",
+          "radius": 2,
+          "opacity": 0.5
+        },
+        {
+          "kind": "border",
+          "inset": 18,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 1,
+          "opacity": 0.85
+        }
+      ]
+    },
+    {
+      "id": "soft-rounded",
+      "name": "Soft rounded",
+      "blurb": "A gently rounded frame with an inset hairline.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 2,
+          "style": "solid",
+          "color": "border",
+          "radius": 20
+        },
+        {
+          "kind": "border",
+          "inset": 16,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 14,
+          "opacity": 0.4
+        }
+      ]
+    },
+    {
+      "id": "arch-window",
+      "name": "Arch window",
+      "blurb": "Rounded arch top \u2014 storybook doors and windows.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 3,
+          "style": "double",
+          "color": "border",
+          "radius": 26
+        },
+        {
+          "kind": "border",
+          "inset": 17,
+          "width": 1,
+          "style": "solid",
+          "color": "accent",
+          "radius": 20,
+          "opacity": 0.55
+        },
+        {
+          "kind": "corners",
+          "glyph": "\u2726",
+          "color": "accent",
+          "inset": 10,
+          "size": 13
+        }
+      ]
+    },
+    {
+      "id": "dashed-craft",
+      "name": "Dashed craft",
+      "blurb": "Hand-stitched dashed rule with a soft inner line.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 2,
+          "style": "dashed",
+          "color": "border",
+          "radius": 6,
+          "opacity": 0.9
+        },
+        {
+          "kind": "border",
+          "inset": 16,
+          "width": 1,
+          "style": "dotted",
+          "color": "accent",
+          "radius": 4,
+          "opacity": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pinstripe",
+      "name": "Pinstripe",
+      "blurb": "Fine double pinstripe frame with small corner dots.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 9,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 1
+        },
+        {
+          "kind": "border",
+          "inset": 14,
+          "width": 2,
+          "style": "solid",
+          "color": "border",
+          "radius": 1,
+          "opacity": 0.35
+        },
+        {
+          "kind": "corners",
+          "glyph": "\u25c6",
+          "color": "accent",
+          "inset": 6,
+          "size": 8
+        }
+      ]
+    },
+    {
+      "id": "masthead-band",
+      "name": "Masthead band",
+      "blurb": "Heavy accent band at the top, rule at the foot \u2014 magazine masthead.",
+      "layers": [
+        {
+          "kind": "band",
+          "edge": "top",
+          "thickness": 10,
+          "color": "accent"
+        },
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 1,
+          "opacity": 0.45
+        },
+        {
+          "kind": "band",
+          "edge": "bottom",
+          "thickness": 3,
+          "color": "border"
+        }
+      ]
+    },
+    {
+      "id": "ribbon-corners",
+      "name": "Ribbon corners",
+      "blurb": "Crisp rule with solid accent squares in each corner.",
+      "layers": [
+        {
+          "kind": "border",
+          "inset": 9,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 1
+        },
+        {
+          "kind": "corners",
+          "glyph": "\u25a0",
+          "color": "accent",
+          "inset": 5,
+          "size": 10
+        }
+      ]
+    },
+    {
+      "id": "vine-scroll",
+      "name": "Vine scroll",
+      "blurb": "Curling scroll-work in each corner with a vine of leaves along the top and foot.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "leaves",
+          "color": "accent",
+          "inset": 6,
+          "opacity": 0.9,
+          "edges": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        {
+          "kind": "scroll",
+          "color": "border",
+          "inset": 6,
+          "size": 64,
+          "opacity": 0.95
+        },
+        {
+          "kind": "border",
+          "inset": 54,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 2
+        }
+      ]
+    },
+    {
+      "id": "lace-scallop",
+      "name": "Scallop lace",
+      "blurb": "A scalloped lace edge on all four sides, like a pressed doily.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "scallop",
+          "color": "accent",
+          "inset": 6,
+          "opacity": 0.9,
+          "edges": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        {
+          "kind": "border",
+          "inset": 24,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 2,
+          "opacity": 0.45
+        }
+      ]
+    },
+    {
+      "id": "fleur-trellis",
+      "name": "Fleur trellis",
+      "blurb": "A trellis of fleurs-de-lis around the page with scroll-work corners.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "fleur",
+          "color": "border",
+          "inset": 6,
+          "opacity": 0.85,
+          "edges": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        {
+          "kind": "scroll",
+          "color": "border",
+          "inset": 6,
+          "size": 56,
+          "opacity": 0.85
+        },
+        {
+          "kind": "border",
+          "inset": 48,
+          "width": 3,
+          "style": "double",
+          "color": "border",
+          "radius": 2
+        }
+      ]
+    },
+    {
+      "id": "diamond-fret",
+      "name": "Diamond fret",
+      "blurb": "A band of printed diamonds and beads with a fine double rule inside.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "diamonds",
+          "color": "border",
+          "inset": 6,
+          "opacity": 0.9,
+          "edges": [
+            "top",
+            "bottom"
+          ]
+        },
+        {
+          "kind": "border",
+          "inset": 28,
+          "width": 3,
+          "style": "double",
+          "color": "border",
+          "radius": 2,
+          "opacity": 0.8
+        },
+        {
+          "kind": "corners",
+          "glyph": "\u2756",
+          "color": "accent",
+          "inset": 28,
+          "size": 12
+        }
+      ]
+    },
+    {
+      "id": "greek-wave",
+      "name": "Wave rule",
+      "blurb": "A running wave pattern, like a printed Greek-key border.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "wave",
+          "color": "border",
+          "inset": 6,
+          "opacity": 0.85,
+          "edges": [
+            "top",
+            "bottom"
+          ]
+        },
+        {
+          "kind": "border",
+          "inset": 24,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 1,
+          "opacity": 0.5
+        },
+        {
+          "kind": "border",
+          "inset": 29,
+          "width": 1,
+          "style": "solid",
+          "color": "accent",
+          "radius": 1,
+          "opacity": 0.35
+        }
+      ]
+    },
+    {
+      "id": "gilded-arch",
+      "name": "Gilded arch",
+      "blurb": "Rounded arch frame with gilded scroll-work and a band of beads.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "dots",
+          "color": "accent",
+          "inset": 4,
+          "opacity": 0.55,
+          "edges": [
+            "top",
+            "bottom"
+          ]
+        },
+        {
+          "kind": "border",
+          "inset": 8,
+          "width": 3,
+          "style": "double",
+          "color": "border",
+          "radius": 30
+        },
+        {
+          "kind": "scroll",
+          "color": "accent",
+          "inset": 8,
+          "size": 58,
+          "opacity": 0.9
+        },
+        {
+          "kind": "pattern",
+          "motif": "dots",
+          "color": "accent",
+          "inset": 46,
+          "opacity": 0.5,
+          "edges": [
+            "top",
+            "bottom"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "florentine",
+      "name": "Florentine filigree",
+      "blurb": "Dense Florentine filigree: scroll-work, fleurs and a fine double rule.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "fleur",
+          "color": "accent",
+          "inset": 6,
+          "opacity": 0.9,
+          "edges": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        {
+          "kind": "scroll",
+          "color": "border",
+          "inset": 6,
+          "size": 68,
+          "opacity": 1
+        },
+        {
+          "kind": "border",
+          "inset": 58,
+          "width": 4,
+          "style": "double",
+          "color": "border",
+          "radius": 2
+        }
+      ]
+    },
+    {
+      "id": "starlit-frame",
+      "name": "Starlit frame",
+      "blurb": "A night-sky frame: starlit bands above and below with twirling corners.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "stars",
+          "color": "accent",
+          "inset": 6,
+          "opacity": 0.9,
+          "edges": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        {
+          "kind": "scroll",
+          "color": "border",
+          "inset": 6,
+          "size": 62,
+          "opacity": 0.95
+        },
+        {
+          "kind": "border",
+          "inset": 56,
+          "width": 3,
+          "style": "double",
+          "color": "border",
+          "radius": 2
+        }
+      ]
+    },
+    {
+      "id": "greek-band",
+      "name": "Greek-key band",
+      "blurb": "A printed Greek-key band around all four sides with a fine inner rule.",
+      "layers": [
+        {
+          "kind": "pattern",
+          "motif": "greek",
+          "color": "border",
+          "inset": 6,
+          "opacity": 0.85,
+          "edges": [
+            "top",
+            "right",
+            "bottom",
+            "left"
+          ]
+        },
+        {
+          "kind": "border",
+          "inset": 28,
+          "width": 1,
+          "style": "solid",
+          "color": "border",
+          "radius": 2,
+          "opacity": 0.5
+        }
+      ]
+    }
+  ],
+  "blockBorders": [
+    {
+      "id": "hairline",
+      "name": "Hairline box",
+      "blurb": "A fine single rule on the page tint."
+    },
+    {
+      "id": "double-rule",
+      "name": "Double rule",
+      "blurb": "Traditional double-ruled text box."
+    },
+    {
+      "id": "left-accent",
+      "name": "Left accent rule",
+      "blurb": "Open box with a bold rule on the reading edge."
+    },
+    {
+      "id": "top-accent",
+      "name": "Top accent rule",
+      "blurb": "Open box with a bold rule above the heading."
+    },
+    {
+      "id": "tinted-panel",
+      "name": "Tinted panel",
+      "blurb": "A soft colour wash behind the words, no heavy rule."
+    },
+    {
+      "id": "parchment",
+      "name": "Parchment card",
+      "blurb": "Insets a lighter card with a fine double edge."
+    },
+    {
+      "id": "ticket",
+      "name": "Ticket stamp",
+      "blurb": "Dashed edge like a printed ticket stub."
+    },
+    {
+      "id": "rule-only",
+      "name": "Rule above",
+      "blurb": "No box \u2014 just a fine rule above the block."
+    },
+    {
+      "id": "shadow-card",
+      "name": "Raised card",
+      "blurb": "A clean card lifted off the page with a soft shadow."
+    },
+    {
+      "id": "underline-only",
+      "name": "No box",
+      "blurb": "Plain words on the page, no frame at all."
+    }
+  ],
+  "headings": [
+    {
+      "id": "centered-rule",
+      "name": "Centred + rule",
+      "blurb": "Centred title with a short rule beneath."
+    },
+    {
+      "id": "top-banner",
+      "name": "Banner",
+      "blurb": "Solid accent banner behind the title."
+    },
+    {
+      "id": "centered-pill",
+      "name": "Pill",
+      "blurb": "Outlined pill around a centred title."
+    },
+    {
+      "id": "left-bar",
+      "name": "Left bar",
+      "blurb": "Left-aligned title with a bold left rule."
+    },
+    {
+      "id": "kicker-overline",
+      "name": "Kicker overline",
+      "blurb": "Small letterspaced kicker above a centred title."
+    },
+    {
+      "id": "masthead",
+      "name": "Masthead",
+      "blurb": "Heavy masthead with the book name above the page title."
+    },
+    {
+      "id": "minimal-caps",
+      "name": "Minimal caps",
+      "blurb": "Small capitals, no rules \u2014 quiet and modern."
+    }
+  ],
+  "ornaments": [
+    {
+      "id": "fleur",
+      "glyph": "\u2767",
+      "name": "Leaf flourish"
+    },
+    {
+      "id": "crest",
+      "glyph": "\u2766",
+      "name": "Hearts & crest"
+    },
+    {
+      "id": "diamond",
+      "glyph": "\u25c6",
+      "name": "Diamond"
+    },
+    {
+      "id": "star",
+      "glyph": "\u2726",
+      "name": "Four-point star"
+    },
+    {
+      "id": "asterisk",
+      "glyph": "\u2733",
+      "name": "Asterisk"
+    },
+    {
+      "id": "dots",
+      "glyph": "\u2022 \u2022 \u2022",
+      "name": "Three dots"
+    },
+    {
+      "id": "rule",
+      "glyph": "\u2014\u2014\u2014",
+      "name": "Plain rule"
+    },
+    {
+      "id": "none",
+      "glyph": "",
+      "name": "No ornament"
+    }
+  ],
+  "pageNumbers": [
+    {
+      "id": "arabic",
+      "name": "1, 2, 3"
+    },
+    {
+      "id": "roman",
+      "name": "I, II, III"
+    },
+    {
+      "id": "none",
+      "name": "No page number"
+    }
+  ],
+  "categoryDefaults": {
+    "photobook": {
+      "pageBorderId": "inner-rule",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-rule",
+      "ornamentId": "diamond",
+      "kicker": true
+    },
+    "cookbook": {
+      "pageBorderId": "double-rule",
+      "blockBorderId": "parchment",
+      "headingStyleId": "top-banner",
+      "ornamentId": "rule",
+      "kicker": false
+    },
+    "magazine": {
+      "pageBorderId": "masthead-band",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "masthead",
+      "ornamentId": "rule",
+      "kicker": true
+    },
+    "storybook": {
+      "pageBorderId": "arch-window",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "star",
+      "kicker": false
+    },
+    "informational": {
+      "pageBorderId": "hairline",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "diamond",
+      "kicker": true
+    },
+    "book": {
+      "pageBorderId": "double-rule",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "fleur",
+      "kicker": true
+    },
+    "workbook": {
+      "pageBorderId": "hairline",
+      "blockBorderId": "hairline",
+      "headingStyleId": "top-banner",
+      "ornamentId": "rule",
+      "kicker": true
+    }
+  },
+  "templateOverrides": {
+    "photo-warm-family": {
+      "pageBorderId": "vine-scroll",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-rule",
+      "ornamentId": "fleur",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "soft"
+    },
+    "photo-modern-minimal": {
+      "pageBorderId": "pinstripe",
+      "blockBorderId": "shadow-card",
+      "headingStyleId": "top-banner",
+      "ornamentId": "rule",
+      "kicker": false,
+      "blockFillId": "clear",
+      "blockDepthId": "flat"
+    },
+    "photo-gallery-frame": {
+      "pageBorderId": "gilded-arch",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "diamond",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "blockOverlap": "over-image"
+    },
+    "photo-vintage-polaroid": {
+      "pageBorderId": "dashed-craft",
+      "blockBorderId": "ticket",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "asterisk",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "pageTextureId": "aged",
+      "blockOverlap": "over-image"
+    },
+    "photo-botanical-sage": {
+      "pageBorderId": "corner-flourish",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "fleur",
+      "kicker": false,
+      "blockFillId": "wash",
+      "blockDepthId": "soft"
+    },
+    "photo-wedding-ivory": {
+      "pageBorderId": "florentine",
+      "blockBorderId": "parchment",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "crest",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "soft",
+      "pageTextureId": "vellum",
+      "blockOverlap": "over-image"
+    },
+    "photo-monochrome-noir": {
+      "pageBorderId": "gallery-matte",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "minimal-caps",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat"
+    },
+    "photo-sunset-terracotta": {
+      "pageBorderId": "ribbon-corners",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "diamond",
+      "kicker": false,
+      "blockFillId": "wash",
+      "blockDepthId": "raised",
+      "blockOverlap": "stacked"
+    },
+    "cook-warm-border": {
+      "pageBorderId": "double-rule",
+      "blockBorderId": "parchment",
+      "headingStyleId": "top-banner",
+      "ornamentId": "rule",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "blockOverlap": "over-image"
+    },
+    "cook-modern-spread": {
+      "pageBorderId": "hairline",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "left-bar",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat"
+    },
+    "cook-cozy-bakehouse": {
+      "pageBorderId": "soft-rounded",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "fleur",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "pageTextureId": "linen",
+      "blockOverlap": "over-image"
+    },
+    "cook-mediterranean-sun": {
+      "pageBorderId": "double-rule",
+      "blockBorderId": "parchment",
+      "headingStyleId": "top-banner",
+      "ornamentId": "diamond",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "soft"
+    },
+    "cook-rustic-farmhouse": {
+      "pageBorderId": "vine-scroll",
+      "blockBorderId": "double-rule",
+      "headingStyleId": "centered-rule",
+      "ornamentId": "fleur",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "soft",
+      "pageTextureId": "aged"
+    },
+    "cook-plant-botanical": {
+      "pageBorderId": "soft-rounded",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "fleur",
+      "kicker": false,
+      "blockFillId": "wash",
+      "blockDepthId": "soft"
+    },
+    "cook-french-bistro": {
+      "pageBorderId": "florentine",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "crest",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "blockOverlap": "over-image"
+    },
+    "cook-fiesta-spice": {
+      "pageBorderId": "lace-scallop",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "star",
+      "kicker": false,
+      "blockFillId": "wash",
+      "blockDepthId": "raised",
+      "blockOverlap": "stacked"
+    },
+    "mag-bold-editorial": {
+      "pageBorderId": "masthead-band",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "masthead",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat",
+      "blockOverlap": "floating"
+    },
+    "mag-lifestyle-minimal": {
+      "pageBorderId": "hairline",
+      "blockBorderId": "shadow-card",
+      "headingStyleId": "minimal-caps",
+      "ornamentId": "dots",
+      "kicker": false,
+      "blockFillId": "clear",
+      "blockDepthId": "soft"
+    },
+    "mag-indigo-digest": {
+      "pageBorderId": "inner-rule",
+      "blockBorderId": "top-accent",
+      "headingStyleId": "left-bar",
+      "ornamentId": "diamond",
+      "kicker": true,
+      "blockFillId": "wash",
+      "blockDepthId": "soft"
+    },
+    "mag-art-culture": {
+      "pageBorderId": "greek-band",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "masthead",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat"
+    },
+    "mag-tech-future": {
+      "pageBorderId": "masthead-band",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "masthead",
+      "ornamentId": "diamond",
+      "kicker": true,
+      "blockFillId": "rich",
+      "blockDepthId": "raised",
+      "blockOverlap": "stacked"
+    },
+    "mag-travel-wanderlust": {
+      "pageBorderId": "ribbon-corners",
+      "blockBorderId": "shadow-card",
+      "headingStyleId": "top-banner",
+      "ornamentId": "star",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "blockOverlap": "over-image"
+    },
+    "mag-fashion-vogue": {
+      "pageBorderId": "florentine",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "crest",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "soft",
+      "pageTextureId": "vellum",
+      "blockOverlap": "over-image"
+    },
+    "mag-sports-action": {
+      "pageBorderId": "masthead-band",
+      "blockBorderId": "top-accent",
+      "headingStyleId": "masthead",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "rich",
+      "blockDepthId": "flat"
+    },
+    "story-starlight-frame": {
+      "pageBorderId": "starlit-frame",
+      "blockBorderId": "parchment",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "star",
+      "kicker": true,
+      "dropCap": true,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "pageTextureId": "vellum",
+      "blockOverlap": "over-image"
+    },
+    "story-sunny-adventure": {
+      "pageBorderId": "arch-window",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "star",
+      "kicker": false,
+      "blockFillId": "wash",
+      "blockDepthId": "soft"
+    },
+    "story-ocean-treasure": {
+      "pageBorderId": "lace-scallop",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "dots",
+      "kicker": false
+    },
+    "story-woodland-friends": {
+      "pageBorderId": "vine-scroll",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "fleur",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "pageTextureId": "linen",
+      "blockOverlap": "stacked"
+    },
+    "story-cosmic-rocket": {
+      "pageBorderId": "ribbon-corners",
+      "blockBorderId": "shadow-card",
+      "headingStyleId": "top-banner",
+      "ornamentId": "star",
+      "kicker": false,
+      "blockFillId": "rich",
+      "blockDepthId": "raised"
+    },
+    "story-fairy-castle": {
+      "pageBorderId": "gilded-arch",
+      "blockBorderId": "parchment",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "crest",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "pageTextureId": "vellum",
+      "blockOverlap": "over-image"
+    },
+    "story-dino-jungle": {
+      "pageBorderId": "dashed-craft",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "asterisk",
+      "kicker": false
+    },
+    "story-pastel-lullaby": {
+      "pageBorderId": "lace-scallop",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "star",
+      "kicker": false,
+      "blockFillId": "wash",
+      "blockDepthId": "soft",
+      "pageTextureId": "vellum"
+    },
+    "info-blue-guide": {
+      "pageBorderId": "none",
+      "blockBorderId": "shadow-card",
+      "headingStyleId": "masthead",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat"
+    },
+    "info-emerald-handbook": {
+      "pageBorderId": "hairline",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "left-bar",
+      "ornamentId": "diamond",
+      "kicker": true,
+      "blockFillId": "wash",
+      "blockDepthId": "soft"
+    },
+    "info-amber-workshop": {
+      "pageBorderId": "dashed-craft",
+      "blockBorderId": "ticket",
+      "headingStyleId": "top-banner",
+      "ornamentId": "asterisk",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "soft",
+      "blockOverlap": "over-image"
+    },
+    "info-purple-masterclass": {
+      "pageBorderId": "greek-wave",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "star",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "raised",
+      "blockOverlap": "floating"
+    },
+    "info-teal-wellness": {
+      "pageBorderId": "soft-rounded",
+      "blockBorderId": "left-accent",
+      "headingStyleId": "top-banner",
+      "ornamentId": "dots",
+      "kicker": false,
+      "blockFillId": "wash",
+      "blockDepthId": "soft"
+    },
+    "info-slate-business": {
+      "pageBorderId": "pinstripe",
+      "blockBorderId": "hairline",
+      "headingStyleId": "minimal-caps",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "paper",
+      "blockDepthId": "soft"
+    },
+    "info-coral-parenting": {
+      "pageBorderId": "lace-scallop",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "top-banner",
+      "ornamentId": "fleur",
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "soft"
+    },
+    "info-indigo-tech": {
+      "pageBorderId": "pinstripe",
+      "blockBorderId": "shadow-card",
+      "headingStyleId": "masthead",
+      "ornamentId": "diamond",
+      "kicker": true,
+      "blockFillId": "rich",
+      "blockDepthId": "soft"
+    },
+    "book-modern-clean": {
+      "pageBorderId": "hairline",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "minimal-caps",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat"
+    },
+    "book-warm-classic": {
+      "pageBorderId": "florentine",
+      "blockBorderId": "parchment",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "fleur",
+      "dropCap": true,
+      "kicker": true,
+      "pageNumbers": "roman",
+      "blockFillId": "paper",
+      "blockDepthId": "soft"
+    },
+    "book-vintage-memoir": {
+      "pageBorderId": "vine-scroll",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-rule",
+      "ornamentId": "fleur",
+      "dropCap": true,
+      "kicker": true,
+      "pageNumbers": "roman",
+      "blockFillId": "paper",
+      "blockDepthId": "soft",
+      "pageTextureId": "aged",
+      "blockOverlap": "stacked"
+    },
+    "book-thriller-noir": {
+      "pageBorderId": "inner-rule",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "minimal-caps",
+      "ornamentId": "rule",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat"
+    },
+    "book-romance-blush": {
+      "pageBorderId": "gilded-arch",
+      "blockBorderId": "parchment",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "fleur",
+      "dropCap": true,
+      "kicker": false,
+      "blockFillId": "paper",
+      "blockDepthId": "soft",
+      "pageTextureId": "vellum",
+      "blockOverlap": "stacked"
+    },
+    "book-scifi-cosmos": {
+      "pageBorderId": "pinstripe",
+      "blockBorderId": "tinted-panel",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "star",
+      "kicker": true,
+      "blockFillId": "rich",
+      "blockDepthId": "raised"
+    },
+    "book-poetry-ivory": {
+      "pageBorderId": "fleur-trellis",
+      "blockBorderId": "underline-only",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "diamond",
+      "kicker": true,
+      "blockFillId": "clear",
+      "blockDepthId": "flat",
+      "pageTextureId": "vellum"
+    },
+    "book-historical-crest": {
+      "pageBorderId": "florentine",
+      "blockBorderId": "parchment",
+      "headingStyleId": "kicker-overline",
+      "ornamentId": "crest",
+      "dropCap": true,
+      "dropCapStyle": "boxed",
+      "kicker": true,
+      "pageNumbers": "roman",
+      "pageNumberWord": "Page",
+      "blockFillId": "paper",
+      "blockDepthId": "soft",
+      "pageTextureId": "aged"
+    },
+    "work-teal-planner": {
+      "pageBorderId": "hairline",
+      "blockBorderId": "hairline",
+      "headingStyleId": "top-banner",
+      "ornamentId": "rule",
+      "kicker": true
+    },
+    "work-indigo-journal": {
+      "pageBorderId": "soft-rounded",
+      "blockBorderId": "rule-only",
+      "headingStyleId": "centered-pill",
+      "ornamentId": "dots",
+      "kicker": false
+    }
+  },
+  "templateCategory": {
+    "photo-warm-family": "photobook",
+    "photo-modern-minimal": "photobook",
+    "photo-gallery-frame": "photobook",
+    "photo-vintage-polaroid": "photobook",
+    "photo-botanical-sage": "photobook",
+    "photo-wedding-ivory": "photobook",
+    "photo-monochrome-noir": "photobook",
+    "photo-sunset-terracotta": "photobook",
+    "cook-warm-border": "cookbook",
+    "cook-modern-spread": "cookbook",
+    "cook-cozy-bakehouse": "cookbook",
+    "cook-mediterranean-sun": "cookbook",
+    "cook-rustic-farmhouse": "cookbook",
+    "cook-plant-botanical": "cookbook",
+    "cook-french-bistro": "cookbook",
+    "cook-fiesta-spice": "cookbook",
+    "mag-bold-editorial": "magazine",
+    "mag-lifestyle-minimal": "magazine",
+    "mag-indigo-digest": "magazine",
+    "mag-art-culture": "magazine",
+    "mag-tech-future": "magazine",
+    "mag-travel-wanderlust": "magazine",
+    "mag-fashion-vogue": "magazine",
+    "mag-sports-action": "magazine",
+    "story-starlight-frame": "storybook",
+    "story-sunny-adventure": "storybook",
+    "story-ocean-treasure": "storybook",
+    "story-woodland-friends": "storybook",
+    "story-cosmic-rocket": "storybook",
+    "story-fairy-castle": "storybook",
+    "story-dino-jungle": "storybook",
+    "story-pastel-lullaby": "storybook",
+    "info-blue-guide": "informational",
+    "info-emerald-handbook": "informational",
+    "info-amber-workshop": "informational",
+    "info-purple-masterclass": "informational",
+    "info-teal-wellness": "informational",
+    "info-slate-business": "informational",
+    "info-coral-parenting": "informational",
+    "info-indigo-tech": "informational",
+    "book-modern-clean": "book",
+    "book-warm-classic": "book",
+    "book-vintage-memoir": "book",
+    "book-thriller-noir": "book",
+    "book-romance-blush": "book",
+    "book-scifi-cosmos": "book",
+    "book-poetry-ivory": "book",
+    "book-historical-crest": "book",
+    "work-teal-planner": "workbook",
+    "work-indigo-journal": "workbook"
+  },
+  "presets": [
+    {
+      "id": "classic-print",
+      "name": "Classic print",
+      "blurb": "Double-ruled border, ornamental blocks, drop caps and roman numerals.",
+      "design": {
+        "pageBorderId": "corner-flourish",
+        "blockBorderId": "double-rule",
+        "headingStyleId": "kicker-overline",
+        "ornamentId": "fleur",
+        "dropCap": true,
+        "kicker": true,
+        "pageNumbers": "roman"
+      }
+    },
+    {
+      "id": "gallery-minimal",
+      "name": "Gallery minimal",
+      "blurb": "Fine hairline border, clean cards and quiet capitals.",
+      "design": {
+        "pageBorderId": "hairline",
+        "blockBorderId": "rule-only",
+        "headingStyleId": "minimal-caps",
+        "ornamentId": "rule",
+        "dropCap": false,
+        "kicker": false,
+        "pageNumbers": "arabic"
+      }
+    },
+    {
+      "id": "editorial-bold",
+      "name": "Editorial bold",
+      "blurb": "Masthead band, accent-ruled blocks and a strong page title.",
+      "design": {
+        "pageBorderId": "masthead-band",
+        "blockBorderId": "top-accent",
+        "headingStyleId": "masthead",
+        "ornamentId": "diamond",
+        "dropCap": false,
+        "kicker": true,
+        "pageNumbers": "arabic"
+      }
+    },
+    {
+      "id": "storybook-ornate",
+      "name": "Storybook ornate",
+      "blurb": "Filigree frame, parchment cards and illuminated drop caps.",
+      "design": {
+        "pageBorderId": "filigree",
+        "blockBorderId": "parchment",
+        "headingStyleId": "centered-pill",
+        "ornamentId": "star",
+        "dropCap": true,
+        "kicker": false,
+        "pageNumbers": "arabic"
+      }
+    },
+    {
+      "id": "handmade-craft",
+      "name": "Handmade craft",
+      "blurb": "Stitched border, dashed note boxes and a relaxed left-aligned title.",
+      "design": {
+        "pageBorderId": "dashed-craft",
+        "blockBorderId": "ticket",
+        "headingStyleId": "left-bar",
+        "ornamentId": "dots",
+        "dropCap": false,
+        "kicker": false,
+        "pageNumbers": "arabic"
+      }
+    },
+    {
+      "id": "keepsake-frame",
+      "name": "Keepsake frame",
+      "blurb": "Crested corners, tinted panels and a centred pill title.",
+      "design": {
+        "pageBorderId": "crest-corners",
+        "blockBorderId": "tinted-panel",
+        "headingStyleId": "centered-pill",
+        "ornamentId": "crest",
+        "dropCap": true,
+        "kicker": true,
+        "pageNumbers": "roman"
+      }
+    },
+    {
+      "id": "ornamental-print",
+      "name": "Ornamental print",
+      "blurb": "Florentine scroll-work corners, printed edge bands and cream cards \u2014 the look of an antique edition.",
+      "design": {
+        "pageBorderId": "florentine",
+        "blockBorderId": "parchment",
+        "headingStyleId": "kicker-overline",
+        "ornamentId": "fleur",
+        "dropCap": true,
+        "dropCapStyle": "boxed",
+        "kicker": true,
+        "pageNumbers": "roman",
+        "pageNumberWord": "Page",
+        "blockFillId": "paper",
+        "blockDepthId": "soft",
+        "pageTextureId": "aged",
+        "blockOverlap": "over-image"
+      }
+    },
+    {
+      "id": "laced-keepsake",
+      "name": "Laced keepsake",
+      "blurb": "A scalloped lace frame, wash-coloured cards and a soft linen page.",
+      "design": {
+        "pageBorderId": "lace-scallop",
+        "blockBorderId": "tinted-panel",
+        "headingStyleId": "centered-pill",
+        "ornamentId": "star",
+        "dropCap": false,
+        "kicker": false,
+        "pageNumbers": "arabic",
+        "blockFillId": "wash",
+        "blockDepthId": "raised",
+        "pageTextureId": "linen",
+        "blockOverlap": "stacked"
+      }
+    }
+  ]
+}
