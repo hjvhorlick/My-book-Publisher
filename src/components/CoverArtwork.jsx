@@ -1,4 +1,9 @@
 import React from 'react';
+import {
+  resolveTemplateDesign,
+  getPageBorderStyle,
+  withAlpha
+} from '../data/designSystem';
 
 /**
  * Read-only cover renderer shared by the Cover editor preview and the
@@ -22,11 +27,23 @@ export default function CoverArtwork({
   const tpl = visualTemplate || {};
   const wordArt = cfg.wordArt || {};
 
-  const pageBg = cfg.pageBg || tpl.pageBg || '#111827';
-  const pageText = cfg.pageText || tpl.pageText || '#FFFFFF';
-  const borderColor = cfg.borderColor || tpl.borderColor || '#D4AF37';
-  const accentColor = cfg.accentColor || tpl.accentColor || '#D4AF37';
-  const fontFamily = cfg.fontFamily || tpl.fontFamily || 'Georgia, serif';
+  // The cover follows the same design system as the pages: the chosen page
+  // border, border colour and ornament, plus the book-wide font.
+  const design = resolveTemplateDesign(
+    { ...tpl, pageBg: cfg.pageBg || tpl.pageBg, pageText: cfg.pageText || tpl.pageText, borderColor: cfg.borderColor || tpl.borderColor, accentColor: cfg.accentColor || tpl.accentColor },
+    cfg.design || {},
+    { fontFamily: cfg.fontFamily || tpl.fontFamily }
+  );
+  const borderLayers = getPageBorderStyle(design.pageBorderId).layers || [];
+  const coverCorners = borderLayers.find((layer) => layer.kind === 'corners');
+  const coverBand = borderLayers.find((layer) => layer.kind === 'band' && layer.edge === 'top');
+
+  const pageBg = design.pageBg || '#111827';
+  const pageText = design.bodyText || '#FFFFFF';
+  const borderColor = design.borderInk || '#D4AF37';
+  const accentColor = design.accentInk || '#D4AF37';
+  const fontFamily = design.fontFamily || 'Georgia, serif';
+  const fontStack = design.fontStack;
   const borderStyle = cfg.borderStyle || tpl.borderStyle || 'double-gold';
 
   const [w, h] = String(trimSize || '6x9').split('x').map((n) => parseFloat(n) || 6);
@@ -55,7 +72,7 @@ export default function CoverArtwork({
           : `2px solid ${borderColor}`;
 
   const wordArtStyle = {
-    fontFamily: `"${fontFamily.split(',')[0].replace(/"/g, '')}", Georgia, serif`,
+    fontFamily: fontStack,
     color: fillMode === 'solid' ? fillColor : 'transparent',
     WebkitTextStroke: fillMode === 'solid' ? undefined : `${strokeWidth}px ${strokeColor}`,
     // Outline-only text stays readable over photos with a soft shadow, never a filled box.
@@ -96,17 +113,43 @@ export default function CoverArtwork({
         />
       ) : null}
 
-      {/* Decorative inner frame */}
+      {/* Decorative frame: the page border chosen for this book */}
       <div
         className="pointer-events-none absolute"
         style={{
           inset: '2.4cqw',
-          border: `0.35cqw solid ${accentColor}`,
-          opacity: 0.85,
+          border: borderStyle === 'double-gold' ? `0.6cqw double ${borderColor}` : `0.35cqw solid ${accentColor}`,
+          opacity: 0.9,
           borderRadius: borderStyle === 'rounded-frame' ? '12px' : '4px'
         }}
         aria-hidden="true"
       />
+      {borderLayers.length > 1 ? (
+        <div
+          className="pointer-events-none absolute"
+          style={{
+            inset: '4.2cqw',
+            border: `0.15cqw solid ${withAlpha(borderColor, 0.55)}`,
+            borderRadius: 4
+          }}
+          aria-hidden="true"
+        />
+      ) : null}
+      {coverCorners ? (
+        <>
+          <span className="pointer-events-none absolute" style={{ top: '2.9cqw', left: '3.1cqw', color: accentColor, fontSize: '2.6cqw', lineHeight: 1 }} aria-hidden="true">{coverCorners.glyph}</span>
+          <span className="pointer-events-none absolute" style={{ top: '2.9cqw', right: '3.1cqw', color: accentColor, fontSize: '2.6cqw', lineHeight: 1 }} aria-hidden="true">{coverCorners.glyph}</span>
+          <span className="pointer-events-none absolute" style={{ bottom: '2.9cqw', left: '3.1cqw', color: accentColor, fontSize: '2.6cqw', lineHeight: 1 }} aria-hidden="true">{coverCorners.glyph}</span>
+          <span className="pointer-events-none absolute" style={{ bottom: '2.9cqw', right: '3.1cqw', color: accentColor, fontSize: '2.6cqw', lineHeight: 1 }} aria-hidden="true">{coverCorners.glyph}</span>
+        </>
+      ) : null}
+      {coverBand ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0"
+          style={{ height: '1.6cqw', background: accentColor, opacity: 0.92 }}
+          aria-hidden="true"
+        />
+      ) : null}
 
       <div className="relative flex h-full flex-col items-center justify-between text-center" style={{ padding: '7cqw 6cqw' }}>
         <div style={{ minHeight: '2cqw' }} aria-hidden="true" />

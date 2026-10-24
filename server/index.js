@@ -16,6 +16,7 @@ const assetRoutes = require('./routes/assetRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const imageProviderRoutes = require('./routes/imageProviderRoutes');
 const publishingRoutes = require('./routes/publishingRoutes');
+const { resolveSampleArtworkPath } = require('./sampleArtworkFiles');
 
 // Keep a strong reference to the listening server for embedded/dev process runners.
 let activeHttpServer = null;
@@ -27,12 +28,23 @@ function createApp() {
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-  // Built-in artwork never changes under a given filename. Serve it with
-  // long-lived immutable caching so each template/page photo downloads
-  // once per browser instead of trickling in on every layout switch.
-  const immutableStatic = { immutable: true, maxAge: '1y', etag: false, fallthrough: true };
-  app.use('/sample-artwork', express.static(path.join(__dirname, '..', 'public', 'sample-artwork'), immutableStatic));
-  app.use('/template-previews', express.static(path.join(__dirname, '..', 'public', 'template-previews'), immutableStatic));
+  // Built-in artwork is cached hard so each template/page photo downloads once
+  // per browser. A one-year immutable cache is only honest when a URL's bytes
+  // can never change, which is why every sample filename carries a content hash
+  // (see scripts/prepare-sample-artwork.mjs): a regenerated image becomes a new
+  // URL, and no browser can hold on to an out-of-date copy.
+  const artworkStatic = { etag: false, lastModified: false, fallthrough: true, immutable: true, maxAge: '1y' };
+  app.use('/sample-artwork', express.static(path.join(__dirname, '..', 'public', 'sample-artwork'), artworkStatic));
+  // Books published before filenames were content-hashed still reference the
+  // old unhashed names. Serve those from the current file instead of a 404.
+  app.get(/^\/sample-artwork\/.+$/, (req, res) => {
+    const resolved = resolveSampleArtworkPath(req.path);
+    if (!resolved) return res.status(404).json({ error: 'Sample artwork not found.' });
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Content-Type', 'image/jpeg');
+    return res.sendFile(resolved);
+  });
+  app.use('/template-previews', express.static(path.join(__dirname, '..', 'public', 'template-previews'), { etag: true, lastModified: true, fallthrough: true }));
 
   // Health endpoint
   app.get('/api/health', (_req, res) => {

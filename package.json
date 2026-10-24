@@ -7,7 +7,9 @@
     "dev": "PORT=3000 node --no-warnings server/index.js",
     "build": "vite build",
     "start": "NODE_ENV=production node --no-warnings server/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "artwork:prepare": "node scripts/prepare-sample-artwork.mjs",
+    "artwork:gallery": "node scripts/build-artwork-gallery.mjs"
   },
   "repository": {
     "type": "git",

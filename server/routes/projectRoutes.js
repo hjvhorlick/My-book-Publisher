@@ -336,6 +336,32 @@ router.post('/', requireAuth, (req, res) => {
   }
 });
 
+/**
+ * Merge a partial design update into the stored one.
+ *
+ * The design panel only sends the key the author just changed (for example
+ * `{ design: { borderColor: '#7F1D1D' } }`). A shallow spread used to wipe the
+ * rest of `coverConfig.design`, so a chosen page border disappeared after a
+ * reload. Nested plain objects are merged key by key instead.
+ */
+function mergeConfigPatch(base, patch) {
+  const merged = { ...base };
+  Object.entries(patch || {}).forEach(([key, value]) => {
+    if (value === undefined) return;
+    if (value === null) {
+      merged[key] = value;
+      return;
+    }
+    const isPlainObject = typeof value === 'object' && !Array.isArray(value);
+    if (isPlainObject && merged[key] && typeof merged[key] === 'object' && !Array.isArray(merged[key])) {
+      merged[key] = mergeConfigPatch(merged[key], value);
+    } else {
+      merged[key] = value;
+    }
+  });
+  return merged;
+}
+
 // Get full project details with strict ownership check
 router.get('/:id', requireAuth, (req, res) => {
   const ownership = verifyProjectOwnership(req.params.id, req.user.id);
@@ -390,7 +416,7 @@ router.put('/:id', requireAuth, (req, res) => {
   let mergedCover = {};
   try { mergedCover = JSON.parse(cur.cover_config_json || '{}'); } catch { mergedCover = {}; }
   if (coverConfig && typeof coverConfig === 'object') {
-    mergedCover = { ...mergedCover, ...coverConfig };
+    mergedCover = mergeConfigPatch(mergedCover, coverConfig);
   }
 
   let mergedIntroduction = {};

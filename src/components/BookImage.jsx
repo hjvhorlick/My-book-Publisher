@@ -20,7 +20,15 @@ export default function BookImage({
   skeletonStyle = {}
 }) {
   const [loaded, setLoaded] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const imgRef = useRef(null);
+
+  // If a picture fails to load it is almost always a stale or truncated cache
+  // entry (artwork is served with a long cache). Retrying with a cache-busting
+  // query repairs it without asking the reader to clear their browser cache.
+  const attemptSrc = attempt === 0
+    ? src
+    : `${src}${String(src).includes('?') ? '&' : '?'}retry=${attempt}`;
 
   // Reset when the source changes; a browser-cached image is already
   // complete on mount and should show without a fade delay.
@@ -43,8 +51,8 @@ export default function BookImage({
       )}
       <img
         ref={imgRef}
-        src={src}
-        srcSet={srcSet}
+        src={attemptSrc}
+        srcSet={attempt === 0 ? srcSet : undefined}
         sizes={sizes}
         alt={alt}
         loading={eager ? 'eager' : 'lazy'}
@@ -52,7 +60,10 @@ export default function BookImage({
         fetchPriority={fetchPriority || (eager ? 'high' : undefined)}
         draggable={false}
         onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
+        onError={() => {
+          if (attempt < 2) setAttempt((value) => value + 1);
+          else setLoaded(true);
+        }}
         className={`h-full w-full object-cover transition-[opacity,transform] duration-500 ${loaded ? 'opacity-100' : 'opacity-0'} ${className}`}
       />
     </span>
