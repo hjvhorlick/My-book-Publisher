@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { execFileSync } from 'node:child_process';
 import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -131,6 +132,21 @@ describe('bundled free sample artwork', () => {
     const firstRatio = portrait[0].width / portrait[0].height;
     expect(firstRatio).toBeGreaterThanOrEqual(0.6);
     expect(firstRatio).toBeLessThanOrEqual(0.94);
+  });
+
+  it('publishes a browsable gallery that lists every sample', () => {
+    const galleryPath = path.join(process.cwd(), 'public', 'artwork-gallery.html');
+    expect(fs.existsSync(galleryPath), 'run npm run artwork:gallery').toBe(true);
+    const gallery = fs.readFileSync(galleryPath, 'utf8');
+
+    for (const item of SAMPLE_ARTWORK) {
+      expect(gallery, `${item.id} missing from the gallery`).toContain(`data-id="${item.id}"`);
+      expect(gallery).toContain(sampleArtworkThumbUrl(item));
+    }
+    // Rebuild and compare, so a stale gallery fails loudly instead of drifting.
+    const regenerated = execFileSync(process.execPath, ['scripts/build-artwork-gallery.mjs'], { encoding: 'utf8' });
+    expect(regenerated).toContain(`${SAMPLE_ARTWORK.length} images`);
+    expect(fs.readFileSync(galleryPath, 'utf8')).toBe(gallery);
   });
 
   it('keeps the cover quick-pick list pointing at real samples', () => {
