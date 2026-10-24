@@ -5,6 +5,7 @@ import {
   VISUAL_FONT_STYLES
 } from '../data/visualTemplatesCatalog';
 import TemplateVisualPreview from './TemplateVisualPreview';
+import PageDesignControls from './PageDesignControls';
 
 const BLOCK_STYLE = {
   background: 'rgba(6, 17, 40, 0.78)',
@@ -72,6 +73,12 @@ export default function BookAppearanceControls({
     setSaving(true);
     try {
       await onBeforeChange?.();
+      // Keep the author's structural design choices (border ornament, block
+      // treatment, heading, furniture) when switching template, but drop the
+      // colour overrides so the new template's own palette applies cleanly.
+      const nextDesign = { ...(cover.design || {}) };
+      delete nextDesign.borderColor;
+      delete nextDesign.blockColor;
       await onUpdateProject({
         fontFamily,
         coverConfig: {
@@ -85,7 +92,8 @@ export default function BookAppearanceControls({
           headingStyle: template.headingStyle,
           pageBg: template.pageBg,
           pageText: template.pageText,
-          borderColor: template.borderColor
+          borderColor: template.borderColor,
+          design: nextDesign
         }
       });
       notify('Saved your book style.');
@@ -109,7 +117,7 @@ export default function BookAppearanceControls({
       >
         <span className="flex items-center gap-2.5 font-bold text-sm">
           <Palette className="w-4 h-4 text-[#F5C451]" />
-          Page photos, template &amp; font settings
+          Photos, page design, template &amp; font
         </span>
         <span className="flex items-center gap-2 text-xs" style={{ color: '#F3D78B' }}>
           Photos are edited directly on each page
@@ -202,6 +210,17 @@ export default function BookAppearanceControls({
               })}
             </div>
           </div>
+        </div>
+
+        <div className="pt-4" style={{ borderTop: '1px solid rgba(229, 184, 75, 0.3)' }}>
+          <PageDesignControls
+            project={project}
+            visualTemplate={activeTemplate}
+            fontFamily={selectedFont}
+            onUpdateProject={onUpdateProject}
+            onBeforeChange={onBeforeChange}
+            notify={notify}
+          />
         </div>
       </div>
     </details>

@@ -501,7 +501,9 @@ export default function ExactTemplatePageRenderer({
             <div className="min-w-0">
               <h2 className="text-sm font-bold sm:text-base">One page editor for every template</h2>
               <p className="text-[11px] text-[#F3D78B] sm:text-xs">
-                Choose a layout for this page. Its colors, borders, and type follow the selected book template; writing tools and AI work the same in every category.
+                Choose a layout for this page. The page border, text-block borders, heading treatment and colours come from
+                your page design (change them under <strong>Photos, page design, template &amp; font</strong> above);
+                writing tools and AI work the same in every category.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -548,7 +550,13 @@ export default function ExactTemplatePageRenderer({
                     ? { background: 'linear-gradient(180deg, #FCE38A 0%, #E5B84B 100%)', color: '#061128', border: '1px solid #FFF3B8' }
                     : { backgroundColor: 'rgba(6, 17, 40, 0.9)', color: '#FDE08D', border: '1px solid rgba(229, 184, 75, 0.48)' }}
                 >
-                  <PageStructureMiniPreview categoryId={categoryId} template={visualTemplate} structureIndex={structure.index} compact />
+                  <PageStructureMiniPreview
+                    categoryId={categoryId}
+                    template={visualTemplate}
+                    designOverrides={project?.coverConfig?.design || {}}
+                    structureIndex={structure.index}
+                    compact
+                  />
                   <span className="mt-1 block text-[10px] font-extrabold uppercase tracking-wide">Layout {structure.index + 1}</span>
                   <span className="line-clamp-2 block text-[10px] leading-tight opacity-80">{structure.shortLabel.replace(/^Structure [IV]+ • /, '')}</span>
                 </button>

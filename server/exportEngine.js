@@ -19,6 +19,12 @@ const {
 const PDFDocument = require('pdfkit');
 const JSZip = require('jszip');
 const { sanitizeRichHtmlServer } = require('./db');
+const {
+  resolveExportDesign,
+  paintPdfPageFurniture,
+  pageNumberLabel,
+  epubDesignCss
+} = require('./designMirror');
 
 const TRIM_DIMENSIONS_INCHES = {
   '5x8': { width: 5, height: 8, label: '5" × 8" (127 × 203 mm)' },
@@ -873,10 +879,18 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
       } catch {
         coverConfig = {};
       }
-      const tplPageBg = coverConfig.pageBg || '#FFFFFF';
-      const tplPageText = coverConfig.pageText || '#1E293B';
-      const tplBorderColor = coverConfig.borderColor || '#4F46E5';
-      const tplAccent = coverConfig.accentColor || '#4F46E5';
+      // One source of truth for page decoration: the same design the author
+      // chose in the studio (page border, border colour, text colour, page
+      // numbers) is painted on every exported page.
+      const design = resolveExportDesign(coverConfig);
+      const tplPageBg = design.pageBg;
+      const tplPageText = design.bodyText;
+      const tplBorderColor = design.borderInk;
+      const tplAccent = design.accentInk;
+      const baseFont = design.serif ? 'Times-Roman' : 'Helvetica';
+      const baseBold = design.serif ? 'Times-Bold' : 'Helvetica-Bold';
+      const baseItalic = design.serif ? 'Times-Italic' : 'Helvetica-Oblique';
+      const baseBoldItalic = design.serif ? 'Times-BoldItalic' : 'Helvetica-BoldOblique';
 
       const renderPdfTextBlock = (block, defaults = {}, prefix = '') => {
         const sourceRuns = block.runs?.length ? block.runs : [{ text: block.text || '' }];
@@ -884,7 +898,7 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
         runs.forEach((run, index) => {
           const bold = Boolean(defaults.bold || run.bold);
           const italic = Boolean(defaults.italic || run.italic);
-          const fontName = bold && italic ? 'Times-BoldItalic' : bold ? 'Times-Bold' : italic ? 'Times-Italic' : 'Times-Roman';
+          const fontName = bold && italic ? baseBoldItalic : bold ? baseBold : italic ? baseItalic : baseFont;
           doc.font(fontName).fontSize(defaults.fontSize || fontSize).fillColor(run.color || tplPageText);
           const options = {
             lineGap,
@@ -901,16 +915,7 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
       };
 
       const decorateCurrentPdfPage = () => {
-        doc.save();
-        if (tplPageBg && tplPageBg.toUpperCase() !== '#FFFFFF') {
-          doc.rect(0, 0, pageWidthPt, pageHeightPt).fill(tplPageBg);
-        }
-        doc.lineWidth(2.5).strokeColor(tplBorderColor).rect(18, 18, pageWidthPt - 36, pageHeightPt - 36).stroke();
-        if (coverConfig.borderStyle === 'double-gold') {
-          doc.lineWidth(1).strokeColor(tplBorderColor).rect(23, 23, pageWidthPt - 46, pageHeightPt - 46).stroke();
-        }
-        doc.restore();
-        doc.fillColor(tplPageText);
+        paintPdfPageFurniture(doc, design, pageWidthPt, pageHeightPt);
       };
 
       decorateCurrentPdfPage();
@@ -1013,11 +1018,11 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
         }
         doc.moveDown(1);
         const headerAlign = formatting.chapterOpeningStyle === 'modern_left' ? 'left' : 'center';
-        doc.font('Times-Bold').fontSize(17).fillColor(tplAccent).text(title, { align: headerAlign });
+        doc.font(baseBold).fontSize(17).fillColor(design.headingColor).text(title, { align: headerAlign });
         doc.fillColor(tplPageText);
         if (subtitle) {
           doc.moveDown(0.3);
-          doc.font('Times-Italic').fontSize(12).text(subtitle, { align: headerAlign });
+          doc.font(baseItalic).fontSize(12).fillColor(design.mutedText).text(subtitle, { align: headerAlign });
         }
         doc.moveDown(1.2);
         renderSectionImages(images);
@@ -1057,13 +1062,17 @@ async function generatePdfExport({ project, chapters = [], formatting = {}, meta
       for (let i = range.start; i < range.start + range.count; i++) {
         if (i < 2) continue;
         doc.switchToPage(i);
-        if (formatting.pageNumberingStyle !== 'none') {
-          doc.font('Times-Roman').fontSize(9).text(
-            String(i - 1),
+        const numberLabel = formatting.pageNumberingStyle === 'none'
+          ? ''
+          : pageNumberLabel(i - 2, design);
+        if (numberLabel) {
+          doc.font(baseFont).fontSize(9).fillColor(design.mutedText).text(
+            numberLabel,
             margins.left,
             pageHeightPt - margins.bottom + 12,
             { width: pageWidthPt - margins.left - margins.right, align: 'center', lineBreak: false }
           );
+          doc.fillColor(tplPageText);
         }
       }
 
@@ -1176,42 +1185,10 @@ async function generateEpubExport({ project, chapters = [], formatting = {}, met
     ? embedCoverAsset(coverConfig.authorPhotoUrl, 'cover-author')
     : null;
 
-  const epubPageBg = coverConfig.pageBg || '#FFFFFF';
-  const epubPageText = coverConfig.pageText || '#1a1a1a';
-  const epubBorderColor = coverConfig.borderColor || '#4F46E5';
-  const epubAccentColor = coverConfig.accentColor || '#4F46E5';
-  const epubBorderRule = coverConfig.borderStyle === 'double-gold'
-    ? `4px double ${epubBorderColor}`
-    : `3px solid ${epubBorderColor}`;
-  const epubRadius = coverConfig.borderStyle === 'rounded-frame' ? '20px' : '10px';
+  const epubDesign = resolveExportDesign(coverConfig);
 
-  const css = `body {
-  font-family: "${coverConfig.fontFamily || formatting.bodyFont || 'Georgia'}", Georgia, serif;
+  const css = `${epubDesignCss(epubDesign)}body {
   line-height: ${formatting.lineSpacing || 1.5};
-  margin: 3%;
-  background-color: ${epubPageBg};
-  color: ${epubPageText};
-}
-.template-page-frame {
-  background-color: ${epubPageBg};
-  color: ${epubPageText};
-  border: ${epubBorderRule};
-  border-radius: ${epubRadius};
-  padding: 1.5em;
-}
-.template-heading-banner {
-  background-color: ${epubAccentColor};
-  color: #FFFFFF;
-  padding: 0.6em 1em;
-  border-radius: 8px;
-  text-align: center;
-  margin-bottom: 1.2em;
-}
-h1, h2, h3 {
-  font-family: "${coverConfig.fontFamily || formatting.headingFont || 'Georgia'}", Georgia, serif;
-  line-height: 1.25;
-  margin-top: 0.8em;
-  margin-bottom: 0.5em;
 }
 h1 {
   text-align: center;
@@ -1242,11 +1219,11 @@ p {
 blockquote {
   margin: 1.2em 1em;
   padding: 0.8em 1em;
-  border-left: 4px solid ${epubAccentColor};
+  border-left: 4px solid ${epubDesign.accentInk};
   font-style: italic;
 }
 a {
-  color: ${epubAccentColor};
+  color: ${epubDesign.accentInk};
   font-weight: bold;
 }
 .title-page {
@@ -1289,7 +1266,7 @@ a {
   line-height: 1.08;
   margin: 0.3em 0;
   text-transform: uppercase;
-  color: ${epubAccentColor};
+  color: ${epubDesign.accentInk};
   text-shadow: 0 2px 8px rgba(0,0,0,0.55);
 }
 @supports (-webkit-text-stroke: 1px #000) {
@@ -1320,7 +1297,7 @@ a {
   width: 22%;
   height: auto;
   border-radius: 50%;
-  border: 2px solid ${epubAccentColor};
+  border: 2px solid ${epubDesign.accentInk};
 }
 .cover-page.no-image {
   background-color: ${coverConfig.pageBg || '#111827'};

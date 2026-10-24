@@ -16,6 +16,8 @@ export default function PagePreviewModal({
   saving = false,
   onClose,
   onSave,
+  description,
+  footerNote,
   children
 }) {
   const closeButtonRef = useRef(null);
@@ -61,8 +63,7 @@ export default function PagePreviewModal({
             </h2>
             <p className="mt-1 text-[11px] leading-relaxed sm:text-xs" style={{ color: '#F3D78B' }}>
               {subheading ? `${subheading} — ` : ''}
-              this is your finished page exactly as readers will see it. Previewing has not saved
-              anything; if you like how it looks, choose Save Page.
+              {description || 'this is your finished page exactly as readers will see it. Previewing has not saved anything; if you like how it looks, choose Save Page.'}
             </p>
           </div>
           <button
@@ -83,7 +84,7 @@ export default function PagePreviewModal({
 
         <footer className="flex flex-wrap items-center justify-between gap-3 px-5 py-4" style={{ borderTop: '1px solid rgba(229, 184, 75, 0.35)' }}>
           <span className="text-[11px]" style={{ color: '#F3D78B' }}>
-            Nothing is final yet — go back and adjust anything, then preview again.
+            {footerNote || 'Nothing is final yet — go back and adjust anything, then preview again.'}
           </span>
           <div className="flex flex-wrap items-center gap-2">
             <button

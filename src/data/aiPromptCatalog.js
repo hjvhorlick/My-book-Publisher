@@ -2,7 +2,7 @@ import { BOOK_CATEGORIES } from './visualTemplatesCatalog';
 
 // Update this version and its coverage test when adding page fields, layouts, or book types.
 // Prompt generation is field-aware and reads the current project/chapter/page/template on every click.
-export const AI_PROMPT_CATALOG_VERSION = '2026-10-23.4';
+export const AI_PROMPT_CATALOG_VERSION = '2026-10-24.1';
 
 export const AI_FIELD_PROFILES = Object.freeze({
   photobook: {
@@ -71,8 +71,36 @@ export const AI_FIELD_PROFILES = Object.freeze({
   }
 });
 
+/**
+ * Fields that exist outside a category's page layouts (the Introduction page
+ * and the cover wording). They are shared by every book type so the same
+ * generous word budget applies wherever they are edited.
+ */
+export const SHARED_FIELD_PROFILES = Object.freeze({
+  introduction: {
+    label: 'Introduction page',
+    format: 'Write a warm introduction page in the author’s voice: an opening note to the reader, who this book is for, and why it matters. Use short paragraphs and no heading.',
+    maxWords: 700
+  },
+  coverBlurb: {
+    label: 'Cover wording',
+    format: 'Write one short, inviting line or two for the front cover that supports the title without repeating it.',
+    maxWords: 40
+  },
+  coverTitle: {
+    label: 'Cover title',
+    format: 'Write a short, memorable book title only — no subtitle, no punctuation unless it helps.',
+    maxWords: 12
+  },
+  coverAuthorName: {
+    label: 'Author name',
+    format: 'Use only the author or pen name supplied in the book context.',
+    maxWords: 8
+  }
+});
+
 export function getAiFieldProfile(categoryId, fieldKey) {
-  const profile = AI_FIELD_PROFILES[categoryId]?.[fieldKey];
+  const profile = AI_FIELD_PROFILES[categoryId]?.[fieldKey] || SHARED_FIELD_PROFILES[fieldKey];
   if (profile) return profile;
   return {
     label: String(fieldKey || 'Page text').replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase()),

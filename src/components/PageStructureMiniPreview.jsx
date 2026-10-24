@@ -1,6 +1,13 @@
 import React from 'react';
 import BookImage from './BookImage';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
+import {
+  resolveTemplateDesign,
+  getPageBorderStyle,
+  blockStyleFor,
+  headingTreatment,
+  withAlpha
+} from '../data/designSystem';
 
 export const SAMPLE_ART_BY_CATEGORY = {
   photobook: [
@@ -42,48 +49,36 @@ export default function PageStructureMiniPreview({
   categoryId = 'photobook',
   template = {},
   structureIndex = 0,
-  compact = false
+  compact = false,
+  designOverrides = {}
 }) {
   const safeIndex = ((Number(structureIndex) || 0) % 5 + 5) % 5;
   const structure = getTemplatePageStructures(categoryId, template)[safeIndex];
-  const pageBg = template?.pageBg || '#FCF8F1';
-  const pageText = template?.pageText || '#1E293B';
-  const borderColor = template?.borderColor || '#D97706';
-  const accentColor = template?.accentColor || borderColor;
+  const design = resolveTemplateDesign(template, designOverrides, { fontFamily: template?.fontFamily });
+  const pageBg = design.pageBg;
+  const pageText = design.bodyText;
+  const borderColor = design.borderInk;
+  const accentColor = design.accentInk;
+  const headingStyle = headingTreatment(design);
   const artList = SAMPLE_ART_BY_CATEGORY[categoryId] || SAMPLE_ART_BY_CATEGORY.photobook;
   const count = Math.max(1, structure?.photoSlots || 1);
 
-  const borderStyle =
-    safeIndex === 0
-      ? {
-          border: `3px double ${borderColor}`,
-          boxShadow: `inset 0 0 0 2px ${pageBg}, inset 0 0 0 3px ${borderColor}55`
-        }
-      : safeIndex === 1
-      ? {
-          border: `3px solid ${accentColor}`,
-          boxShadow: `inset 0 0 0 4px ${borderColor}33`
-        }
-      : safeIndex === 2
-      ? {
-          borderTop: `4px double ${borderColor}`,
-          borderBottom: `4px double ${borderColor}`,
-          borderLeft: `3px solid ${accentColor}`,
-          borderRight: `3px solid ${accentColor}`,
-          boxShadow: `inset 0 0 0 2px ${borderColor}33`
-        }
-      : safeIndex === 3
-      ? {
-          borderTop: `5px solid ${accentColor}`,
-          borderBottom: `2px solid ${borderColor}`,
-          borderLeft: `2px solid ${borderColor}`,
-          borderRight: `2px solid ${borderColor}`,
-          boxShadow: `inset 0 0 0 2px ${accentColor}22`
-        }
-      : {
-          border: `2px dotted ${borderColor}`,
-          boxShadow: `inset 0 0 0 3px ${accentColor}18`
-        };
+  // The miniature draws the same page-border ornament the finished page uses,
+  // scaled down so the five layout thumbnails stay a faithful preview.
+  const borderLayers = getPageBorderStyle(design.pageBorderId).layers || [];
+  const hasDoubleRule = borderLayers.some((layer) => layer.kind === 'border' && layer.style === 'double');
+  const hasInnerRule = borderLayers.filter((layer) => layer.kind === 'border').length > 1;
+  const hasBand = borderLayers.some((layer) => layer.kind === 'band' && layer.edge === 'top');
+  const hasCorners = borderLayers.some((layer) => layer.kind === 'corners');
+  const borderStyle = hasBand
+    ? { borderTop: `3px solid ${accentColor}`, borderBottom: `1px solid ${borderColor}`, borderLeft: 'none', borderRight: 'none' }
+    : !borderLayers.length
+    ? { border: 'none' }
+    : {
+        border: hasDoubleRule ? `2px double ${borderColor}` : `1.5px solid ${withAlpha(borderColor, 0.85)}`,
+        borderRadius: design.pageBorderId === 'soft-rounded' || design.pageBorderId === 'arch-window' ? 10 : 2,
+        boxShadow: hasInnerRule ? `inset 0 0 0 3px ${withAlpha(pageBg, 0.95)}, inset 0 0 0 4px ${withAlpha(borderColor, 0.35)}` : undefined
+      };
 
   const frameStyle = (index) => ({
     border:
@@ -124,13 +119,9 @@ export default function PageStructureMiniPreview({
 
   const storyCard = (className = '') => (
     <div
-      className={`min-w-0 p-1.5 rounded ${className}`}
+      className={`min-w-0 p-1.5 ${className}`}
       style={{
-        backgroundColor: `${accentColor}18`,
-        border:
-          safeIndex === 2
-            ? `2px double ${borderColor}`
-            : `1px solid ${borderColor}`,
+        ...blockStyleFor(design, { radius: 4 }),
         borderTop: safeIndex === 1 ? `3px solid ${accentColor}` : undefined
       }}
     >
@@ -174,30 +165,20 @@ export default function PageStructureMiniPreview({
             color: pageText
           }}
         >
-          {safeIndex === 0 && (
+          {hasCorners && (
             <>
               <span className="absolute top-1 left-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
               <span className="absolute top-1 right-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
+              <span className="absolute bottom-1 left-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
+              <span className="absolute bottom-1 right-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
             </>
-          )}
-          {safeIndex === 1 && (
-            <div className="absolute top-0 inset-x-0 h-1.5" style={{ backgroundColor: accentColor }} />
-          )}
-          {safeIndex === 2 && (
-            <span className="absolute top-0.5 left-1/2 -translate-x-1/2 px-1 rounded-full text-[6px] font-bold text-white" style={{ backgroundColor: accentColor }}>✦</span>
-          )}
-          {safeIndex === 3 && (
-            <span className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 rounded-b-full" style={{ backgroundColor: accentColor }} />
-          )}
-          {safeIndex === 4 && (
-            <span className="absolute top-1 right-1 text-[7px] font-black" style={{ color: accentColor }}>✧</span>
           )}
 
           <div
             className={`relative z-10 text-center ${compact ? 'text-[5px] pb-0.5 mb-0.5' : 'text-[7px] pb-1 mb-1'} font-extrabold uppercase tracking-widest truncate`}
             style={{
-              color: safeIndex === 1 ? '#fff' : accentColor,
-              borderBottom: `1px solid ${borderColor}88`
+              color: headingStyle.titleStyle.color,
+              borderBottom: `1px solid ${withAlpha(borderColor, 0.55)}`
             }}
           >
             {structure?.shortLabel || structure?.name || template?.name || 'Matched Page Design'}

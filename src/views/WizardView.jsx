@@ -3,7 +3,8 @@ import {
   CheckCircle2,
   Sparkles,
   ListOrdered,
-  Tablet
+  Tablet,
+  Eye
 } from 'lucide-react';
 import {
   BOOK_CATEGORIES,
@@ -15,6 +16,13 @@ import {
   buildPlannedPagesList
 } from '../data/templatePageStructures';
 import TemplateVisualPreview from '../components/TemplateVisualPreview';
+import ExactTemplatePageRenderer from '../components/ExactTemplatePageRenderer';
+import PagePreviewModal from '../components/PagePreviewModal';
+import {
+  buildSamplePageForTemplate,
+  buildSampleProjectForTemplate
+} from '../data/templateSampleContent';
+import { DESIGN_PRESETS } from '../data/designSystem';
 
 const CLASSICAL_SERIF =
   '"Playfair Display", "Cinzel", "Cormorant Garamond", "Newsreader", "Lora", Georgia, "Times New Roman", serif';
@@ -101,6 +109,11 @@ export default function WizardView({
   );
   const [submitting, setSubmitting] = useState(false);
   const [titleError, setTitleError] = useState('');
+  // The style chooser can open a real page drawn by the page renderer, so the
+  // author can compare the sample photograph with what the studio produces.
+  const [livePreviewTemplate, setLivePreviewTemplate] = useState(null);
+  // Which creative direction the live preview is exploring (nothing is saved).
+  const [previewPresetId, setPreviewPresetId] = useState('');
 
   // Keep the style chooser locked to the selected book category and saved project template.
   useEffect(() => {
@@ -134,6 +147,14 @@ export default function WizardView({
     if (editingProject) {
       setSubmitting(true);
       try {
+        // Switching template drops the previous template's colour overrides
+        // (its border, block and ink colours) so the new template looks the
+        // way it does in its sample picture. Structural choices such as the
+        // page border or block treatment are kept.
+        const nextDesign = { ...(editingProject.coverConfig?.design || {}) };
+        delete nextDesign.borderColor;
+        delete nextDesign.blockColor;
+        delete nextDesign.accentColor;
         await onUpdateProject?.({
           coverConfig: {
             ...(editingProject.coverConfig || {}),
@@ -144,7 +165,8 @@ export default function WizardView({
             pageBg: template.pageBg,
             pageText: template.pageText,
             borderColor: template.borderColor,
-            accentColor: template.accentColor
+            accentColor: template.accentColor,
+            design: nextDesign
           }
         });
       } finally {
@@ -410,6 +432,20 @@ export default function WizardView({
                       >
                         {tpl.desc}
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => setLivePreviewTemplate(tpl)}
+                        aria-label={`See a real page from the ${tpl.name} template`}
+                        className="mt-3 inline-flex min-h-10 items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-extrabold uppercase tracking-wider transition hover:brightness-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FDE08D]"
+                        style={{
+                          backgroundColor: 'rgba(6, 17, 40, 0.85)',
+                          color: '#FDE08D',
+                          border: '1px solid rgba(229, 184, 75, 0.55)'
+                        }}
+                      >
+                        <Eye className="h-3.5 w-3.5 text-[#F5C451]" aria-hidden="true" />
+                        Live page preview
+                      </button>
                     </div>
 
 
@@ -421,6 +457,76 @@ export default function WizardView({
           </div>
         </div>
       )}
+
+      {livePreviewTemplate ? (
+        <PagePreviewModal
+          open
+          heading="Live page preview"
+          subheading={`${livePreviewTemplate.name} · sample words`}
+          description="this is a real page drawn by the same page designer that will print your book: the same border, blocks, type and ornaments. The sample words are only here to show the layout — your own words replace them in Step 4."
+          footerNote="Change the template, border or colours at any time. This preview is not saved to any book."
+          onClose={() => { setLivePreviewTemplate(null); setPreviewPresetId(''); }}
+        >
+          <div className="mb-3 space-y-2" data-live-preview-presets>
+            <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#F3D78B' }}>
+              Try a creative direction
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                aria-pressed={!previewPresetId}
+                onClick={() => setPreviewPresetId('')}
+                className="min-h-9 rounded-full px-3 py-1.5 text-[11px] font-bold"
+                style={{
+                  background: !previewPresetId ? 'rgba(253, 224, 141, 0.22)' : 'rgba(6, 17, 40, 0.8)',
+                  color: '#FDE08D',
+                  border: '1px solid rgba(229, 184, 75, 0.55)'
+                }}
+              >
+                Template as designed
+              </button>
+              {DESIGN_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  title={preset.blurb}
+                  aria-pressed={previewPresetId === preset.id}
+                  onClick={() => setPreviewPresetId(preset.id)}
+                  className="min-h-9 rounded-full px-3 py-1.5 text-[11px] font-bold"
+                  style={{
+                    background: previewPresetId === preset.id ? 'rgba(253, 224, 141, 0.22)' : 'rgba(6, 17, 40, 0.8)',
+                    color: '#FDE08D',
+                    border: '1px solid rgba(229, 184, 75, 0.55)'
+                  }}
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ExactTemplatePageRenderer
+            project={buildSampleProjectForTemplate({
+              categoryId,
+              template: livePreviewTemplate,
+              title: bookTitle || activeCategory.shortName,
+              authorName,
+              fontFamily: selectedFont,
+              design: {
+                ...(DESIGN_PRESETS.find((preset) => preset.id === previewPresetId)?.design || {})
+              }
+            })}
+            chapter={buildSamplePageForTemplate(categoryId, livePreviewTemplate, {
+              title: (livePreviewTemplate.defaultPages?.[0]?.title) || livePreviewTemplate.name
+            })}
+            chapterIndex={0}
+            totalChapters={1}
+            pageIndex={0}
+            totalPages={1}
+            editable={false}
+            assets={[]}
+          />
+        </PagePreviewModal>
+      ) : null}
 
       {/* STEP 3: Chapter Index and chapter count */}
       {wizardStep === 3 && !editingProject && (
