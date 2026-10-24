@@ -125,7 +125,23 @@ export async function downloadExportFile(projectId, format, fallbackFilename) {
     throw new Error(errorMessage);
   }
 
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    // A JSON body on an export response is an error payload, not a book file.
+    let errorMessage = 'Export failed. Please try again.';
+    try {
+      const errData = await response.json();
+      if (errData?.error) errorMessage = errData.error;
+    } catch {
+      // keep the friendly fallback message
+    }
+    throw new Error(errorMessage);
+  }
+
   const blob = await response.blob();
+  if (!blob || blob.size === 0) {
+    throw new Error('The export came back empty. Please try again.');
+  }
   const disposition = response.headers.get('content-disposition') || '';
   const match = disposition.match(/filename="([^"]+)"/);
   const filename = match ? match[1] : fallbackFilename;
@@ -134,9 +150,15 @@ export async function downloadExportFile(projectId, format, fallbackFilename) {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  a.rel = 'noopener';
   document.body.appendChild(a);
   a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
+  // Revoking the object URL immediately can cancel the download before the
+  // browser starts reading the blob (notably Firefox/Safari). Keep the link
+  // and URL alive briefly so every browser can begin the transfer.
+  window.setTimeout(() => {
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }, 4000);
   return { filename, size: blob.size };
 }

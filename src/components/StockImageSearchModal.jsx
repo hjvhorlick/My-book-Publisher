@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ExternalLink, Image as ImageIcon, LoaderCircle, Search, Settings2, X } from 'lucide-react';
 import { apiRequest } from '../api/client';
+import { imageFitsSlot } from '../data/slotRules';
 
 export default function StockImageSearchModal({
   open,
   projectId,
   initialQuery = '',
+  slotRule = null,
   onClose,
   onImageSelected,
   onAssetsChanged,
@@ -41,6 +43,8 @@ export default function StockImageSearchModal({
     setImages([]);
     try {
       const params = new URLSearchParams({ q: query.trim(), provider });
+      // Fetch photos shaped for the frame they must fill (portrait frame → portrait photos).
+      if (slotRule?.orientation) params.set('orientation', slotRule.orientation);
       const result = await apiRequest(`/api/projects/${projectId}/assets/search?${params.toString()}`);
       setImages(result.images || []);
       setProviderStatus(result.providers || {});
@@ -115,6 +119,11 @@ export default function StockImageSearchModal({
             <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
               Search Pexels and Pixabay. Selected images are saved into this book’s asset library with the creator, source link, and stock-license record.
             </p>
+            {slotRule && (
+              <p className="mt-1.5 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-900 dark:bg-amber-900/50 dark:text-amber-100">
+                For this frame: {slotRule.aspectLabel} {slotRule.orientation} · best {slotRule.recommendedWidth} × {slotRule.recommendedHeight} px — you will crop &amp; centre the photo next.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -192,6 +201,20 @@ export default function StockImageSearchModal({
                       <span className="absolute left-2 top-2 rounded-full bg-slate-950/80 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
                         {image.providerName}
                       </span>
+                      {slotRule && image.width > 0 && image.height > 0 && (() => {
+                        const fit = imageFitsSlot(image.width, image.height, slotRule);
+                        const label = fit === 'good' ? 'Fits this frame' : fit === 'crop' ? 'Will crop to fit' : 'Different shape';
+                        const colors = fit === 'good'
+                          ? 'bg-emerald-700/90 text-white'
+                          : fit === 'crop'
+                            ? 'bg-amber-600/90 text-white'
+                            : 'bg-slate-800/85 text-slate-200';
+                        return (
+                          <span className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[9px] font-bold ${colors}`}>
+                            {label} · {image.width}×{image.height}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <div className="space-y-2 p-3">
                       <p className="min-h-8 text-[11px] leading-relaxed text-stone-700 dark:text-stone-200">
@@ -215,7 +238,7 @@ export default function StockImageSearchModal({
                         className="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-stone-900 px-3 text-xs font-bold text-white hover:bg-stone-700 disabled:opacity-50 dark:bg-amber-800 dark:hover:bg-amber-700"
                       >
                         {importing ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}
-                        {importing ? 'Importing into book…' : 'Use this image'}
+                        {importing ? 'Importing into book…' : slotRule ? 'Use & frame this image' : 'Use this image'}
                       </button>
                     </div>
                   </article>

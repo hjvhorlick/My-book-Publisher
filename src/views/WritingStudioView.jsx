@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Check,
+  Eye,
   Plus,
   Trash2,
   KeyRound,
@@ -15,9 +16,11 @@ import ExactTemplatePageRenderer from '../components/ExactTemplatePageRenderer';
 import BookAppearanceControls from '../components/BookAppearanceControls';
 import IntroductionPageEditor from '../components/IntroductionPageEditor';
 import CoverEditor from '../components/CoverEditor';
+import PagePreviewModal from '../components/PagePreviewModal';
 import {
   appendChapterPage,
   buildChapterPagePatch,
+  buildChapterPagePreview,
   buildChapterPagesPatch,
   deleteChapterPage,
   getChapterPageForEditor,
@@ -69,7 +72,9 @@ export default function WritingStudioView({
   notify = () => {}
 }) {
   const [saving, setSaving] = useState(false);
+  const [pagePreview, setPagePreview] = useState(null);
   const activePageSaveRef = useRef(null);
+  const activePagePreviewRef = useRef(null);
   const pendingPageSavesRef = useRef(new Map());
 
   // Three studio sections: chapter pages, the full Introduction page, and the cover designer.
@@ -135,6 +140,10 @@ export default function WritingStudioView({
     activePageSaveRef.current = savePage;
   }, []);
 
+  const registerActivePagePreview = useCallback((getPreviewPatch) => {
+    activePagePreviewRef.current = getPreviewPatch;
+  }, []);
+
   const flushActivePage = useCallback(async (
     chapterId = activeChapter?.id,
     pageIndex = safePageIndex
@@ -190,6 +199,27 @@ export default function WritingStudioView({
       setSaving(false);
     }
   };
+
+  // Snapshot the page exactly as it stands — unsaved words and the chosen
+  // layout included — and show it as the clean finished page. Previewing
+  // reads the editor's draft; it never writes to the book.
+  const handlePreviewPage = () => {
+    if (!activeChapter || !activePageChapter) return;
+    const draftPatch = activePagePreviewRef.current?.() || null;
+    const chapterIndex = activeIdx >= 0 ? activeIdx : 0;
+    setPagePreview({
+      chapter: buildChapterPagePreview(activePageChapter, draftPatch),
+      chapterIndex,
+      pageIndex: safePageIndex,
+      totalPages: activePages.length,
+      label: `${activeChapter.title || `Chapter ${chapterIndex + 1}`} · Page ${safePageIndex + 1} of ${activePages.length}`
+    });
+  };
+
+  // A preview belongs to one page; never leave a stale one open after moving.
+  useEffect(() => {
+    setPagePreview(null);
+  }, [activeChapter?.id, safePageIndex]);
 
   const handleSelectExistingPage = async (nextPageIndex) => {
     const nextIndex = Number(nextPageIndex);
@@ -278,15 +308,15 @@ export default function WritingStudioView({
           Write and design your pages
         </h1>
         <p className="text-xs sm:text-sm italic mt-1" style={{ color: '#F3D78B' }}>
-          Choose one of five page layouts, then edit its text and photos. Use Next Page to add a page to this chapter; the Index stays a chapter list.
+          Choose one of five page layouts, then use the small Edit button on any text block or photo frame. Each editor knows exactly how much its space holds, so the finished page matches the design. Use Next Page to add a page to this chapter; the Index stays a chapter list.
         </p>
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-amber-200/30 bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-start gap-2.5">
             {aiConfigured ? <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#F5C451]" /> : <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-[#F5C451]" />}
             <p className="text-[11px] leading-relaxed sm:text-xs" style={{ color: '#F3D78B' }}>
               {aiConfigured
-                ? 'AI writing is ready. Look for “Write with AI” in the formatting toolbar above each text field. Every draft uses this book, chapter guidance, page, field type, selected template and existing text; review it before inserting.'
-                : 'Connect Gemini to enable contextual AI in every page field. Paste and save your key in the header settings, test the connection, then “Write with AI” appears in each text field’s toolbar.'}
+                ? 'AI writing is ready. Open any block with its Edit button — “Write with AI” lives inside the editor, and every draft is written to fit that block’s exact space on the page before you review and place it.'
+                : 'Connect Gemini to enable contextual AI inside each block’s editor. Paste and save your key in the header settings, test the connection, then open any text block with its Edit button.'}
             </p>
           </div>
           <button
@@ -385,6 +415,7 @@ export default function WritingStudioView({
                 aiConfigured={aiConfigured}
                 onSaveChapter={trackedSaveCurrentPage}
                 onRegisterSave={registerActivePageSave}
+                onRegisterPreview={registerActivePagePreview}
                 onAssetsChanged={onAssetsChanged}
                 onOpenAiSettings={onOpenAiSettings}
               />
@@ -457,19 +488,32 @@ export default function WritingStudioView({
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-3" style={{ borderTop: '1px solid rgba(229, 184, 75, 0.35)' }}>
                   <span className="text-[11px]" style={{ color: '#F3D78B' }}>
-                    Page changes save as you work. The chapter title on page one supplies the Index entry.
+                    Page changes save as you work. The chapter title on page one supplies the Index entry. Tap Preview Page to see the finished page before you save.
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleManualSave}
-                    disabled={saving}
-                    aria-busy={saving}
-                    className="min-h-10 px-4 py-2 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-2 disabled:opacity-60 transition-all hover:brightness-110"
-                    style={GOLD_BTN_STYLE}
-                  >
-                    <Check className="w-4 h-4 text-[#061128]" />
-                    <span>{saving ? 'Saving…' : 'Save Page'}</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handlePreviewPage}
+                      disabled={saving}
+                      aria-label="Preview this page as readers will see it, before saving"
+                      className="min-h-10 px-4 py-2 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-2 disabled:opacity-60 transition-all hover:brightness-125"
+                      style={NAVY_BTN_STYLE}
+                    >
+                      <Eye className="w-4 h-4 text-[#F5C451]" />
+                      <span>Preview Page</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleManualSave}
+                      disabled={saving}
+                      aria-busy={saving}
+                      className="min-h-10 px-4 py-2 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-2 disabled:opacity-60 transition-all hover:brightness-110"
+                      style={GOLD_BTN_STYLE}
+                    >
+                      <Check className="w-4 h-4 text-[#061128]" />
+                      <span>{saving ? 'Saving…' : 'Save Page'}</span>
+                    </button>
+                  </div>
                 </div>
               </section>
             </>
@@ -481,6 +525,29 @@ export default function WritingStudioView({
         </div>
       </div>
       ) : null}
+
+      <PagePreviewModal
+        open={Boolean(pagePreview)}
+        heading="Preview this page"
+        subheading={pagePreview?.label || ''}
+        saving={saving}
+        onClose={() => setPagePreview(null)}
+        onSave={handleManualSave}
+      >
+        {pagePreview && (
+          <ExactTemplatePageRenderer
+            project={project}
+            chapter={pagePreview.chapter}
+            chapterIndex={pagePreview.chapterIndex}
+            totalChapters={chapters.length}
+            pageIndex={pagePreview.pageIndex}
+            totalPages={pagePreview.totalPages}
+            chapterSummaries={chapters.map((item) => ({ title: item.title, synopsis: item.synopsis, guidance: item.guidance }))}
+            assets={assets}
+            editable={false}
+          />
+        )}
+      </PagePreviewModal>
     </div>
   );
 
