@@ -16,6 +16,7 @@ const assetRoutes = require('./routes/assetRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const imageProviderRoutes = require('./routes/imageProviderRoutes');
 const publishingRoutes = require('./routes/publishingRoutes');
+const { resolveSampleArtworkPath } = require('./sampleArtworkFiles');
 
 // Keep a strong reference to the listening server for embedded/dev process runners.
 let activeHttpServer = null;
@@ -28,20 +29,22 @@ function createApp() {
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
   // Built-in artwork is cached hard so each template/page photo downloads once
-  // per browser. A one-year immutable cache is only safe for a URL whose bytes
-  // can never change, so the app versions its artwork URLs with ?v=<catalogue>.
-  // Unversioned requests (an old bookmark, a hand-written path) must revalidate:
-  // otherwise a browser keeps a stale copy of a file that was regenerated in place.
-  const artworkStatic = { etag: true, lastModified: true, fallthrough: true };
-  const artworkCache = (req, res, next) => {
-    const versioned = Boolean(req.query && req.query.v);
-    res.setHeader('Cache-Control', versioned
-      ? 'public, max-age=31536000, immutable'
-      : 'no-cache, must-revalidate');
-    next();
-  };
-  app.use('/sample-artwork', artworkCache, express.static(path.join(__dirname, '..', 'public', 'sample-artwork'), artworkStatic));
-  app.use('/template-previews', artworkCache, express.static(path.join(__dirname, '..', 'public', 'template-previews'), artworkStatic));
+  // per browser. A one-year immutable cache is only honest when a URL's bytes
+  // can never change, which is why every sample filename carries a content hash
+  // (see scripts/prepare-sample-artwork.mjs): a regenerated image becomes a new
+  // URL, and no browser can hold on to an out-of-date copy.
+  const artworkStatic = { etag: false, lastModified: false, fallthrough: true, immutable: true, maxAge: '1y' };
+  app.use('/sample-artwork', express.static(path.join(__dirname, '..', 'public', 'sample-artwork'), artworkStatic));
+  // Books published before filenames were content-hashed still reference the
+  // old unhashed names. Serve those from the current file instead of a 404.
+  app.get(/^\/sample-artwork\/.+$/, (req, res) => {
+    const resolved = resolveSampleArtworkPath(req.path);
+    if (!resolved) return res.status(404).json({ error: 'Sample artwork not found.' });
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Content-Type', 'image/jpeg');
+    return res.sendFile(resolved);
+  });
+  app.use('/template-previews', express.static(path.join(__dirname, '..', 'public', 'template-previews'), { etag: true, lastModified: true, fallthrough: true }));
 
   // Health endpoint
   app.get('/api/health', (_req, res) => {

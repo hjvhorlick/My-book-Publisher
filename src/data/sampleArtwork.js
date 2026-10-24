@@ -24,20 +24,11 @@ import catalog from './sampleArtwork.json';
 export const SAMPLE_ARTWORK_VERSION = catalog.version;
 
 /**
- * Cache-busting tag appended to every artwork URL.
- *
- * The server sends artwork with a one-year immutable cache because a given
- * filename never changes. That promise only holds while the *bytes* stay the
- * same — and this library is regenerated in place, so a browser that loaded a
- * file mid-rewrite would otherwise keep a half-written copy forever. The tag
- * changes whenever the catalogue changes, which forces a clean download.
+ * Artwork filenames carry a content hash (`family-picnic.9f3a1c7d.jpg`), so a
+ * changed image is always a changed URL. That is what makes the one-year
+ * immutable cache honest: nothing is ever rewritten under an existing name, and
+ * no query string is needed (some proxies drop those).
  */
-export const SAMPLE_ASSET_TAG = String(catalog.version || '1').replace(/[^\w.-]/g, '');
-
-function versioned(url) {
-  if (!url) return '';
-  return `${url}?v=${SAMPLE_ASSET_TAG}`;
-}
 export const SAMPLE_LICENSE = catalog.license;
 export const SAMPLE_ARTWORK = catalog.items;
 export const SAMPLE_PROVIDER = 'sample';
@@ -94,7 +85,7 @@ export function sampleCategoryLabel(categoryId) {
 
 /** Public URL served by Vite in dev and by Express in production. */
 export function sampleArtworkUrl(item) {
-  return item?.file ? versioned(`/sample-artwork/${item.file}`) : '';
+  return item?.file ? `/sample-artwork/${item.file}` : '';
 }
 
 /**
@@ -103,7 +94,7 @@ export function sampleArtworkUrl(item) {
  * so browsing the library never downloads the full-page files.
  */
 export function sampleArtworkThumbUrl(item) {
-  return item?.file ? versioned(`/sample-artwork/thumbs/${item.file}`) : '';
+  return item?.file ? `/sample-artwork/thumbs/${item.file}` : '';
 }
 
 /** Versioned URL for one catalogue id, for template default-artwork lists. */

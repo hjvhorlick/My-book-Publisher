@@ -17,7 +17,6 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const catalog = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'data', 'sampleArtwork.json'), 'utf8'));
-const tag = encodeURIComponent(catalog.version || '1');
 
 const CATEGORY_LABELS = {
   photobook: 'Photo books',
@@ -36,8 +35,8 @@ const groups = ORDER
   .filter((group) => group.items.length);
 
 function card(item) {
-  const thumb = `/sample-artwork/thumbs/${item.file}?v=${tag}`;
-  const full = `/sample-artwork/${item.file}?v=${tag}`;
+  const thumb = `/sample-artwork/thumbs/${item.file}`;
+  const full = `/sample-artwork/${item.file}`;
   const inWidth = (item.width / 300).toFixed(1);
   const inHeight = (item.height / 300).toFixed(1);
   return `      <figure class="card" data-id="${item.id}">

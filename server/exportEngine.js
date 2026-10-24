@@ -1165,8 +1165,11 @@ async function generateEpubExport({ project, chapters = [], formatting = {}, met
       if (value.startsWith('/sample-artwork/')) {
         const fs = require('node:fs');
         const path = require('node:path');
-        const publicPath = path.join(__dirname, '..', 'public', value.replace(/^\/+/, ''));
-        if (!fs.existsSync(publicPath)) return null;
+        // Resolve through the catalogue so covers saved with the old unhashed
+        // filenames still embed correctly after the artwork was regenerated.
+        const { resolveSampleArtworkPath } = require('./sampleArtworkFiles');
+        const publicPath = resolveSampleArtworkPath(value);
+        if (!publicPath) return null;
         const rawExt = path.extname(publicPath).slice(1).toLowerCase() || 'jpg';
         const ext = ['png', 'webp', 'gif', 'jpg', 'jpeg'].includes(rawExt) ? rawExt : 'jpg';
         const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'gif' ? 'image/gif' : 'image/jpeg';

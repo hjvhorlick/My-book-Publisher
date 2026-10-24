@@ -10,7 +10,6 @@ import {
   SAMPLE_ARTWORK,
   SAMPLE_CATEGORIES,
   COVER_SAMPLE_URLS,
-  SAMPLE_ARTWORK_VERSION,
   SAMPLE_PRINT_DPI,
   formatPrintSize,
   sampleArtworkThumbUrl,
@@ -78,9 +77,10 @@ describe('bundled free sample artwork', () => {
       expect(item.title.trim().length, `${item.id} needs a title`).toBeGreaterThan(2);
       expect(item.alt.trim().length, `${item.id} needs alt text`).toBeGreaterThan(20);
       expect(item.tags.length, `${item.id} needs search tags`).toBeGreaterThanOrEqual(3);
-      // Every URL carries the cache tag so a regenerated file is never served
-      // from an old immutable cache entry.
-      expect(sampleArtworkUrl(item)).toBe(`/sample-artwork/${item.file}?v=${SAMPLE_ARTWORK_VERSION}`);
+      // File names are content-hashed, so a changed image is always a new URL
+      // and the immutable cache can never serve a stale copy.
+      expect(item.file).toMatch(new RegExp(`^${item.id}\\.[0-9a-f]{8}\\.jpg$`));
+      expect(sampleArtworkUrl(item)).toBe(`/sample-artwork/${item.file}`);
 
       const filePath = path.join(ARTWORK_DIR, item.file);
       expect(fs.existsSync(filePath), `missing artwork file ${item.file}`).toBe(true);
@@ -143,6 +143,20 @@ describe('bundled free sample artwork', () => {
     expect(firstRatio).toBeLessThanOrEqual(0.94);
   });
 
+  it('serves old unhashed artwork URLs so existing books keep their pictures', () => {
+    const { resolveSampleArtworkPath } = require('../server/sampleArtworkFiles');
+    for (const item of SAMPLE_ARTWORK) {
+      const hashed = resolveSampleArtworkPath(`/sample-artwork/${item.file}`);
+      const legacy = resolveSampleArtworkPath(`/sample-artwork/${item.id}.jpg`);
+      const legacyThumb = resolveSampleArtworkPath(`/sample-artwork/thumbs/${item.id}.jpg`);
+      expect(hashed, item.id).toBeTruthy();
+      expect(legacy, `${item.id} legacy URL no longer resolves`).toBe(hashed);
+      expect(legacyThumb, `${item.id} legacy thumbnail no longer resolves`).toBeTruthy();
+    }
+    expect(resolveSampleArtworkPath('/sample-artwork/../server/index.js')).toBeNull();
+    expect(resolveSampleArtworkPath('/sample-artwork/not-a-sample.jpg')).toBeNull();
+  });
+
   it('publishes a browsable gallery that lists every sample', () => {
     const galleryPath = path.join(process.cwd(), 'public', 'artwork-gallery.html');
     expect(fs.existsSync(galleryPath), 'run npm run artwork:gallery').toBe(true);
@@ -198,15 +212,17 @@ describe('free samples in the image picker', () => {
     expect(markup).toContain('Bundled · works offline');
     expect(markup).toContain('No credit needed');
     expect(markup).toContain(`Free samples (${SAMPLE_ARTWORK.length})`);
+    // The grid carries the file name so a failed tile can be identified.
+    expect(markup).toMatch(/sample-artwork\/thumbs\/nature-ferns\.[0-9a-f]{8}\.jpg/);
     expect(markup).not.toContain('Show all');
     expect(markup).toContain('Use this image');
     expect(markup).toContain('image-source-panel-samples');
 
     // The grid loads the small thumbnails, never the full-page files.
-    const thumbnails = markup.match(/\/sample-artwork\/thumbs\/[a-z0-9-]+\.jpg/g) || [];
+    const thumbnails = markup.match(/\/sample-artwork\/thumbs\/[a-z0-9.-]+\.jpg/g) || [];
     expect(new Set(thumbnails).size).toBeGreaterThanOrEqual(20);
-    expect(markup).toContain('/sample-artwork/thumbs/nature-ferns.jpg');
-    expect(markup).not.toMatch(/src="\/sample-artwork\/[a-z0-9-]+\.jpg"/);
+    expect(markup).toMatch(/\/sample-artwork\/thumbs\/nature-ferns\.[0-9a-f]{8}\.jpg/);
+    expect(markup).not.toMatch(/src="\/sample-artwork\/[a-z0-9.-]+\.jpg"/);
     expect(markup).toContain('prints to');
     expect(markup).toContain('300 dpi');
   });
@@ -224,7 +240,7 @@ describe('free samples in the image picker', () => {
       />
     );
 
-    const thumbnails = markup.match(/\/sample-artwork\/thumbs\/[a-z0-9-]+\.jpg/g) || [];
+    const thumbnails = markup.match(/\/sample-artwork\/thumbs\/[a-z0-9.-]+\.jpg/g) || [];
     expect(new Set(thumbnails).size).toBeGreaterThanOrEqual(20);
     expect(markup).not.toContain('Nothing matches');
     // The inherited text is not silently applied to the sample filter.

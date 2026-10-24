@@ -18,6 +18,59 @@ const TABS = [
   { id: 'stock', label: 'Pexels + Pixabay', hint: 'Needs an API key' }
 ];
 
+/**
+ * Artwork thumbnail that is never silently blank.
+ *
+ * If the prepared thumbnail fails, it falls back to the full-size file, and if
+ * that fails too it shows a labelled placeholder. A grey hole in the grid is
+ * indistinguishable from "the library is empty", which is exactly the wrong
+ * thing for a user to see — so a failure has to be visible and diagnosable.
+ */
+function SampleThumb({ item, thumbUrl, fullUrl, onFail }) {
+  const [source, setSource] = useState(thumbUrl);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    setSource(thumbUrl);
+    setFailed(false);
+    setAttempt(0);
+  }, [thumbUrl]);
+
+  if (failed) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-stone-200 p-2 text-center dark:bg-stone-800">
+        <ImageIcon className="h-5 w-5 text-stone-500" />
+        <span className="text-[9px] font-bold uppercase tracking-wide text-stone-600 dark:text-stone-300">Image file</span>
+        <span className="break-all text-[9px] text-stone-500 dark:text-stone-400">{item.file}</span>
+      </div>
+    );
+  }
+
+  const handleError = () => {
+    if (source === thumbUrl) {
+      setSource(fullUrl);            // the full-page file is a second copy
+    } else if (attempt === 0) {
+      setAttempt(1);
+      setSource(`${fullUrl}${fullUrl.includes('?') ? '&' : '?'}retry=1`);
+    } else {
+      setFailed(true);
+      onFail?.(item);
+    }
+  };
+
+  return (
+    <img
+      src={source}
+      alt={item.alt}
+      loading="lazy"
+      decoding="async"
+      onError={handleError}
+      className="h-full w-full object-cover"
+    />
+  );
+}
+
 function FitBadge({ image, slotRule }) {
   if (!slotRule || !(image.width > 0) || !(image.height > 0)) return null;
   const fit = imageFitsSlot(image.width, image.height, slotRule);
@@ -59,6 +112,7 @@ export default function StockImageSearchModal({
   const [error, setError] = useState('');
   const [searching, setSearching] = useState(false);
   const [importingId, setImportingId] = useState('');
+  const [brokenSamples, setBrokenSamples] = useState([]);
 
   useEffect(() => {
     if (!open) return;
@@ -293,6 +347,24 @@ export default function StockImageSearchModal({
                 </div>
               </div>
 
+              {brokenSamples.length > 0 && (
+                <div className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                  <span>
+                    <strong>{brokenSamples.length} of {SAMPLE_ARTWORK.length}</strong> sample files could not be loaded by this browser
+                    ({brokenSamples.slice(0, 3).join(', ')}{brokenSamples.length > 3 ? '…' : ''}). The files are installed in the app;
+                    this usually means the page cannot reach them yet.
+                  </span>
+                  <a
+                    href="/artwork-gallery.html"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-fit items-center gap-1 font-bold underline underline-offset-2"
+                  >
+                    <ExternalLink className="h-3 w-3" /> Open the artwork gallery to check the files
+                  </a>
+                </div>
+              )}
+
               {sampleFilterMissed && (
                 <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
                   No match for{sampleQuery.trim() ? ` “${sampleQuery.trim()}”` : ' this filter'} — showing all {SAMPLE_ARTWORK.length} free samples.
@@ -313,11 +385,13 @@ export default function StockImageSearchModal({
                     return (
                       <article key={sample.id} className="overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
                         <div className="relative aspect-[4/3] bg-stone-100 dark:bg-stone-800">
-                          <img
-                            src={result.previewUrl}
-                            alt={sample.alt}
-                            loading="lazy"
-                            className="h-full w-full object-cover"
+                          <SampleThumb
+                            item={sample}
+                            thumbUrl={result.previewUrl}
+                            fullUrl={result.imageUrl}
+                            onFail={(failedItem) => setBrokenSamples((list) => (
+                              list.includes(failedItem.id) ? list : [...list, failedItem.id]
+                            ))}
                           />
                           <span className="absolute left-2 top-2 rounded-full bg-amber-800/95 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white">
                             Free sample

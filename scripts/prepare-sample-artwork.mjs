@@ -15,8 +15,19 @@
  *   3. Tags the file 300 dpi, strips metadata, and writes a progressive JPEG
  *      with a byte budget so one detailed photo cannot bloat the bundle.
  *
- * The catalogue (src/data/sampleArtwork.json) is updated with the new pixel
- * dimensions and file sizes so the picker can report honest print sizes.
+ * 4. Renames each file to `<id>.<content-hash>.jpg`.
+ *
+ * Why the hash in the filename matters
+ * ------------------------------------
+ * Artwork is served with a one-year immutable cache, which is only honest if a
+ * URL's bytes never change. Regenerating an image in place breaks that promise:
+ * a browser that fetched the old bytes keeps them for a year, and if it caught a
+ * half-written file it keeps a broken image forever. Putting a content hash in
+ * the filename makes every change a *new URL*, so caches stay correct without
+ * query strings (which some proxies drop) and without a cache-clearing step.
+ *
+ * The catalogue (src/data/sampleArtwork.json) is updated with the new file
+ * names, pixel dimensions and sizes so the picker can report honest print sizes.
  *
  * Usage:
  *   node scripts/prepare-sample-artwork.mjs
@@ -28,6 +39,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -108,6 +120,54 @@ function writeThumb(file) {
   return fs.statSync(thumb).size;
 }
 
+function sha8(file) {
+  return crypto.createHash('sha1').update(fs.readFileSync(file)).digest('hex').slice(0, 8);
+}
+
+/**
+ * Give every sample a content-hashed filename and remove files the catalogue no
+ * longer references. Safe to run repeatedly: unchanged bytes keep the same name.
+ */
+function applyContentHashes() {
+  if (!fs.existsSync(CATALOG_PATH)) return { renamed: 0, removed: 0 };
+  const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
+  let renamed = 0;
+
+  for (const item of catalog.items) {
+    const current = path.join(ARTWORK_DIR, item.file);
+    if (!fs.existsSync(current)) continue;
+    const targetName = `${item.id}.${sha8(current)}.jpg`;
+    const target = path.join(ARTWORK_DIR, targetName);
+    if (current !== target) {
+      fs.renameSync(current, target);
+      const staleThumb = path.join(THUMB_DIR, item.file);
+      if (fs.existsSync(staleThumb)) fs.unlinkSync(staleThumb);
+      renamed += 1;
+    }
+    item.file = targetName;
+    writeThumb(target);
+  }
+
+  // Drop orphaned artwork and thumbnails (e.g. an older hash of the same image).
+  const keep = new Set(catalog.items.map((item) => item.file));
+  let removed = 0;
+  for (const name of fs.readdirSync(ARTWORK_DIR)) {
+    if (!/\.jpe?g$/i.test(name) || keep.has(name)) continue;
+    fs.unlinkSync(path.join(ARTWORK_DIR, name));
+    removed += 1;
+  }
+  if (fs.existsSync(THUMB_DIR)) {
+    for (const name of fs.readdirSync(THUMB_DIR)) {
+      if (!/\.jpe?g$/i.test(name) || keep.has(name)) continue;
+      fs.unlinkSync(path.join(THUMB_DIR, name));
+      removed += 1;
+    }
+  }
+
+  fs.writeFileSync(CATALOG_PATH, `${JSON.stringify(catalog, null, 2)}\n`);
+  return { renamed, removed };
+}
+
 function syncCatalog() {
   if (!fs.existsSync(CATALOG_PATH)) return { updated: 0 };
   const catalog = JSON.parse(fs.readFileSync(CATALOG_PATH, 'utf8'));
@@ -144,6 +204,8 @@ for (const name of files) {
 }
 
 const catalogResult = syncCatalog();
+const hashResult = applyContentHashes();
 console.log(`\n${files.length} files, ${(totalBytes / (1024 * 1024)).toFixed(1)} MB total, long edge ${LONG_EDGE}px @ ${DPI} dpi`);
 console.log(`thumbnails, ${(totalThumbBytes / (1024 * 1024)).toFixed(1)} MB total, long edge ${THUMB_LONG_EDGE}px`);
 console.log(`catalogue updated: ${catalogResult.updated} entr${catalogResult.updated === 1 ? 'y' : 'ies'}`);
+console.log(`content-hashed names: ${hashResult.renamed} renamed, ${hashResult.removed} stale files removed`);

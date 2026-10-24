@@ -260,7 +260,7 @@ async function importSampleArtwork(req, res) {
       userId: req.user.id,
       mimeType,
       extension,
-      originalName: sample.file,
+      originalName: `${sample.id}.jpg`,
       buffer,
       caption,
       altText,

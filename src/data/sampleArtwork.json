@@ -9,7 +9,7 @@
   "items": [
     {
       "id": "book-desk",
-      "file": "book-desk.jpg",
+      "file": "book-desk.f78576c3.jpg",
       "category": "book",
       "collection": "book",
       "title": "Writer’s desk by lamplight",
@@ -27,7 +27,7 @@
     },
     {
       "id": "book-harbor",
-      "file": "book-harbor.jpg",
+      "file": "book-harbor.f244fdd6.jpg",
       "category": "book",
       "collection": "book",
       "title": "Harbour in morning light",
@@ -45,7 +45,7 @@
     },
     {
       "id": "book-homestead",
-      "file": "book-homestead.jpg",
+      "file": "book-homestead.c7752be3.jpg",
       "category": "book",
       "collection": "book",
       "title": "Homestead in the hills",
@@ -63,7 +63,7 @@
     },
     {
       "id": "book-reading",
-      "file": "book-reading.jpg",
+      "file": "book-reading.685e6b77.jpg",
       "category": "book",
       "collection": "book",
       "title": "Reading by the window",
@@ -81,7 +81,7 @@
     },
     {
       "id": "book-typewriter",
-      "file": "book-typewriter.jpg",
+      "file": "book-typewriter.6e4cbaf4.jpg",
       "category": "book",
       "collection": "book",
       "title": "Typewriter and coffee",
@@ -99,7 +99,7 @@
     },
     {
       "id": "book-letter",
-      "file": "book-letter.jpg",
+      "file": "book-letter.b0cbbf02.jpg",
       "category": "book",
       "collection": "book",
       "title": "Letter and fountain pen",
@@ -117,7 +117,7 @@
     },
     {
       "id": "book-city",
-      "file": "book-city.jpg",
+      "file": "book-city.b106f407.jpg",
       "category": "book",
       "collection": "book",
       "title": "Rainy city street",
@@ -135,7 +135,7 @@
     },
     {
       "id": "book-flowers",
-      "file": "book-flowers.jpg",
+      "file": "book-flowers.9de58d24.jpg",
       "category": "book",
       "collection": "book",
       "title": "Pressed flowers on a book",
@@ -153,7 +153,7 @@
     },
     {
       "id": "dish-bakehouse",
-      "file": "dish-bakehouse.jpg",
+      "file": "dish-bakehouse.38e63134.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Bakehouse loaves",
@@ -170,7 +170,7 @@
     },
     {
       "id": "dish-bistro",
-      "file": "dish-bistro.jpg",
+      "file": "dish-bistro.2513de78.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Bistro table",
@@ -188,7 +188,7 @@
     },
     {
       "id": "dish-herbs",
-      "file": "dish-herbs.jpg",
+      "file": "dish-herbs.f3c9d243.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Windowsill herbs",
@@ -206,7 +206,7 @@
     },
     {
       "id": "dish-market",
-      "file": "dish-market.jpg",
+      "file": "dish-market.506bca92.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Market stall produce",
@@ -224,7 +224,7 @@
     },
     {
       "id": "dish-mediterranean",
-      "file": "dish-mediterranean.jpg",
+      "file": "dish-mediterranean.988bfaa6.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Mediterranean table",
@@ -242,7 +242,7 @@
     },
     {
       "id": "dish-pasta",
-      "file": "dish-pasta.jpg",
+      "file": "dish-pasta.5a90d512.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Fresh pasta",
@@ -260,7 +260,7 @@
     },
     {
       "id": "dish-breakfast",
-      "file": "dish-breakfast.jpg",
+      "file": "dish-breakfast.1904d775.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Weekend breakfast",
@@ -278,7 +278,7 @@
     },
     {
       "id": "dish-roast",
-      "file": "dish-roast.jpg",
+      "file": "dish-roast.f74d07e4.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Roast vegetables",
@@ -296,7 +296,7 @@
     },
     {
       "id": "dish-dessert",
-      "file": "dish-dessert.jpg",
+      "file": "dish-dessert.f8c6f348.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Cream and raspberry cake",
@@ -314,7 +314,7 @@
     },
     {
       "id": "dish-soup",
-      "file": "dish-soup.jpg",
+      "file": "dish-soup.a5e67bac.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Pumpkin soup",
@@ -332,7 +332,7 @@
     },
     {
       "id": "dish-cheese",
-      "file": "dish-cheese.jpg",
+      "file": "dish-cheese.ee0eb516.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Cheese board",
@@ -350,7 +350,7 @@
     },
     {
       "id": "dish-citrus",
-      "file": "dish-citrus.jpg",
+      "file": "dish-citrus.8a8f3502.jpg",
       "category": "cookbook",
       "collection": "dish",
       "title": "Citrus halves",
@@ -368,7 +368,7 @@
     },
     {
       "id": "info-joinery",
-      "file": "info-joinery.jpg",
+      "file": "info-joinery.9ef33291.jpg",
       "category": "informational",
       "collection": "info",
       "title": "Joinery detail",
@@ -385,7 +385,7 @@
     },
     {
       "id": "info-studio",
-      "file": "info-studio.jpg",
+      "file": "info-studio.11310469.jpg",
       "category": "informational",
       "collection": "info",
       "title": "Artist’s studio",
@@ -402,7 +402,7 @@
     },
     {
       "id": "info-workshop",
-      "file": "info-workshop.jpg",
+      "file": "info-workshop.11a5bd83.jpg",
       "category": "informational",
       "collection": "info",
       "title": "Workshop bench",
@@ -420,7 +420,7 @@
     },
     {
       "id": "info-tools",
-      "file": "info-tools.jpg",
+      "file": "info-tools.4e4a8073.jpg",
       "category": "informational",
       "collection": "info",
       "title": "Hand tools laid out",
@@ -438,7 +438,7 @@
     },
     {
       "id": "info-books",
-      "file": "info-books.jpg",
+      "file": "info-books.341c10ee.jpg",
       "category": "informational",
       "collection": "info",
       "title": "Reference books",
@@ -456,7 +456,7 @@
     },
     {
       "id": "info-diagrams",
-      "file": "info-diagrams.jpg",
+      "file": "info-diagrams.5c10fd3f.jpg",
       "category": "informational",
       "collection": "info",
       "title": "Technical sketchbook",
@@ -474,7 +474,7 @@
     },
     {
       "id": "mag-couture",
-      "file": "mag-couture.jpg",
+      "file": "mag-couture.be353988.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Couture detail",
@@ -492,7 +492,7 @@
     },
     {
       "id": "mag-portrait",
-      "file": "mag-portrait.jpg",
+      "file": "mag-portrait.ec2176a7.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Studio portrait",
@@ -510,7 +510,7 @@
     },
     {
       "id": "mag-runner",
-      "file": "mag-runner.jpg",
+      "file": "mag-runner.34281f52.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Track runner",
@@ -528,7 +528,7 @@
     },
     {
       "id": "mag-sculpture",
-      "file": "mag-sculpture.jpg",
+      "file": "mag-sculpture.3c1ab5dc.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Gallery sculpture",
@@ -546,7 +546,7 @@
     },
     {
       "id": "mag-interior",
-      "file": "mag-interior.jpg",
+      "file": "mag-interior.ea088833.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Calm interior",
@@ -564,7 +564,7 @@
     },
     {
       "id": "mag-architecture",
-      "file": "mag-architecture.jpg",
+      "file": "mag-architecture.ea768eb7.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Modernist facade",
@@ -582,7 +582,7 @@
     },
     {
       "id": "mag-streetfood",
-      "file": "mag-streetfood.jpg",
+      "file": "mag-streetfood.86013b92.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Night market food",
@@ -600,7 +600,7 @@
     },
     {
       "id": "mag-music",
-      "file": "mag-music.jpg",
+      "file": "mag-music.3a21293a.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Stage lights",
@@ -618,7 +618,7 @@
     },
     {
       "id": "mag-chef",
-      "file": "mag-chef.jpg",
+      "file": "mag-chef.f1d38cba.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Plating at the pass",
@@ -636,7 +636,7 @@
     },
     {
       "id": "mag-dance",
-      "file": "mag-dance.jpg",
+      "file": "mag-dance.f02b6467.jpg",
       "category": "magazine",
       "collection": "mag",
       "title": "Dancer in the window",
@@ -654,7 +654,7 @@
     },
     {
       "id": "nature-ferns",
-      "file": "nature-ferns.jpg",
+      "file": "nature-ferns.aa267d69.jpg",
       "category": "photobook",
       "collection": "nature",
       "title": "Unfurling ferns",
@@ -672,7 +672,7 @@
     },
     {
       "id": "nature-mushrooms",
-      "file": "nature-mushrooms.jpg",
+      "file": "nature-mushrooms.b73b6596.jpg",
       "category": "photobook",
       "collection": "nature",
       "title": "Forest mushrooms",
@@ -690,7 +690,7 @@
     },
     {
       "id": "nature-waterfall",
-      "file": "nature-waterfall.jpg",
+      "file": "nature-waterfall.fd9dfdb6.jpg",
       "category": "photobook",
       "collection": "nature",
       "title": "Forest waterfall",
@@ -708,7 +708,7 @@
     },
     {
       "id": "family-picnic",
-      "file": "family-picnic.jpg",
+      "file": "family-picnic.a81b92e4.jpg",
       "category": "photobook",
       "collection": "family",
       "title": "Summer picnic",
@@ -726,7 +726,7 @@
     },
     {
       "id": "family-child",
-      "file": "family-child.jpg",
+      "file": "family-child.3bfdb4db.jpg",
       "category": "photobook",
       "collection": "family",
       "title": "Building blocks",
@@ -744,7 +744,7 @@
     },
     {
       "id": "family-grandparents",
-      "file": "family-grandparents.jpg",
+      "file": "family-grandparents.4333b20d.jpg",
       "category": "photobook",
       "collection": "family",
       "title": "Tea for two",
@@ -762,7 +762,7 @@
     },
     {
       "id": "family-dog",
-      "file": "family-dog.jpg",
+      "file": "family-dog.1b7c0257.jpg",
       "category": "photobook",
       "collection": "family",
       "title": "Porch dog",
@@ -780,7 +780,7 @@
     },
     {
       "id": "travel-coast",
-      "file": "travel-coast.jpg",
+      "file": "travel-coast.b30ad670.jpg",
       "category": "photobook",
       "collection": "travel",
       "title": "Low-tide coast",
@@ -798,7 +798,7 @@
     },
     {
       "id": "travel-mountains",
-      "file": "travel-mountains.jpg",
+      "file": "travel-mountains.a66ef190.jpg",
       "category": "photobook",
       "collection": "travel",
       "title": "Mountain valley at dawn",
@@ -816,7 +816,7 @@
     },
     {
       "id": "wedding-bride",
-      "file": "wedding-bride.jpg",
+      "file": "wedding-bride.9ba92fa8.jpg",
       "category": "photobook",
       "collection": "wedding",
       "title": "Bridal detail",
@@ -834,7 +834,7 @@
     },
     {
       "id": "wedding-confetti",
-      "file": "wedding-confetti.jpg",
+      "file": "wedding-confetti.1c9f6be9.jpg",
       "category": "photobook",
       "collection": "wedding",
       "title": "Confetti moment",
@@ -851,7 +851,7 @@
     },
     {
       "id": "wedding-dance",
-      "file": "wedding-dance.jpg",
+      "file": "wedding-dance.c1d72c2f.jpg",
       "category": "photobook",
       "collection": "wedding",
       "title": "First dance",
@@ -869,7 +869,7 @@
     },
     {
       "id": "wedding-walk",
-      "file": "wedding-walk.jpg",
+      "file": "wedding-walk.159c0d08.jpg",
       "category": "photobook",
       "collection": "wedding",
       "title": "Down the aisle",
@@ -886,7 +886,7 @@
     },
     {
       "id": "travel-cottage",
-      "file": "travel-cottage.jpg",
+      "file": "travel-cottage.ee7e038f.jpg",
       "category": "photobook",
       "collection": "travel",
       "title": "Lakeside cottage at dawn",
@@ -904,7 +904,7 @@
     },
     {
       "id": "family-garden",
-      "file": "family-garden.jpg",
+      "file": "family-garden.36a14942.jpg",
       "category": "photobook",
       "collection": "family",
       "title": "Garden helpers",
@@ -922,7 +922,7 @@
     },
     {
       "id": "nature-stones",
-      "file": "nature-stones.jpg",
+      "file": "nature-stones.bfd52726.jpg",
       "category": "photobook",
       "collection": "nature",
       "title": "River stones",
@@ -940,7 +940,7 @@
     },
     {
       "id": "family-birthday",
-      "file": "family-birthday.jpg",
+      "file": "family-birthday.147fe257.jpg",
       "category": "photobook",
       "collection": "family",
       "title": "Birthday cake",
@@ -958,7 +958,7 @@
     },
     {
       "id": "travel-desert",
-      "file": "travel-desert.jpg",
+      "file": "travel-desert.d462cbfb.jpg",
       "category": "photobook",
       "collection": "travel",
       "title": "Desert dunes at sunset",
@@ -976,7 +976,7 @@
     },
     {
       "id": "nature-lake",
-      "file": "nature-lake.jpg",
+      "file": "nature-lake.5438dc51.jpg",
       "category": "photobook",
       "collection": "nature",
       "title": "Alpine lake at first light",
@@ -994,7 +994,7 @@
     },
     {
       "id": "wedding-table",
-      "file": "wedding-table.jpg",
+      "file": "wedding-table.485e2eb4.jpg",
       "category": "photobook",
       "collection": "wedding",
       "title": "Reception table",
@@ -1012,7 +1012,7 @@
     },
     {
       "id": "travel-road",
-      "file": "travel-road.jpg",
+      "file": "travel-road.26fb5469.jpg",
       "category": "photobook",
       "collection": "travel",
       "title": "Road through the hills",
@@ -1030,7 +1030,7 @@
     },
     {
       "id": "nature-aurora",
-      "file": "nature-aurora.jpg",
+      "file": "nature-aurora.7a07457a.jpg",
       "category": "photobook",
       "collection": "nature",
       "title": "Aurora over the lake",
@@ -1048,7 +1048,7 @@
     },
     {
       "id": "family-beach",
-      "file": "family-beach.jpg",
+      "file": "family-beach.650046f4.jpg",
       "category": "photobook",
       "collection": "family",
       "title": "Beach picnic",
@@ -1066,7 +1066,7 @@
     },
     {
       "id": "story-balloon",
-      "file": "story-balloon.jpg",
+      "file": "story-balloon.2ee4ad09.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Balloon over the valley",
@@ -1084,7 +1084,7 @@
     },
     {
       "id": "story-castle",
-      "file": "story-castle.jpg",
+      "file": "story-castle.48515796.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Castle at dusk",
@@ -1102,7 +1102,7 @@
     },
     {
       "id": "story-dragon",
-      "file": "story-dragon.jpg",
+      "file": "story-dragon.bf682422.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Friendly dragon",
@@ -1119,7 +1119,7 @@
     },
     {
       "id": "story-lantern",
-      "file": "story-lantern.jpg",
+      "file": "story-lantern.c24e6296.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Lantern in the woods",
@@ -1137,7 +1137,7 @@
     },
     {
       "id": "story-rocket",
-      "file": "story-rocket.jpg",
+      "file": "story-rocket.55f0ce51.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Rocket to the stars",
@@ -1155,7 +1155,7 @@
     },
     {
       "id": "story-squirrel",
-      "file": "story-squirrel.jpg",
+      "file": "story-squirrel.cb1a466e.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Squirrel with an acorn",
@@ -1173,7 +1173,7 @@
     },
     {
       "id": "story-turtle",
-      "file": "story-turtle.jpg",
+      "file": "story-turtle.6b30fc83.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Sea turtle",
@@ -1191,7 +1191,7 @@
     },
     {
       "id": "story-woodland",
-      "file": "story-woodland.jpg",
+      "file": "story-woodland.da3d17d5.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Woodland path",
@@ -1209,7 +1209,7 @@
     },
     {
       "id": "story-sea",
-      "file": "story-sea.jpg",
+      "file": "story-sea.30e90c99.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Lighthouse at dusk",
@@ -1227,7 +1227,7 @@
     },
     {
       "id": "story-fox",
-      "file": "story-fox.jpg",
+      "file": "story-fox.755071fa.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Fox in the leaves",
@@ -1245,7 +1245,7 @@
     },
     {
       "id": "story-garden",
-      "file": "story-garden.jpg",
+      "file": "story-garden.725b9a92.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Garden gate",
@@ -1263,7 +1263,7 @@
     },
     {
       "id": "story-snow",
-      "file": "story-snow.jpg",
+      "file": "story-snow.98012613.jpg",
       "category": "storybook",
       "collection": "story",
       "title": "Snowy village at night",
@@ -1281,7 +1281,7 @@
     },
     {
       "id": "work-planner",
-      "file": "work-planner.jpg",
+      "file": "work-planner.5d638335.jpg",
       "category": "workbook",
       "collection": "work",
       "title": "Weekly planner spread",
@@ -1299,7 +1299,7 @@
     },
     {
       "id": "work-journal",
-      "file": "work-journal.jpg",
+      "file": "work-journal.ca05570c.jpg",
       "category": "workbook",
       "collection": "work",
       "title": "Indigo journal",
@@ -1317,7 +1317,7 @@
     },
     {
       "id": "work-desk",
-      "file": "work-desk.jpg",
+      "file": "work-desk.53c841dc.jpg",
       "category": "workbook",
       "collection": "work",
       "title": "Notebook and laptop",
@@ -1335,7 +1335,7 @@
     },
     {
       "id": "work-notes",
-      "file": "work-notes.jpg",
+      "file": "work-notes.530cba9d.jpg",
       "category": "workbook",
       "collection": "work",
       "title": "Planning wall",
@@ -1353,7 +1353,7 @@
     },
     {
       "id": "work-goals",
-      "file": "work-goals.jpg",
+      "file": "work-goals.833759f3.jpg",
       "category": "workbook",
       "collection": "work",
       "title": "Goals and habits desk",
@@ -1371,7 +1371,7 @@
     },
     {
       "id": "work-review",
-      "file": "work-review.jpg",
+      "file": "work-review.9639e5a6.jpg",
       "category": "workbook",
       "collection": "work",
       "title": "Dot-grid journal",
