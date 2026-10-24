@@ -16,6 +16,8 @@ import {
 } from '../data/visualTemplatesCatalog';
 import ExactTemplatePageRenderer from '../components/ExactTemplatePageRenderer';
 import BookIndexPageRenderer from '../components/BookIndexPageRenderer';
+import CoverArtwork from '../components/CoverArtwork';
+import IntroductionPageEditor from '../components/IntroductionPageEditor';
 import { getChapterPageForEditor, getChapterPages } from '../utils/chapterPages';
 
 const CLASSICAL_SERIF =
@@ -54,6 +56,7 @@ export default function ExportPublishView({
 }) {
   const [downloadingFormat, setDownloadingFormat] = useState(null);
   // Preview the Chapter Index first; chapter and page selection are kept separate.
+  // readerMode: 'index' | 'page' | 'cover' | 'intro'
   const [readerMode, setReaderMode] = useState('index');
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
   const [activePageIndex, setActivePageIndex] = useState(0);
@@ -162,6 +165,34 @@ export default function ExportPublishView({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setReaderMode('cover')}
+              className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+              style={readerMode === 'cover' ? GOLD_BTN_STYLE : NAVY_BTN_STYLE}
+            >
+              <BookOpen
+                className={`w-3.5 h-3.5 ${
+                  readerMode === 'cover' ? 'text-[#061128]' : 'text-[#F5C451]'
+                }`}
+              />
+              <span>Front Cover</span>
+            </button>
+            {String(project.introduction?.contentHtml || '').trim() ? (
+              <button
+                type="button"
+                onClick={() => setReaderMode('intro')}
+                className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                style={readerMode === 'intro' ? GOLD_BTN_STYLE : NAVY_BTN_STYLE}
+              >
+                <FileText
+                  className={`w-3.5 h-3.5 ${
+                    readerMode === 'intro' ? 'text-[#061128]' : 'text-[#F5C451]'
+                  }`}
+                />
+                <span>Introduction</span>
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setReaderMode('index')}
@@ -291,9 +322,30 @@ export default function ExportPublishView({
             </div>
           </div>
 
-          {/* Preview the Chapter Index or a selected page */}
+          {/* Preview the cover, Introduction, Chapter Index or a selected page */}
           <div className="lg:col-span-8 space-y-3">
-            {readerMode === 'index' ? (
+            {readerMode === 'cover' ? (
+              <div className="mx-auto w-full max-w-md">
+                <CoverArtwork
+                  project={project}
+                  coverConfig={cover}
+                  visualTemplate={visualTpl}
+                  trimSize={activeCategory.trimSize || '6x9'}
+                  className="w-full shadow-2xl"
+                />
+                <p className="mt-3 text-center text-[11px] uppercase tracking-widest" style={{ color: '#F3D78B' }}>
+                  Front cover · {activeCategory.trimSize || '6x9'}
+                </p>
+              </div>
+            ) : readerMode === 'intro' ? (
+              <IntroductionPageEditor
+                project={project}
+                visualTemplate={visualTpl}
+                fontFamily={cover.fontFamily || visualTpl.fontFamily || ''}
+                introduction={project.introduction}
+                editable={false}
+              />
+            ) : readerMode === 'index' ? (
               <BookIndexPageRenderer
                 project={project}
                 pages={chapters}

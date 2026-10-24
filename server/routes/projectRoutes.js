@@ -1,6 +1,6 @@
 const express = require('express');
 const crypto = require('node:crypto');
-const { db, countWordsFromHtml, syncStructuredContentToHtml } = require('../db');
+const { db, countWordsFromHtml, sanitizeRichHtmlServer, syncStructuredContentToHtml } = require('../db');
 const { requireAuth, verifyProjectOwnership } = require('../auth');
 const { STARTER_TEMPLATES, PUBLICATION_TYPES, PAGE_LAYOUT_LIBRARY } = require('../templatesData');
 const { formatCustomTemplate } = require('./templateRoutes');
@@ -27,6 +27,8 @@ function hydrateProjectSummary(projRow) {
 
   let coverConfig = {};
   try { coverConfig = JSON.parse(projRow.cover_config_json || '{}'); } catch { coverConfig = {}; }
+  let introduction = {};
+  try { introduction = JSON.parse(projRow.introduction_json || '{}'); } catch { introduction = {}; }
   const tpl = resolveTemplate(projRow.template_id);
   const pubType = PUBLICATION_TYPES.find(p => p.id === (projRow.book_type || tpl?.publicationType || tpl?.bookType));
 
@@ -52,6 +54,10 @@ function hydrateProjectSummary(projRow) {
     totalChapters: Number(stats?.totalChapters || 0),
     completedChapters: Number(stats?.completedChapters || 0),
     coverConfig,
+    introduction: {
+      title: typeof introduction.title === 'string' && introduction.title.trim() ? introduction.title.trim() : '',
+      contentHtml: typeof introduction.contentHtml === 'string' ? introduction.contentHtml : ''
+    },
     lastOpenedChapterId: projRow.last_opened_chapter_id,
     createdAt: projRow.created_at,
     updatedAt: projRow.updated_at
@@ -377,6 +383,7 @@ router.put('/:id', requireAuth, (req, res) => {
     currentStage,
     targetWordCount,
     coverConfig,
+    introduction,
     lastOpenedChapterId
   } = req.body || {};
 
@@ -384,6 +391,18 @@ router.put('/:id', requireAuth, (req, res) => {
   try { mergedCover = JSON.parse(cur.cover_config_json || '{}'); } catch { mergedCover = {}; }
   if (coverConfig && typeof coverConfig === 'object') {
     mergedCover = { ...mergedCover, ...coverConfig };
+  }
+
+  let mergedIntroduction = {};
+  try { mergedIntroduction = JSON.parse(cur.introduction_json || '{}'); } catch { mergedIntroduction = {}; }
+  if (introduction && typeof introduction === 'object') {
+    mergedIntroduction = {
+      ...mergedIntroduction,
+      ...(introduction.title !== undefined ? { title: String(introduction.title).trim().slice(0, 200) } : {}),
+      ...(introduction.contentHtml !== undefined
+        ? { contentHtml: sanitizeRichHtmlServer(String(introduction.contentHtml || '')) }
+        : {})
+    };
   }
 
   const resolvedBookType = publicationType !== undefined ? String(publicationType) : (bookType !== undefined ? String(bookType) : cur.book_type);
@@ -402,6 +421,7 @@ router.put('/:id', requireAuth, (req, res) => {
         current_stage = ?,
         target_word_count = ?,
         cover_config_json = ?,
+        introduction_json = ?,
         last_opened_chapter_id = ?,
         updated_at = ?
     WHERE id = ?
@@ -417,6 +437,7 @@ router.put('/:id', requireAuth, (req, res) => {
     currentStage !== undefined ? String(currentStage) : cur.current_stage,
     targetWordCount !== undefined ? Number(targetWordCount) || cur.target_word_count : cur.target_word_count,
     JSON.stringify(mergedCover),
+    JSON.stringify(mergedIntroduction),
     lastOpenedChapterId !== undefined ? lastOpenedChapterId : cur.last_opened_chapter_id,
     now,
     cur.id

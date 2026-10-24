@@ -241,6 +241,7 @@ function initDatabase() {
       current_stage TEXT NOT NULL DEFAULT 'manuscript',
       target_word_count INTEGER NOT NULL DEFAULT 40000,
       cover_config_json TEXT NOT NULL DEFAULT '{}',
+      introduction_json TEXT NOT NULL DEFAULT '{}',
       last_opened_chapter_id TEXT DEFAULT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
@@ -384,6 +385,13 @@ function initDatabase() {
   const assetCols = db.prepare('PRAGMA table_info(assets)').all().map((column) => column.name);
   if (!assetCols.includes('license_url')) {
     db.exec(`ALTER TABLE assets ADD COLUMN license_url TEXT NOT NULL DEFAULT '';`);
+  }
+
+  // The full-page Introduction (words of expression / dedication) editor stores its
+  // content on the project row; migrate databases created before the column existed.
+  const projCols = db.prepare('PRAGMA table_info(projects)').all().map((column) => column.name);
+  if (!projCols.includes('introduction_json')) {
+    db.exec(`ALTER TABLE projects ADD COLUMN introduction_json TEXT NOT NULL DEFAULT '{}';`);
   }
 
   // Gemini 2.5 Flash-Lite and Gemini 3.7 Flash are no longer the current
