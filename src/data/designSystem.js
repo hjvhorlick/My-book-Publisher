@@ -492,6 +492,320 @@ export function getBlockBorderStyle(id) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Block colour, depth and aged paper                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Text blocks in the sample pictures are not just outlined — they are
+ * *coloured* panes: a cream recipe card on a warm page, a warm wash behind a
+ * caption, a deep panel behind a quote. They also sit slightly above the page,
+ * with the soft shadow of a card laid on paper. And a few of the samples look
+ * like an old book: foxed spots, a warm vignette, a woven sheet.
+ *
+ * Each of those is an optional, one-tap choice. `auto` keeps a block's own
+ * designed background, so nothing changes unless the author asks for it.
+ */
+export const BLOCK_FILLS = Object.freeze([
+  {
+    id: 'auto',
+    name: 'As designed',
+    blurb: 'Keep the text-block style exactly as it was designed.'
+  },
+  {
+    id: 'clear',
+    name: 'No colour',
+    blurb: 'The words sit straight on the page tint.'
+  },
+  {
+    id: 'wash',
+    name: 'Colour wash',
+    blurb: 'A gentle wash of the block colour behind the words.'
+  },
+  {
+    id: 'paper',
+    name: 'Paper card',
+    blurb: 'A warm, slightly lighter card lifted off the page.'
+  },
+  {
+    id: 'rich',
+    name: 'Rich colour',
+    blurb: 'A strong colour panel — the ink is still contrast-checked.'
+  }
+]);
+
+export const BLOCK_DEPTHS = Object.freeze([
+  {
+    id: 'flat',
+    name: 'Flat',
+    blurb: 'Print-flat: no shadow at all.'
+  },
+  {
+    id: 'soft',
+    name: 'Soft lift',
+    blurb: 'A slight shadow, so the block sits just above the page.'
+  },
+  {
+    id: 'raised',
+    name: 'Raised card',
+    blurb: 'A deeper shadow and a fine top highlight, like a card laid on paper.'
+  }
+]);
+
+export const PAGE_TEXTURES = Object.freeze([
+  {
+    id: 'none',
+    name: 'Fresh page',
+    blurb: 'Clean, modern paper.'
+  },
+  {
+    id: 'aged',
+    name: 'Aged paper',
+    blurb: 'Warm foxing and a soft vignette, like a book that has been read for years.'
+  },
+  {
+    id: 'linen',
+    name: 'Linen',
+    blurb: 'A fine woven texture, like a cloth-bound edition.'
+  },
+  {
+    id: 'vellum',
+    name: 'Vellum',
+    blurb: 'Soft hand-made mottling, cloudy and quiet.'
+  }
+]);
+
+/**
+ * Where the text blocks sit relative to the artwork.
+ *
+ * The sample pictures do not keep text politely beside the photographs: a
+ * caption card lies across the corner of the photo, a recipe card sits on the
+ * food shot, and some pages stack two cards so the lower one tucks over the
+ * upper. These placements do the same thing on a real page — always with an
+ * opaque card and a shadow, so the words stay readable over whatever is
+ * underneath.
+ */
+export const BLOCK_PLACEMENTS = Object.freeze([
+  {
+    id: 'inline',
+    name: 'Beside the artwork',
+    blurb: 'Blocks sit in their own column, clear of the photographs.'
+  },
+  {
+    id: 'over-image',
+    name: 'Over the artwork',
+    blurb: 'The first text block lifts onto the edge of the artwork, like a caption card laid on a photograph.'
+  },
+  {
+    id: 'stacked',
+    name: 'Stacked cards',
+    blurb: 'Each text block tucks slightly over the one above it, in a stepped column.'
+  },
+  {
+    id: 'floating',
+    name: 'Floating panel',
+    blurb: 'A raised, inset panel that breaks the page margin, magazine-style.'
+  }
+]);
+
+const BLOCK_PLACEMENT_MAP = new Map(BLOCK_PLACEMENTS.map((placement) => [placement.id, placement]));
+
+export function getBlockPlacement(id) {
+  return BLOCK_PLACEMENT_MAP.get(id) || BLOCK_PLACEMENT_MAP.get('inline');
+}
+
+/**
+ * Inline style for one text block under the chosen placement.
+ * `index` is the block's position on the page (0 = the first block).
+ */
+export function blockOverlapStyle(design = {}, index = 0) {
+  const id = getBlockPlacement(design.blockOverlap).id;
+  if (id === 'inline') return null;
+
+  if (id === 'over-image') {
+    // Only the first block lifts; the rest keep the normal rhythm.
+    if (index > 0) return null;
+    // Lifts onto the bottom edge of the artwork and bleeds a little wider than
+    // its column, the way a caption card crosses onto a photograph.
+    return {
+      marginTop: 'clamp(-2.9rem, -3.6vw, -1.3rem)',
+      marginLeft: '-0.85rem',
+      marginRight: '-0.85rem',
+      position: 'relative',
+      zIndex: 3
+    };
+  }
+
+  if (id === 'stacked') {
+    if (index === 0) return { position: 'relative', zIndex: 2 };
+    const step = Math.min(index, 4);
+    return {
+      marginTop: '-1.15rem',
+      marginLeft: `${0.55 * step}rem`,
+      marginRight: `${0.2 * step}rem`,
+      position: 'relative',
+      zIndex: 2 + step
+    };
+  }
+
+  // floating
+  return {
+    marginTop: index === 0 ? '-1.4rem' : '0.35rem',
+    marginLeft: '1.1rem',
+    marginRight: '1.1rem',
+    position: 'relative',
+    zIndex: 3
+  };
+}
+
+/** A design whose blocks are opaque and lifted, as overlapping cards must be. */
+export function overlapSafeDesign(design = {}) {
+  const id = getBlockPlacement(design.blockOverlap).id;
+  if (id === 'inline') return design;
+  const fillNeedsHelp = !design.blockFillId || design.blockFillId === 'auto' || design.blockFillId === 'clear';
+  return {
+    ...design,
+    blockFillId: fillNeedsHelp ? 'paper' : design.blockFillId,
+    blockDepthId: design.blockDepthId === 'flat' ? 'raised' : design.blockDepthId
+  };
+}
+
+const BLOCK_FILL_MAP = new Map(BLOCK_FILLS.map((fill) => [fill.id, fill]));
+const BLOCK_DEPTH_MAP = new Map(BLOCK_DEPTHS.map((depth) => [depth.id, depth]));
+const PAGE_TEXTURE_MAP = new Map(PAGE_TEXTURES.map((texture) => [texture.id, texture]));
+
+export function getBlockFill(id) {
+  return BLOCK_FILL_MAP.get(id) || BLOCK_FILL_MAP.get('auto');
+}
+
+export function getBlockDepth(id) {
+  return BLOCK_DEPTH_MAP.get(id) || BLOCK_DEPTH_MAP.get('soft');
+}
+
+export function getPageTexture(id) {
+  return PAGE_TEXTURE_MAP.get(id) || PAGE_TEXTURE_MAP.get('none');
+}
+
+/**
+ * Step a fill colour towards the page tint until the block's own ink is
+ * readable on it. A dark page tint therefore lightens a dark fill instead of
+ * hiding the words — the same contrast guarantee the border colours get.
+ */
+function legibleFill(fill, ink, pageBg, min = 4.5) {
+  let candidate = fill;
+  for (let step = 0; step <= 10; step += 1) {
+    if (contrastRatio(candidate, ink) >= min) return candidate;
+    candidate = mixColors(candidate, pageBg, 0.16);
+  }
+  return fill;
+}
+
+/** The CSS background for a block, or '' when the style keeps its own. */
+export function blockFillColor(design = {}, fillId) {
+  const id = getBlockFill(fillId || design.blockFillId).id;
+  if (id === 'auto') return '';
+  if (id === 'clear') return 'transparent';
+
+  const pageBg = design.pageBg || '#FFFFFF';
+  const ink = design.bodyText || design.pageText || '#1F2937';
+  const border = design.blockColor || design.borderColor || design.accentColor || '#8F6534';
+
+  if (id === 'paper') {
+    // A warm card that stays close to the page, the way the recipe cards and
+    // caption plaques look in the samples.
+    const card = mixColors(pageBg, '#FFFDF6', 0.78);
+    return legibleFill(card, ink, pageBg);
+  }
+  if (id === 'rich') {
+    return legibleFill(mixColors(border, pageBg, 0.34), ink, pageBg);
+  }
+  return legibleFill(mixColors(border, pageBg, 0.14), ink, pageBg);
+}
+
+/** The CSS box-shadow for a block's depth, or '' when it is print-flat. */
+export function blockDepthShadow(design = {}, depthId) {
+  const id = getBlockDepth(depthId || design.blockDepthId).id;
+  if (id === 'flat') return '';
+  const pageText = design.pageText || design.bodyText || '#1F2937';
+  const shade = mixColors(pageText, '#000000', 0.5);
+  if (id === 'raised') {
+    return [
+      `0 12px 26px ${withAlpha(shade, 0.22)}`,
+      `0 3px 7px ${withAlpha(shade, 0.16)}`,
+      `inset 0 1px 0 ${withAlpha('#FFFFFF', 0.45)}`
+    ].join(', ');
+  }
+  return `0 3px 10px ${withAlpha(shade, 0.15)}`;
+}
+
+/**
+ * Aged-paper decoration as CSS `background-image` layers. It is drawn on a
+ * pointer-events-none overlay above the page tint and below the words, so it
+ * can never blur, tint or interfere with typing.
+ */
+export function pageTextureLayers(design = {}, textureId) {
+  const id = getPageTexture(textureId || design.pageTextureId).id;
+  if (id === 'none') return { backgroundImage: '', boxShadow: '' };
+
+  const warm = mixColors('#8B5A2B', design.borderInk || design.borderColor || '#8B5A2B', 0.4);
+  const spot = withAlpha(warm, 0.16);
+  const spotSoft = withAlpha(warm, 0.09);
+
+  if (id === 'aged') {
+    const foxing = [
+      [18, 26, 1.6], [31, 12, 1.1], [72, 18, 1.4], [86, 41, 1.9],
+      [12, 68, 1.3], [43, 84, 1.7], [67, 72, 1.2], [88, 88, 1.5],
+      [55, 47, 1.0], [24, 52, 0.9]
+    ]
+      .map(([x, y, r]) => `radial-gradient(circle at ${x}% ${y}%, ${spot} 0 ${r}px, transparent ${(r * 1.9).toFixed(1)}px)`)
+      .join(', ');
+    return {
+      backgroundImage: [
+        `radial-gradient(ellipse at 8% 4%, ${withAlpha(warm, 0.12)} 0, transparent 42%)`,
+        `radial-gradient(ellipse at 94% 96%, ${withAlpha(warm, 0.13)} 0, transparent 46%)`,
+        `radial-gradient(ellipse at 50% 50%, ${withAlpha('#FFF3D6', 0.10)} 0, transparent 70%)`,
+        foxing
+      ].join(', '),
+      boxShadow: `inset 0 0 64px ${withAlpha(warm, 0.17)}, inset 0 0 14px ${spotSoft}`
+    };
+  }
+
+  if (id === 'linen') {
+    return {
+      backgroundImage: [
+        'repeating-linear-gradient(0deg, rgba(90, 62, 35, 0.045) 0 1px, transparent 1px 3px)',
+        'repeating-linear-gradient(90deg, rgba(90, 62, 35, 0.045) 0 1px, transparent 1px 3px)',
+        `radial-gradient(ellipse at 50% 50%, transparent 55%, ${withAlpha(warm, 0.08)} 100%)`
+      ].join(', '),
+      boxShadow: ''
+    };
+  }
+
+  // vellum — soft, cloudy mottling like a hand-made sheet
+  return {
+    backgroundImage: [
+      `radial-gradient(ellipse at 22% 28%, ${spotSoft} 0, transparent 52%)`,
+      `radial-gradient(ellipse at 78% 66%, ${spotSoft} 0, transparent 58%)`,
+      `radial-gradient(ellipse at 46% 86%, ${withAlpha(warm, 0.06)} 0, transparent 44%)`,
+      'repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 5px)'
+    ].join(', '),
+    boxShadow: `inset 0 0 40px ${withAlpha(warm, 0.07)}`
+  };
+}
+
+/** An inline style object for the aged-paper overlay of a page. */
+export function pageTextureStyle(design = {}, textureId) {
+  const { backgroundImage, boxShadow } = pageTextureLayers(design, textureId);
+  if (!backgroundImage && !boxShadow) return null;
+  return {
+    position: 'absolute',
+    inset: 0,
+    backgroundImage: backgroundImage || undefined,
+    boxShadow: boxShadow || undefined,
+    pointerEvents: 'none'
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* Headings                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -678,65 +992,64 @@ const HEADING_BY_TEMPLATE_HEADING_STYLE = {
  */
 export const TEMPLATE_DESIGN_OVERRIDES = Object.freeze({
   // --- Photo books: matted gallery frames, caption plaques -------------
-  'photo-warm-family': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-rule', ornamentId: 'fleur', kicker: true },
-  'photo-modern-minimal': { pageBorderId: 'pinstripe', blockBorderId: 'shadow-card', headingStyleId: 'top-banner', ornamentId: 'rule', kicker: false },
-  'photo-gallery-frame': { pageBorderId: 'filigree', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'diamond', kicker: true },
-  'photo-vintage-polaroid': { pageBorderId: 'dashed-craft', blockBorderId: 'ticket', headingStyleId: 'centered-pill', ornamentId: 'asterisk', kicker: false },
-  'photo-botanical-sage': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'fleur', kicker: false },
-  'photo-wedding-ivory': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'crest', kicker: true },
-  'photo-monochrome-noir': { pageBorderId: 'gallery-matte', blockBorderId: 'rule-only', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true },
-  'photo-sunset-terracotta': { pageBorderId: 'ribbon-corners', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'diamond', kicker: false },
+  'photo-warm-family': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-rule', ornamentId: 'fleur', kicker: true, blockFillId: 'paper', blockDepthId: 'soft' },
+  'photo-modern-minimal': { pageBorderId: 'pinstripe', blockBorderId: 'shadow-card', headingStyleId: 'top-banner', ornamentId: 'rule', kicker: false, blockFillId: 'clear', blockDepthId: 'flat' },
+  'photo-gallery-frame': { pageBorderId: 'filigree', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'diamond', kicker: true, blockFillId: 'paper', blockDepthId: 'raised', blockOverlap: 'over-image' },
+  'photo-vintage-polaroid': { pageBorderId: 'dashed-craft', blockBorderId: 'ticket', headingStyleId: 'centered-pill', ornamentId: 'asterisk', kicker: false, blockFillId: 'paper', blockDepthId: 'raised', pageTextureId: 'aged', blockOverlap: 'over-image' },
+  'photo-botanical-sage': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'fleur', kicker: false, blockFillId: 'wash', blockDepthId: 'soft' },
+  'photo-wedding-ivory': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'crest', kicker: true, blockFillId: 'paper', blockDepthId: 'soft', pageTextureId: 'vellum', blockOverlap: 'over-image' },
+  'photo-monochrome-noir': { pageBorderId: 'gallery-matte', blockBorderId: 'rule-only', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true, blockFillId: 'clear', blockDepthId: 'flat' },
+  'photo-sunset-terracotta': { pageBorderId: 'ribbon-corners', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'diamond', kicker: false, blockFillId: 'wash', blockDepthId: 'raised', blockOverlap: 'stacked' },
 
   // --- Cookbooks: framed recipe cards, ingredient boxes ----------------
-  'cook-warm-border': { pageBorderId: 'double-rule', blockBorderId: 'parchment', headingStyleId: 'top-banner', ornamentId: 'rule', kicker: false },
-  'cook-modern-spread': { pageBorderId: 'hairline', blockBorderId: 'tinted-panel', headingStyleId: 'left-bar', ornamentId: 'rule', kicker: true },
-  'cook-cozy-bakehouse': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'fleur', kicker: false },
-  'cook-mediterranean-sun': { pageBorderId: 'double-rule', blockBorderId: 'parchment', headingStyleId: 'top-banner', ornamentId: 'diamond', kicker: false },
-  'cook-rustic-farmhouse': { pageBorderId: 'corner-flourish', blockBorderId: 'double-rule', headingStyleId: 'centered-rule', ornamentId: 'fleur', kicker: true },
-  'cook-plant-botanical': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'fleur', kicker: false },
-  'cook-french-bistro': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'crest', kicker: true },
-  'cook-fiesta-spice': { pageBorderId: 'ribbon-corners', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'star', kicker: false },
+  'cook-warm-border': { pageBorderId: 'double-rule', blockBorderId: 'parchment', headingStyleId: 'top-banner', ornamentId: 'rule', kicker: false, blockFillId: 'paper', blockDepthId: 'raised', blockOverlap: 'over-image' },
+  'cook-modern-spread': { pageBorderId: 'hairline', blockBorderId: 'tinted-panel', headingStyleId: 'left-bar', ornamentId: 'rule', kicker: true, blockFillId: 'clear', blockDepthId: 'flat' },
+  'cook-cozy-bakehouse': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'fleur', kicker: false, blockFillId: 'paper', blockDepthId: 'raised', pageTextureId: 'linen', blockOverlap: 'over-image' },
+  'cook-mediterranean-sun': { pageBorderId: 'double-rule', blockBorderId: 'parchment', headingStyleId: 'top-banner', ornamentId: 'diamond', kicker: false, blockFillId: 'paper', blockDepthId: 'soft' },
+  'cook-rustic-farmhouse': { pageBorderId: 'corner-flourish', blockBorderId: 'double-rule', headingStyleId: 'centered-rule', ornamentId: 'fleur', kicker: true, blockFillId: 'paper', blockDepthId: 'soft', pageTextureId: 'aged' },
+  'cook-plant-botanical': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'fleur', kicker: false, blockFillId: 'wash', blockDepthId: 'soft' },
+  'cook-french-bistro': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'crest', kicker: true, blockFillId: 'paper', blockDepthId: 'raised', blockOverlap: 'over-image' },
+  'cook-fiesta-spice': { pageBorderId: 'ribbon-corners', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'star', kicker: false, blockFillId: 'wash', blockDepthId: 'raised', blockOverlap: 'stacked' },
 
   // --- Magazines: mastheads, rules, no ornamental frame ----------------
-  'mag-bold-editorial': { pageBorderId: 'masthead-band', blockBorderId: 'rule-only', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true },
-  'mag-lifestyle-minimal': { pageBorderId: 'hairline', blockBorderId: 'shadow-card', headingStyleId: 'minimal-caps', ornamentId: 'dots', kicker: false },
-  'mag-indigo-digest': { pageBorderId: 'inner-rule', blockBorderId: 'top-accent', headingStyleId: 'left-bar', ornamentId: 'diamond', kicker: true },
-  'mag-art-culture': { pageBorderId: 'pinstripe', blockBorderId: 'rule-only', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true },
-  'mag-tech-future': { pageBorderId: 'masthead-band', blockBorderId: 'tinted-panel', headingStyleId: 'masthead', ornamentId: 'diamond', kicker: true },
-  'mag-travel-wanderlust': { pageBorderId: 'ribbon-corners', blockBorderId: 'shadow-card', headingStyleId: 'top-banner', ornamentId: 'star', kicker: false },
-  'mag-fashion-vogue': { pageBorderId: 'inner-rule', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'crest', kicker: true },
-  'mag-sports-action': { pageBorderId: 'masthead-band', blockBorderId: 'top-accent', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true },
+  'mag-bold-editorial': { pageBorderId: 'masthead-band', blockBorderId: 'rule-only', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true, blockFillId: 'clear', blockDepthId: 'flat', blockOverlap: 'floating' },
+  'mag-lifestyle-minimal': { pageBorderId: 'hairline', blockBorderId: 'shadow-card', headingStyleId: 'minimal-caps', ornamentId: 'dots', kicker: false, blockFillId: 'clear', blockDepthId: 'soft' },
+  'mag-indigo-digest': { pageBorderId: 'inner-rule', blockBorderId: 'top-accent', headingStyleId: 'left-bar', ornamentId: 'diamond', kicker: true, blockFillId: 'wash', blockDepthId: 'soft' },
+  'mag-art-culture': { pageBorderId: 'pinstripe', blockBorderId: 'rule-only', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true, blockFillId: 'clear', blockDepthId: 'flat' },
+  'mag-tech-future': { pageBorderId: 'masthead-band', blockBorderId: 'tinted-panel', headingStyleId: 'masthead', ornamentId: 'diamond', kicker: true, blockFillId: 'rich', blockDepthId: 'raised', blockOverlap: 'stacked' },
+  'mag-travel-wanderlust': { pageBorderId: 'ribbon-corners', blockBorderId: 'shadow-card', headingStyleId: 'top-banner', ornamentId: 'star', kicker: false, blockFillId: 'paper', blockDepthId: 'raised', blockOverlap: 'over-image' },
+  'mag-fashion-vogue': { pageBorderId: 'inner-rule', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'crest', kicker: true, blockFillId: 'paper', blockDepthId: 'soft', pageTextureId: 'vellum', blockOverlap: 'over-image' },
+  'mag-sports-action': { pageBorderId: 'masthead-band', blockBorderId: 'top-accent', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true, blockFillId: 'rich', blockDepthId: 'flat' },
 
   // --- Storybooks: arch windows and ornamented frames ------------------
-  'story-starlight-frame': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'star', kicker: true, dropCap: true },
-  'story-sunny-adventure': { pageBorderId: 'arch-window', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'star', kicker: false },
+  'story-starlight-frame': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'star', kicker: true, dropCap: true, blockFillId: 'paper', blockDepthId: 'raised', pageTextureId: 'vellum', blockOverlap: 'over-image' },
+  'story-sunny-adventure': { pageBorderId: 'arch-window', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'star', kicker: false, blockFillId: 'wash', blockDepthId: 'soft' },
   'story-ocean-treasure': { pageBorderId: 'arch-window', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'dots', kicker: false },
-  'story-woodland-friends': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'fleur', kicker: false },
-  'story-cosmic-rocket': { pageBorderId: 'ribbon-corners', blockBorderId: 'shadow-card', headingStyleId: 'top-banner', ornamentId: 'star', kicker: false },
-  'story-fairy-castle': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'crest', kicker: true },
+  'story-woodland-friends': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'fleur', kicker: false, blockFillId: 'paper', blockDepthId: 'raised', pageTextureId: 'linen', blockOverlap: 'stacked' },
+  'story-cosmic-rocket': { pageBorderId: 'ribbon-corners', blockBorderId: 'shadow-card', headingStyleId: 'top-banner', ornamentId: 'star', kicker: false, blockFillId: 'rich', blockDepthId: 'raised' },
+  'story-fairy-castle': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'crest', kicker: true, blockFillId: 'paper', blockDepthId: 'raised', pageTextureId: 'vellum', blockOverlap: 'over-image' },
   'story-dino-jungle': { pageBorderId: 'dashed-craft', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'asterisk', kicker: false },
-  'story-pastel-lullaby': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'star', kicker: false },
+  'story-pastel-lullaby': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'centered-pill', ornamentId: 'star', kicker: false, blockFillId: 'wash', blockDepthId: 'soft', pageTextureId: 'vellum' },
 
   // --- How-to guides: banners, numbered steps, callouts ----------------
-  'info-blue-guide': { pageBorderId: 'none', blockBorderId: 'shadow-card', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true },
-  'info-emerald-handbook': { pageBorderId: 'hairline', blockBorderId: 'tinted-panel', headingStyleId: 'left-bar', ornamentId: 'diamond', kicker: true },
-  'info-amber-workshop': { pageBorderId: 'dashed-craft', blockBorderId: 'ticket', headingStyleId: 'top-banner', ornamentId: 'asterisk', kicker: false },
-  'info-purple-masterclass': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'star', kicker: true },
-  'info-teal-wellness': { pageBorderId: 'soft-rounded', blockBorderId: 'left-accent', headingStyleId: 'top-banner', ornamentId: 'dots', kicker: false },
-  'info-slate-business': { pageBorderId: 'pinstripe', blockBorderId: 'hairline', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true },
-  'info-coral-parenting': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'fleur', kicker: false },
-  'info-indigo-tech': { pageBorderId: 'pinstripe', blockBorderId: 'shadow-card', headingStyleId: 'masthead', ornamentId: 'diamond', kicker: true },
+  'info-blue-guide': { pageBorderId: 'none', blockBorderId: 'shadow-card', headingStyleId: 'masthead', ornamentId: 'rule', kicker: true, blockFillId: 'clear', blockDepthId: 'flat' },
+  'info-emerald-handbook': { pageBorderId: 'hairline', blockBorderId: 'tinted-panel', headingStyleId: 'left-bar', ornamentId: 'diamond', kicker: true, blockFillId: 'wash', blockDepthId: 'soft' },
+  'info-amber-workshop': { pageBorderId: 'dashed-craft', blockBorderId: 'ticket', headingStyleId: 'top-banner', ornamentId: 'asterisk', kicker: false, blockFillId: 'paper', blockDepthId: 'soft', blockOverlap: 'over-image' },
+  'info-purple-masterclass': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'star', kicker: true, blockFillId: 'paper', blockDepthId: 'raised', blockOverlap: 'floating' },
+  'info-teal-wellness': { pageBorderId: 'soft-rounded', blockBorderId: 'left-accent', headingStyleId: 'top-banner', ornamentId: 'dots', kicker: false, blockFillId: 'wash', blockDepthId: 'soft' },
+  'info-slate-business': { pageBorderId: 'pinstripe', blockBorderId: 'hairline', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true, blockFillId: 'paper', blockDepthId: 'soft' },
+  'info-coral-parenting': { pageBorderId: 'soft-rounded', blockBorderId: 'tinted-panel', headingStyleId: 'top-banner', ornamentId: 'fleur', kicker: false, blockFillId: 'paper', blockDepthId: 'soft' },
+  'info-indigo-tech': { pageBorderId: 'pinstripe', blockBorderId: 'shadow-card', headingStyleId: 'masthead', ornamentId: 'diamond', kicker: true, blockFillId: 'rich', blockDepthId: 'soft' },
 
   // --- Chapter books: the classic print samples ------------------------
-  'book-modern-clean': { pageBorderId: 'hairline', blockBorderId: 'rule-only', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true },
-  'book-warm-classic': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'fleur', dropCap: true, kicker: true, pageNumbers: 'roman' },
-  'book-vintage-memoir': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-rule', ornamentId: 'fleur', dropCap: true, kicker: true, pageNumbers: 'roman' },
-  'book-thriller-noir': { pageBorderId: 'inner-rule', blockBorderId: 'rule-only', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true },
-  'book-romance-blush': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'fleur', dropCap: true, kicker: false },
-  'book-scifi-cosmos': { pageBorderId: 'pinstripe', blockBorderId: 'tinted-panel', headingStyleId: 'kicker-overline', ornamentId: 'star', kicker: true },
-  'book-poetry-ivory': { pageBorderId: 'inner-rule', blockBorderId: 'underline-only', headingStyleId: 'kicker-overline', ornamentId: 'diamond', kicker: true },
-  'book-historical-crest': {
-    pageBorderId: 'crest-corners',
+  'book-modern-clean': { pageBorderId: 'hairline', blockBorderId: 'rule-only', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true, blockFillId: 'clear', blockDepthId: 'flat' },
+  'book-warm-classic': { pageBorderId: 'filigree', blockBorderId: 'parchment', headingStyleId: 'kicker-overline', ornamentId: 'fleur', dropCap: true, kicker: true, pageNumbers: 'roman', blockFillId: 'paper', blockDepthId: 'soft' },
+  'book-vintage-memoir': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-rule', ornamentId: 'fleur', dropCap: true, kicker: true, pageNumbers: 'roman', blockFillId: 'paper', blockDepthId: 'soft', pageTextureId: 'aged', blockOverlap: 'stacked' },
+  'book-thriller-noir': { pageBorderId: 'inner-rule', blockBorderId: 'rule-only', headingStyleId: 'minimal-caps', ornamentId: 'rule', kicker: true, blockFillId: 'clear', blockDepthId: 'flat' },
+  'book-romance-blush': { pageBorderId: 'corner-flourish', blockBorderId: 'parchment', headingStyleId: 'centered-pill', ornamentId: 'fleur', dropCap: true, kicker: false, blockFillId: 'paper', blockDepthId: 'soft', pageTextureId: 'vellum', blockOverlap: 'stacked' },
+  'book-scifi-cosmos': { pageBorderId: 'pinstripe', blockBorderId: 'tinted-panel', headingStyleId: 'kicker-overline', ornamentId: 'star', kicker: true, blockFillId: 'rich', blockDepthId: 'raised' },
+  'book-poetry-ivory': { pageBorderId: 'inner-rule', blockBorderId: 'underline-only', headingStyleId: 'kicker-overline', ornamentId: 'diamond', kicker: true, blockFillId: 'clear', blockDepthId: 'flat', pageTextureId: 'vellum' },
+  'book-historical-crest': { pageBorderId: 'crest-corners',
     blockBorderId: 'parchment',
     headingStyleId: 'kicker-overline',
     ornamentId: 'crest',
@@ -746,7 +1059,11 @@ export const TEMPLATE_DESIGN_OVERRIDES = Object.freeze({
     dropCapStyle: 'boxed',
     kicker: true,
     pageNumbers: 'roman',
-    pageNumberWord: 'Page'
+    pageNumberWord: 'Page',
+    // Cream card blocks lifted off a gently aged page, as in the sample.
+    blockFillId: 'paper',
+    blockDepthId: 'soft',
+    pageTextureId: 'aged'
   },
 
   // --- Workbooks --------------------------------------------------------
@@ -781,6 +1098,10 @@ const DEFAULTS = Object.freeze({
   ornamentId: 'fleur',
   dropCap: false,
   dropCapStyle: 'plain',
+  blockFillId: 'auto',
+  blockDepthId: 'soft',
+  blockOverlap: 'inline',
+  pageTextureId: 'none',
   kicker: true,
   pageNumbers: 'arabic',
   pageNumberWord: '',
@@ -862,6 +1183,11 @@ export function resolveTemplateDesign(template = {}, overrides = {}, options = {
     ornamentId: getOrnament(pick(safeOverrides.ornamentId, derived.ornamentId)).id,
     dropCap: pick(safeOverrides.dropCap, derived.dropCap) !== false,
     dropCapStyle: pick(safeOverrides.dropCapStyle, derived.dropCapStyle) === 'boxed' ? 'boxed' : 'plain',
+    // Block colour, card depth and aged-paper choice.
+    blockFillId: getBlockFill(pick(safeOverrides.blockFillId, derived.blockFillId)).id,
+    blockDepthId: getBlockDepth(pick(safeOverrides.blockDepthId, derived.blockDepthId)).id,
+    blockOverlap: getBlockPlacement(pick(safeOverrides.blockOverlap, derived.blockOverlap)).id,
+    pageTextureId: getPageTexture(pick(safeOverrides.pageTextureId, derived.pageTextureId)).id,
     kicker: pick(safeOverrides.kicker, derived.kicker) !== false,
     // An explicit empty string means "number only", so check the key itself
     // rather than falling back to the template's wording.
@@ -877,6 +1203,12 @@ export function resolveTemplateDesign(template = {}, overrides = {}, options = {
     fontOverride: Boolean(options.fontFamily),
     presetId: safeOverrides.presetId || ''
   };
+
+  // Resolve the paint that depends on the colours above, once, so every
+  // renderer (studio, wizard preview, Introduction page, export) agrees.
+  design.blockFill = blockFillColor(design);
+  design.blockDepthShadow = blockDepthShadow(design);
+  design.pageTexture = pageTextureLayers(design);
 
   return design;
 }
@@ -1021,7 +1353,20 @@ export function blockStyleFor(design, options = {}) {
     pageText: design?.pageText || '#1F2937',
     radius: options.radius
   });
-  return { ...css, ...(options.style || {}) };
+
+  // Fill and depth are layered on top of the chosen block treatment: a
+  // parchment card can also be a warm coloured card, and every block can sit
+  // a little above the page.
+  const fill = blockFillColor(design, options.fillId);
+  const depth = blockDepthShadow(design, options.depthId);
+  const baseShadow = options.keepBaseShadow === false ? '' : (css.boxShadow || '');
+
+  return {
+    ...css,
+    ...(fill ? { background: fill } : null),
+    ...(depth ? { boxShadow: [baseShadow, depth].filter(Boolean).join(', ') } : null),
+    ...(options.style || {})
+  };
 }
 
 /** The three colours offered as one-tap border choices for a template. */

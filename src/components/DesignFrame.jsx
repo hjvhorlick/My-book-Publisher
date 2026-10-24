@@ -5,6 +5,7 @@ import {
   getPageBorderStyle,
   headingTreatment,
   pageNumberLabel,
+  pageTextureStyle,
   withAlpha
 } from '../data/designSystem';
 
@@ -48,6 +49,7 @@ export function PageFrame({
     border.id === 'soft-rounded' || border.id === 'arch-window' ? 24 : 4
   );
   const layers = border.layers || [];
+  const texture = pageTextureStyle(safeDesign);
 
   return (
     <Tag
@@ -55,6 +57,7 @@ export function PageFrame({
       role={role}
       aria-label={ariaLabel}
       data-page-border={border.id}
+      data-page-texture={safeDesign.pageTextureId || 'none'}
       data-page-kind={dataPageKind}
       style={{
         backgroundColor: pageBg,
@@ -64,6 +67,8 @@ export function PageFrame({
         ...style
       }}
     >
+      {/* Aged-paper decoration sits under the page border and the words. */}
+      {texture ? <span aria-hidden="true" style={texture} data-page-paper="true" /> : null}
       {layers.map((layer, index) => {
         const key = `layer-${index}`;
         const color = layerColor(layer.color, safeDesign);
@@ -288,6 +293,8 @@ export function BlockFrame({
     <Tag
       className={`overflow-hidden ${className}`}
       data-block-border={design?.blockBorderId || 'hairline'}
+      data-block-fill={design?.blockFillId || 'auto'}
+      data-block-depth={design?.blockDepthId || 'soft'}
       style={{ ...css, ...style }}
       {...rest}
     >

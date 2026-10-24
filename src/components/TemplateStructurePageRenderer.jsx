@@ -8,7 +8,9 @@ import {
   getOrnament,
   withAlpha,
   toRoman,
-  readableInk
+  readableInk,
+  blockOverlapStyle,
+  overlapSafeDesign
 } from '../data/designSystem';
 import { PageFrame, PageTitleFrame, BlockFrame, PageNumberLine } from './DesignFrame';
 import RichTextField from './RichTextField';
@@ -662,6 +664,9 @@ export default function TemplateStructurePageRenderer({
     };
   };
 
+  // Counts the text blocks laid out on this page, reset on every render.
+  let blockCounter = 0;
+
   const renderPhoto = (
     index,
     heightClass = 'h-48',
@@ -755,12 +760,19 @@ export default function TemplateStructurePageRenderer({
   const card = (heading, content, options = {}) => {
     const visibleHeading = editable ? heading : (heading ? PRINT_CARD_HEADINGS[heading] || '' : '');
     const ornament = getDesignOrnament(design);
+    // Blocks are counted as they are laid out, so the placement knows which
+    // card is the first on the page (the one that may lift over the artwork).
+    const blockIndex = blockCounter;
+    blockCounter += 1;
+    const overlapStyle = blockOverlapStyle(design, blockIndex);
+    const blockDesign = overlapStyle ? overlapSafeDesign(design) : design;
     return (
       <BlockFrame
-        design={design}
+        design={blockDesign}
         radius={options.variant === 2 || options.variant === 4 ? 14 : options.variant === 3 ? 8 : 10}
         className={`p-3.5 sm:p-4 ${options.className || ''}`}
-        style={options.style}
+        style={{ ...(overlapStyle || {}), ...(options.style || {}) }}
+        data-block-overlap={overlapStyle ? design.blockOverlap : undefined}
       >
         {visibleHeading && (
           <div

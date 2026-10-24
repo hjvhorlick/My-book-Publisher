@@ -5,6 +5,7 @@ import {
   resolveTemplateDesign,
   getPageBorderStyle,
   blockStyleFor,
+  pageTextureStyle,
   headingTreatment,
   withAlpha
 } from '../data/designSystem';
@@ -68,6 +69,22 @@ export default function PageStructureMiniPreview({
   const headingStyle = headingTreatment(design);
   const artList = SAMPLE_ART_BY_CATEGORY[categoryId] || SAMPLE_ART_BY_CATEGORY.photobook;
   const count = Math.max(1, structure?.photoSlots || 1);
+  const texture = pageTextureStyle(design);
+
+  // Thumbnails hint at the block placement: a card lifted over the artwork or
+  // stacked over the card above it. The live preview shows the real thing.
+  const overlapStyle = (() => {
+    if (design.blockOverlap === 'over-image') {
+      return { marginTop: -7, marginLeft: -4, marginRight: -4, position: 'relative', zIndex: 3 };
+    }
+    if (design.blockOverlap === 'stacked') {
+      return { marginTop: -5, marginLeft: 3, marginRight: -3, position: 'relative', zIndex: 3 };
+    }
+    if (design.blockOverlap === 'floating') {
+      return { marginTop: -4, marginLeft: 5, marginRight: 5, position: 'relative', zIndex: 3, boxShadow: '0 6px 12px rgba(15,23,42,0.25)' };
+    }
+    return null;
+  })();
 
   // The miniature draws the same page-border ornament the finished page uses,
   // scaled down so the five layout thumbnails stay a faithful preview.
@@ -128,6 +145,7 @@ export default function PageStructureMiniPreview({
       className={`min-w-0 p-1.5 ${className}`}
       style={{
         ...blockStyleFor(design, { radius: 4 }),
+        ...(overlapStyle || {}),
         borderTop: safeIndex === 1 ? `3px solid ${accentColor}` : undefined
       }}
     >
@@ -171,6 +189,7 @@ export default function PageStructureMiniPreview({
             color: pageText
           }}
         >
+          {texture ? <span aria-hidden="true" style={{ ...texture, borderRadius: 8 }} /> : null}
           {hasCorners && (
             <>
               <span className="absolute top-1 left-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>

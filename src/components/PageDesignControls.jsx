@@ -7,6 +7,10 @@ import {
   ORNAMENTS,
   DESIGN_PRESETS,
   PAGE_NUMBER_FORMATS,
+  BLOCK_FILLS,
+  BLOCK_DEPTHS,
+  PAGE_TEXTURES,
+  BLOCK_PLACEMENTS,
   borderColorChoices,
   resolveTemplateDesign
 } from '../data/designSystem';
@@ -333,6 +337,89 @@ export default function PageDesignControls({
               )
             });
           })}
+        </div>
+      </section>
+
+      {/* Block colour, depth and placement */}
+      <section style={{ ...CARD_STYLE, padding: 14 }}>
+        {sectionTitle('Text-block colour & depth', 'Fill the boxes behind your words and lift them off the page.')}
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest" style={{ color: HELPER_INK }}>Block colour</span>
+            <select
+              aria-label="Text-block fill"
+              value={design.blockFillId}
+              disabled={saving}
+              onChange={(event) => apply({ blockFillId: event.target.value })}
+              className="min-h-10 w-full rounded-xl px-3 text-sm font-semibold"
+              style={{ background: '#FFFDF7', color: '#0F172A', border: '1.5px solid rgba(229, 184, 75, 0.7)' }}
+            >
+              {BLOCK_FILLS.map((fill) => (
+                <option key={fill.id} value={fill.id}>{fill.name}</option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[10px] leading-snug" style={{ color: HELPER_INK }}>
+              {BLOCK_FILLS.find((fill) => fill.id === design.blockFillId)?.blurb}
+            </span>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest" style={{ color: HELPER_INK }}>Block depth</span>
+            <select
+              aria-label="Text-block depth"
+              value={design.blockDepthId}
+              disabled={saving}
+              onChange={(event) => apply({ blockDepthId: event.target.value })}
+              className="min-h-10 w-full rounded-xl px-3 text-sm font-semibold"
+              style={{ background: '#FFFDF7', color: '#0F172A', border: '1.5px solid rgba(229, 184, 75, 0.7)' }}
+            >
+              {BLOCK_DEPTHS.map((depth) => (
+                <option key={depth.id} value={depth.id}>{depth.name}</option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[10px] leading-snug" style={{ color: HELPER_INK }}>
+              {BLOCK_DEPTHS.find((depth) => depth.id === design.blockDepthId)?.blurb}
+            </span>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest" style={{ color: HELPER_INK }}>Block placement</span>
+            <select
+              aria-label="Text-block placement"
+              value={design.blockOverlap}
+              disabled={saving}
+              onChange={(event) => apply({ blockOverlap: event.target.value })}
+              className="min-h-10 w-full rounded-xl px-3 text-sm font-semibold"
+              style={{ background: '#FFFDF7', color: '#0F172A', border: '1.5px solid rgba(229, 184, 75, 0.7)' }}
+            >
+              {BLOCK_PLACEMENTS.map((placement) => (
+                <option key={placement.id} value={placement.id}>{placement.name}</option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[10px] leading-snug" style={{ color: HELPER_INK }}>
+              {BLOCK_PLACEMENTS.find((placement) => placement.id === design.blockOverlap)?.blurb}
+            </span>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest" style={{ color: HELPER_INK }}>Paper</span>
+            <select
+              aria-label="Page paper texture"
+              value={design.pageTextureId}
+              disabled={saving}
+              onChange={(event) => apply({ pageTextureId: event.target.value })}
+              className="min-h-10 w-full rounded-xl px-3 text-sm font-semibold"
+              style={{ background: '#FFFDF7', color: '#0F172A', border: '1.5px solid rgba(229, 184, 75, 0.7)' }}
+            >
+              {PAGE_TEXTURES.map((texture) => (
+                <option key={texture.id} value={texture.id}>{texture.name}</option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[10px] leading-snug" style={{ color: HELPER_INK }}>
+              {PAGE_TEXTURES.find((texture) => texture.id === design.pageTextureId)?.blurb}
+            </span>
+          </label>
         </div>
       </section>
 
