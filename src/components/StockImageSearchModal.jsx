@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ExternalLink, Image as ImageIcon, LoaderCircle, Search, Settings2, Sparkles, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ExternalLink,
+  Image as ImageIcon,
+  Images,
+  LoaderCircle,
+  Search,
+  Settings2,
+  Upload,
+  X
+} from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { imageFitsSlot } from '../data/slotRules';
 import {
@@ -9,14 +19,39 @@ import {
   SAMPLE_LICENSE,
   SAMPLE_PRINT_DPI,
   formatPrintSize,
-  sampleToSearchResult,
-  samplePickerResults
+  samplePickerResults,
+  sampleToSearchResult
 } from '../data/sampleArtwork';
 
-const TABS = [
-  { id: 'samples', label: 'Free samples', hint: 'Bundled · works offline' },
-  { id: 'stock', label: 'Pexels + Pixabay', hint: 'Needs an API key' }
-];
+/**
+ * The one place a reader adds a picture to a page or a cover.
+ *
+ * The upload section offers two ways in, as the workflow asks for:
+ *
+ *   1. Search photo sites — Pexels + Pixabay, when the account has an API key.
+ *   2. Upload your own — straight from this device.
+ *
+ * When neither is usable (no API key saved, or no network) the free artwork
+ * bundled with the app is right there underneath as the fallback, so a page can
+ * still be illustrated. Those samples are always listed; they never require a
+ * key, a connection, or a credit line.
+ */
+
+function FitBadge({ image, slotRule }) {
+  if (!slotRule || !(image.width > 0) || !(image.height > 0)) return null;
+  const fit = imageFitsSlot(image.width, image.height, slotRule);
+  const label = fit === 'good' ? 'Fits this frame' : fit === 'crop' ? 'Will crop to fit' : 'Different shape';
+  const colors = fit === 'good'
+    ? 'bg-emerald-700/90 text-white'
+    : fit === 'crop'
+      ? 'bg-amber-600/90 text-white'
+      : 'bg-slate-800/85 text-slate-200';
+  return (
+    <span className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[9px] font-bold ${colors}`}>
+      {label} · {image.width}×{image.height}
+    </span>
+  );
+}
 
 /**
  * Artwork thumbnail that is never silently blank.
@@ -71,22 +106,6 @@ function SampleThumb({ item, thumbUrl, fullUrl, onFail }) {
   );
 }
 
-function FitBadge({ image, slotRule }) {
-  if (!slotRule || !(image.width > 0) || !(image.height > 0)) return null;
-  const fit = imageFitsSlot(image.width, image.height, slotRule);
-  const label = fit === 'good' ? 'Fits this frame' : fit === 'crop' ? 'Will crop to fit' : 'Different shape';
-  const colors = fit === 'good'
-    ? 'bg-emerald-700/90 text-white'
-    : fit === 'crop'
-      ? 'bg-amber-600/90 text-white'
-      : 'bg-slate-800/85 text-slate-200';
-  return (
-    <span className={`absolute right-2 top-2 rounded-full px-2 py-1 text-[9px] font-bold ${colors}`}>
-      {label} · {image.width}×{image.height}
-    </span>
-  );
-}
-
 export default function StockImageSearchModal({
   open,
   projectId,
@@ -95,37 +114,58 @@ export default function StockImageSearchModal({
   onClose,
   onImageSelected,
   onAssetsChanged,
-  onOpenProviderSettings
+  onOpenProviderSettings,
+  onRequestUpload
 }) {
-  const [tab, setTab] = useState('samples');
-  // Two separate queries on purpose. The stock tab inherits the chapter's text
-  // (title, synopsis, central idea) because that is a useful Pexels search. The
-  // free-sample tab must never inherit it: a whole sentence matches no sample,
-  // which would open the tab on an empty grid and hide the library.
+  const [view, setView] = useState('options');
+  const [providers, setProviders] = useState({});
+  const [providersLoaded, setProvidersLoaded] = useState(false);
+
   const [sampleQuery, setSampleQuery] = useState('');
-  const [stockQuery, setStockQuery] = useState('');
   const [sampleCategory, setSampleCategory] = useState('all');
+  const [brokenSamples, setBrokenSamples] = useState([]);
+
+  const [stockQuery, setStockQuery] = useState('');
   const [provider, setProvider] = useState('all');
   const [images, setImages] = useState([]);
-  const [providerStatus, setProviderStatus] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [searching, setSearching] = useState(false);
   const [importingId, setImportingId] = useState('');
-  const [brokenSamples, setBrokenSamples] = useState([]);
 
   useEffect(() => {
     if (!open) return;
-    setTab('samples');
+    setView('options');
     setSampleQuery('');
-    setStockQuery(initialQuery || '');
     setSampleCategory('all');
+    setBrokenSamples([]);
+    setStockQuery(initialQuery || '');
     setProvider('all');
     setImages([]);
-    setProviderStatus({});
     setMessage('');
     setError('');
+    setProviders({});
+    setProvidersLoaded(false);
+
+    let cancelled = false;
+    // Knowing whether a photo-site key exists decides whether option 1 is a
+    // working button or a link to settings. Failure here is harmless: the free
+    // samples still work, so the dialog never becomes a dead end.
+    apiRequest('/api/image-providers')
+      .then((result) => {
+        if (!cancelled) setProviders(result?.providers ? Object.fromEntries(result.providers.map((p) => [p.id, p])) : {});
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setProvidersLoaded(true);
+      });
+    return () => { cancelled = true; };
   }, [open, initialQuery]);
+
+  const { items: sampleResults, usedFallback: sampleFilterMissed } = useMemo(
+    () => samplePickerResults({ query: sampleQuery, category: sampleCategory, slotRule }),
+    [sampleQuery, sampleCategory, slotRule]
+  );
 
   const sampleCounts = useMemo(
     () => SAMPLE_ARTWORK.reduce((counts, item) => {
@@ -135,12 +175,15 @@ export default function StockImageSearchModal({
     []
   );
 
-  const { items: sampleResults, usedFallback: sampleFilterMissed } = useMemo(
-    () => samplePickerResults({ query: sampleQuery, category: sampleCategory, slotRule }),
-    [sampleQuery, sampleCategory, slotRule]
-  );
-
   if (!open) return null;
+
+  const savedProviders = Object.values(providers).filter((entry) => entry?.configured);
+  const stockReady = savedProviders.length > 0;
+
+  const openProviderSettings = () => {
+    onClose?.();
+    onOpenProviderSettings?.();
+  };
 
   const handleSearch = async (event) => {
     event?.preventDefault?.();
@@ -154,10 +197,8 @@ export default function StockImageSearchModal({
       if (slotRule?.orientation) params.set('orientation', slotRule.orientation);
       const result = await apiRequest(`/api/projects/${projectId}/assets/search?${params.toString()}`);
       setImages(result.images || []);
-      setProviderStatus(result.providers || {});
       setMessage(result.message || '');
     } catch (searchError) {
-      setProviderStatus({});
       setError(searchError.message || 'Could not search stock images. Please try again.');
     } finally {
       setSearching(false);
@@ -213,15 +254,34 @@ export default function StockImageSearchModal({
     failureMessage: 'Could not add this free sample. Try another image.'
   });
 
-  const openProviderSettings = () => {
+  const handleUploadOwn = () => {
     onClose?.();
-    onOpenProviderSettings?.();
+    onRequestUpload?.();
   };
 
-  const noProviderConfigured = Object.values(providerStatus).length > 0 &&
-    Object.values(providerStatus).every((status) => status.status === 'not_configured');
-
   const usesSlotArt = sampleResults.length !== SAMPLE_ARTWORK.length && slotRule;
+
+  const optionCard = ({ icon: Icon, title, detail, meta, onClick, disabled = false, badge }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || Boolean(importingId)}
+      className={`flex flex-1 items-start gap-3 rounded-2xl border p-3.5 text-left transition disabled:cursor-not-allowed disabled:opacity-70 ${
+        badge
+          ? 'border-amber-300 bg-amber-50 hover:border-amber-600 dark:border-amber-800 dark:bg-amber-950/30'
+          : 'border-stone-300 bg-white hover:border-amber-700 dark:border-stone-600 dark:bg-stone-900'
+      }`}
+    >
+      <span className="mt-0.5 rounded-xl bg-stone-100 p-2 text-stone-700 dark:bg-stone-800 dark:text-stone-200">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-stone-900 dark:text-stone-100">{title}</span>
+        <span className="mt-0.5 block text-[11px] leading-relaxed text-stone-600 dark:text-stone-300">{detail}</span>
+        <span className="mt-1 block text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">{meta}</span>
+      </span>
+    </button>
+  );
 
   const dialog = (
     <div
@@ -235,18 +295,18 @@ export default function StockImageSearchModal({
       <section
         role="dialog"
         aria-modal="true"
-        aria-labelledby="stock-image-search-title"
+        aria-labelledby="upload-image-title"
         className="relative z-10 flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-2xl dark:border-stone-700 dark:bg-[#15120F]"
       >
         <header className="flex items-start justify-between gap-4 border-b border-stone-200 p-4 dark:border-stone-700 sm:p-5">
           <div>
-            <h2 id="stock-image-search-title" className="flex items-center gap-2 text-lg font-bold text-stone-900 dark:text-stone-100">
-              <ImageIcon className="h-5 w-5 text-amber-700" /> Find an image
+            <h2 id="upload-image-title" className="flex items-center gap-2 text-lg font-bold text-stone-900 dark:text-stone-100">
+              <Upload className="h-5 w-5 text-amber-700" /> Upload an image
             </h2>
             <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
-              {tab === 'samples'
-                ? `${SAMPLE_ARTWORK.length} free sample images are included with the app. They work offline, need no API key, print at ${SAMPLE_PRINT_DPI} dpi, and can be used in your book without a credit line.`
-                : 'Search Pexels and Pixabay. Selected images are saved into this book’s asset library with the creator, source link, and stock-license record.'}
+              {view === 'stock'
+                ? 'Search Pexels and Pixabay. The image is saved into this book’s asset library with its creator, source and licence.'
+                : 'Two ways to add a picture. Every image is saved into this book’s asset library.'}
             </p>
             {slotRule && (
               <p className="mt-1.5 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-900 dark:bg-amber-900/50 dark:text-amber-100">
@@ -256,7 +316,7 @@ export default function StockImageSearchModal({
           </div>
           <button
             type="button"
-            aria-label="Close image search"
+            aria-label="Close image upload"
             onClick={onClose}
             disabled={Boolean(importingId)}
             className="rounded-xl p-2 text-stone-500 hover:bg-stone-100 disabled:opacity-40 dark:hover:bg-stone-800"
@@ -265,36 +325,6 @@ export default function StockImageSearchModal({
           </button>
         </header>
 
-        <div
-          role="tablist"
-          aria-label="Image sources"
-          className="flex gap-1 border-b border-stone-200 bg-stone-50 p-2 dark:border-stone-700 dark:bg-stone-900/60"
-        >
-          {TABS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              id={`image-source-tab-${item.id}`}
-              aria-selected={tab === item.id}
-              aria-controls={`image-source-panel-${item.id}`}
-              onClick={() => setTab(item.id)}
-              disabled={Boolean(importingId)}
-              className={`flex min-h-10 flex-1 flex-col items-center justify-center rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:opacity-60 sm:flex-row sm:gap-2 ${
-                tab === item.id
-                  ? 'bg-white text-stone-900 shadow-sm ring-1 ring-stone-200 dark:bg-stone-800 dark:text-white dark:ring-stone-600'
-                  : 'text-stone-600 hover:bg-white/60 dark:text-stone-300 dark:hover:bg-stone-800/60'
-              }`}
-            >
-              <span className="flex items-center gap-1.5">
-                {item.id === 'samples' && <Sparkles className="h-3.5 w-3.5 text-amber-700" />}
-                {item.id === 'samples' ? `Free samples (${SAMPLE_ARTWORK.length})` : item.label}
-              </span>
-              <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400">{item.hint}</span>
-            </button>
-          ))}
-        </div>
-
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
           {error && (
             <div role="alert" className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2.5 text-xs text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200">
@@ -302,14 +332,55 @@ export default function StockImageSearchModal({
             </div>
           )}
 
-          {tab === 'samples' ? (
-            <div
-              role="tabpanel"
-              id="image-source-panel-samples"
-              aria-labelledby="image-source-tab-samples"
-              className="space-y-4"
-            >
+          {view === 'options' ? (
+            <>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                {stockReady ? (
+                  optionCard({
+                    icon: Search,
+                    title: 'Find from photo sites',
+                    detail: 'Search Pexels and Pixabay — millions of photos, with the licence recorded for you.',
+                    meta: `Connected: ${savedProviders.map((entry) => entry.name).join(' + ')}`,
+                    onClick: () => setView('stock')
+                  })
+                ) : (
+                  optionCard({
+                    icon: Settings2,
+                    title: 'Find from photo sites',
+                    detail: 'Pexels and Pixabay need an API key before they can be searched. Add one and come back.',
+                    meta: providersLoaded ? 'No API key saved — add one' : 'Checking API keys…',
+                    onClick: openProviderSettings,
+                    disabled: !providersLoaded,
+                    badge: true
+                  })
+                )}
+                {onRequestUpload && optionCard({
+                  icon: Upload,
+                  title: 'Upload your own',
+                  detail: 'Choose a photo from this device. JPEG, PNG or WebP, up to 8 MB.',
+                  meta: 'From your computer or phone',
+                  onClick: handleUploadOwn
+                })}
+              </div>
+
+              {!stockReady && providersLoaded && (
+                <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                  Photo-site search and your own uploads are not available yet, so the free artwork below is the fallback — it is included with the app and works offline.
+                </p>
+              )}
+
               <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
+                    <Images className="h-4 w-4 text-amber-700" />
+                    Free samples
+                    <span className="rounded-full bg-amber-800 px-2 py-0.5 text-[10px] font-bold text-white">{SAMPLE_ARTWORK.length}</span>
+                  </h3>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                    Included · offline · no credit needed
+                  </span>
+                </div>
+
                 <label className="sr-only" htmlFor="sample-image-query">Filter free sample images</label>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
@@ -424,25 +495,29 @@ export default function StockImageSearchModal({
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-stone-300 px-4 py-10 text-center text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
-                  No free artwork is installed in this copy of the app. Reinstall it, or search Pexels and Pixabay instead.
+                  No free artwork is installed in this copy of the app. Reinstall it, or upload a picture from your device.
                 </div>
               )}
 
               <p className="text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">
                 {SAMPLE_LICENSE.summary}
               </p>
-            </div>
+            </>
           ) : (
-            <div
-              role="tabpanel"
-              id="image-source-panel-stock"
-              aria-labelledby="image-source-tab-stock"
-              className="space-y-4"
-            >
+            <>
+              <button
+                type="button"
+                onClick={() => setView('options')}
+                className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1.5 text-[11px] font-bold text-stone-700 hover:border-amber-700 dark:border-stone-600 dark:text-stone-200"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back to the free samples
+              </button>
+
               <form onSubmit={handleSearch} className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_170px_auto]">
                 <label className="sr-only" htmlFor="stock-image-query">Search images</label>
                 <input
                   id="stock-image-query"
+                  autoFocus
                   value={stockQuery}
                   onChange={(event) => setStockQuery(event.target.value)}
                   placeholder="e.g. misty forest, sourdough bread, city at night"
@@ -471,17 +546,12 @@ export default function StockImageSearchModal({
               </form>
 
               <p className="text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">
-                API keys stay encrypted on the server. Review the provider’s current license and restrictions before publishing; attribution and the source page are saved with each imported image.
+                API keys stay encrypted on the server. Review the provider’s current licence and restrictions before publishing; attribution and the source page are saved with each imported image.
               </p>
 
               {message && (
-                <div role="status" className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
-                  <span>{message}</span>
-                  {noProviderConfigured && (
-                    <button type="button" onClick={openProviderSettings} className="inline-flex w-fit items-center gap-1 font-bold underline underline-offset-2">
-                      <Settings2 className="h-3.5 w-3.5" /> Open API keys settings
-                    </button>
-                  )}
+                <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                  {message}
                 </div>
               )}
 
@@ -515,7 +585,7 @@ export default function StockImageSearchModal({
                                 Source <ExternalLink className="h-3 w-3" />
                               </a>
                               <a href={image.licenseUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-amber-800 underline dark:text-amber-300">
-                                License <ExternalLink className="h-3 w-3" />
+                                Licence <ExternalLink className="h-3 w-3" />
                               </a>
                             </div>
                           </div>
@@ -537,10 +607,10 @@ export default function StockImageSearchModal({
 
               {!searching && !images.length && !message && (
                 <div className="rounded-2xl border border-dashed border-stone-300 px-4 py-10 text-center text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
-                  Enter a few words to find stock photos, or switch to the free samples that are already on this device.
+                  Enter a few words to search, or go back to the free samples included in the app.
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </section>

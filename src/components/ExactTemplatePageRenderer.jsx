@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Crop, FlipHorizontal, LoaderCircle, Search, Upload } from 'lucide-react';
+import { Crop, FlipHorizontal, LoaderCircle, Upload } from 'lucide-react';
 import { getVisualTemplateForProject } from '../data/visualTemplatesCatalog';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
 import { apiRequest } from '../api/client';
@@ -345,13 +345,6 @@ export default function ExactTemplatePageRenderer({
     closeCropSession();
   };
 
-  const triggerPhotoUpload = (target) => {
-    if (!editable) return;
-    activePhotoTargetRef.current = target;
-    setUploadError('');
-    fileInputRef.current?.click();
-  };
-
   const openStockImageSearch = (target) => {
     if (!editable) return;
     activePhotoTargetRef.current = target;
@@ -426,21 +419,13 @@ export default function ExactTemplatePageRenderer({
           <div className="absolute right-2 top-2 flex items-center gap-1 opacity-95">
             <button
               type="button"
-              onClick={(event) => triggerPhotoUpload(targetWithRule(event))}
+              onClick={(event) => openStockImageSearch(targetWithRule(event))}
+              aria-label="Upload an image: search photo sites, upload your own, or use a free sample"
+              title="Upload an image"
               className="inline-flex items-center gap-1 rounded-lg bg-slate-900/90 px-2.5 py-1 text-[10px] font-extrabold text-white shadow"
             >
               {uploadingPhoto ? <LoaderCircle className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
               <span>{uploadingPhoto ? 'Uploading…' : 'Upload'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={(event) => openStockImageSearch(targetWithRule(event))}
-              aria-label="Find an image: free samples included with the app, or stock photos"
-              title="Find an image — free samples work offline"
-              className="inline-flex items-center gap-1 rounded-lg bg-amber-800/95 px-2.5 py-1 text-[10px] font-extrabold text-white shadow"
-            >
-              <Search className="h-3 w-3" />
-              <span>Find image</span>
             </button>
             <button
               type="button"
@@ -621,6 +606,7 @@ export default function ExactTemplatePageRenderer({
         }}
         onAssetsChanged={onAssetsChanged}
         onOpenProviderSettings={onOpenAiSettings}
+        onRequestUpload={() => fileInputRef.current?.click()}
       />
       {cropSession && (
         <ImageCropEditor

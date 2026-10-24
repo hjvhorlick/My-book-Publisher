@@ -203,28 +203,40 @@ describe('bundled free sample artwork', () => {
 });
 
 describe('free samples in the image picker', () => {
-  it('opens on the offline samples with one-tap buttons', () => {
+  it('offers the two upload options with the free samples as the fallback', () => {
+    const markup = renderToStaticMarkup(
+      <StockImageSearchModal
+        open
+        projectId="project-1"
+        onClose={() => {}}
+        onRequestUpload={() => {}}
+      />
+    );
+
+    // The upload section is the single entry point…
+    expect(markup).toContain('Upload an image');
+    // …with exactly two ways in…
+    expect(markup).toContain('Find from photo sites');
+    expect(markup).toContain('Pexels and Pixabay');
+    expect(markup).toContain('Upload your own');
+    // …and the bundled library underneath as the fallback.
+    expect(markup).toContain('Free samples');
+    expect(markup).toContain('No credit needed');
+    expect(markup).toContain('Use this image');
+
+    const thumbnails = markup.match(/\/sample-artwork\/thumbs\/[a-z0-9.-]+\.jpg/g) || [];
+    expect(new Set(thumbnails).size).toBeGreaterThanOrEqual(20);
+    expect(markup).toMatch(/sample-artwork\/thumbs\/nature-ferns\.[0-9a-f]{8}\.jpg/);
+  });
+
+  it('hides the own-upload option when the page has no file picker', () => {
     const markup = renderToStaticMarkup(
       <StockImageSearchModal open projectId="project-1" onClose={() => {}} />
     );
-
+    expect(markup).toContain('Find from photo sites');
+    expect(markup).not.toContain('Upload your own');
+    // The library is still there, so the dialog is never a dead end.
     expect(markup).toContain('Free samples');
-    expect(markup).toContain('Bundled · works offline');
-    expect(markup).toContain('No credit needed');
-    expect(markup).toContain(`Free samples (${SAMPLE_ARTWORK.length})`);
-    // The grid carries the file name so a failed tile can be identified.
-    expect(markup).toMatch(/sample-artwork\/thumbs\/nature-ferns\.[0-9a-f]{8}\.jpg/);
-    expect(markup).not.toContain('Show all');
-    expect(markup).toContain('Use this image');
-    expect(markup).toContain('image-source-panel-samples');
-
-    // The grid loads the small thumbnails, never the full-page files.
-    const thumbnails = markup.match(/\/sample-artwork\/thumbs\/[a-z0-9.-]+\.jpg/g) || [];
-    expect(new Set(thumbnails).size).toBeGreaterThanOrEqual(20);
-    expect(markup).toMatch(/\/sample-artwork\/thumbs\/nature-ferns\.[0-9a-f]{8}\.jpg/);
-    expect(markup).not.toMatch(/src="\/sample-artwork\/[a-z0-9.-]+\.jpg"/);
-    expect(markup).toContain('prints to');
-    expect(markup).toContain('300 dpi');
   });
 
   it('never opens on an empty grid, even when the page supplies a long search', () => {
@@ -256,7 +268,7 @@ describe('free samples in the image picker', () => {
         slotRule={{ aspectRatio: 4 / 3, orientation: 'landscape', aspectLabel: '4:3', recommendedWidth: 1600, recommendedHeight: 1200 }}
       />
     );
-    expect(markup).toContain('Pexels + Pixabay');
+    expect(markup).toContain('upload-image-title');
     expect(markup).toContain('Fits this frame');
     expect(markup).toContain('best 1600 × 1200 px');
   });

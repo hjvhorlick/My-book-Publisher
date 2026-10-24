@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Image as ImageIcon, LoaderCircle, Search, Trash2, Upload } from 'lucide-react';
+import { Check, Image as ImageIcon, LoaderCircle, Trash2, Upload } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import CoverArtwork from './CoverArtwork';
 import StockImageSearchModal from './StockImageSearchModal';
 import { shrinkImageToDataUrl } from '../utils/imageResize';
-import { COVER_SAMPLES } from '../data/sampleArtwork';
 
 const DEFAULT_WORD_ART = {
   text: '',
@@ -277,20 +276,12 @@ export default function CoverEditor({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => { fileTargetRef.current = 'cover'; coverFileRef.current?.click(); }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                onClick={() => { setStockTarget('cover'); setStockOpen(true); }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-800 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700"
                 disabled={busyImage === 'cover'}
               >
                 {busyImage === 'cover' ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                Upload
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStockTarget('cover'); setStockOpen(true); }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
-              >
-                <Search className="h-3.5 w-3.5" />
-                Find image
+                Upload an image
               </button>
               {coverImage ? (
                 <button
@@ -317,23 +308,6 @@ export default function CoverEditor({
                 <option key={asset.id} value={asset.id}>{asset.title || asset.filename || `Asset ${asset.id}`}</option>
               ))}
             </select>
-
-            <p className={`${labelStyle} mt-4`} style={{ color: labelInk }}>Free sample artwork</p>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {COVER_SAMPLES.map((sample) => (
-                <button
-                  key={sample.id}
-                  type="button"
-                  onClick={() => applyImage(sample.url, 'cover')}
-                  className={`overflow-hidden rounded-lg border-2 transition ${
-                    coverImage === sample.url ? 'border-amber-500 ring-2 ring-amber-400/50' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'
-                  }`}
-                  title={sample.title}
-                >
-                  <img src={sample.thumbUrl} alt={sample.title} className="h-12 w-full object-cover" />
-                </button>
-              ))}
-            </div>
 
             <label className={`${labelStyle} mt-4`} style={{ color: labelInk }} htmlFor="cover-overlay">
               Image dim (helps the word art read) · {Math.round(coverOverlay * 100)}%
@@ -503,20 +477,12 @@ export default function CoverEditor({
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => { fileTargetRef.current = 'author'; authorFileRef.current?.click(); }}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                    onClick={() => { setStockTarget('author'); setStockOpen(true); }}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-800 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700"
                     disabled={busyImage === 'author'}
                   >
                     {busyImage === 'author' ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                    Upload photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setStockTarget('author'); setStockOpen(true); }}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
-                  >
-                    <Search className="h-3.5 w-3.5" />
-                    Find image
+                    Upload a photo
                   </button>
                   {authorPhotoUrl ? (
                     <button
@@ -580,6 +546,11 @@ export default function CoverEditor({
         }}
         onAssetsChanged={onAssetsChanged}
         onOpenProviderSettings={onOpenAiSettings}
+        onRequestUpload={() => {
+          const target = stockTarget === 'author' ? 'author' : 'cover';
+          fileTargetRef.current = target;
+          (target === 'author' ? authorFileRef : coverFileRef).current?.click();
+        }}
       />
     </div>
   );
