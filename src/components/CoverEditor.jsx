@@ -290,7 +290,7 @@ export default function CoverEditor({
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
               >
                 <Search className="h-3.5 w-3.5" />
-                Stock photos
+                Find image
               </button>
               {coverImage ? (
                 <button
@@ -516,7 +516,7 @@ export default function CoverEditor({
                     className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                   >
                     <Search className="h-3.5 w-3.5" />
-                    Stock photos
+                    Find image
                   </button>
                   {authorPhotoUrl ? (
                     <button

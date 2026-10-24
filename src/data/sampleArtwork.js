@@ -161,6 +161,20 @@ function rankForSlot(item, slotRule) {
  * Text matches the title, description, tags, collection and category label, so
  * "bread", "wedding" and "picture book" all find something useful.
  */
+/**
+ * Results for the picker. The library ships inside the app, so the picker must
+ * never show an empty panel — an empty image picker reads as "the images are
+ * missing". When a filter matches nothing we fall back to the whole library and
+ * report `usedFallback` so the UI can explain itself.
+ */
+export function samplePickerResults({ query = '', category = 'all', slotRule = null, items = SAMPLE_ARTWORK } = {}) {
+  const matches = searchSampleArtwork({ query, category, slotRule, items });
+  if (matches.length) return { items: matches, usedFallback: false };
+  const filtering = Boolean(String(query || '').trim()) || (category && category !== 'all');
+  if (!filtering) return { items: matches, usedFallback: false };
+  return { items: searchSampleArtwork({ slotRule, items }), usedFallback: true };
+}
+
 export function searchSampleArtwork({ query = '', category = 'all', slotRule = null, items = SAMPLE_ARTWORK } = {}) {
   const needle = String(query || '').trim().toLowerCase();
   const words = needle ? needle.split(/\s+/).filter(Boolean) : [];
@@ -169,17 +183,28 @@ export function searchSampleArtwork({ query = '', category = 'all', slotRule = n
     .filter((item) => !category || category === 'all' || item.category === category)
     .map((item, index) => {
       if (!words.length) return { item, index, score: 0 };
-      const haystack = [
+      // Match whole words (prefixes allowed) rather than raw substrings, so
+      // "here" does not match "gathered" and a nonsense filter stays empty
+      // instead of returning random pictures.
+      const haystackWords = [
         item.title,
         item.alt,
         item.collection,
         sampleCategoryLabel(item.category),
         ...(item.tags || [])
-      ].join(' ').toLowerCase();
+      ]
+        .join(' ')
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(Boolean);
+
       // Forgiving on purpose: a filter box that returns nothing looks broken.
       // Any matching word keeps the image, and images matching more words rank
       // first ("forest mushrooms" shows mushrooms before ferns).
-      const score = words.reduce((total, word) => total + (haystack.includes(word) ? 1 : 0), 0);
+      const score = words.reduce(
+        (total, word) => total + (haystackWords.some((entry) => entry.startsWith(word)) ? 1 : 0),
+        0
+      );
       return { item, index, score };
     })
     .filter((entry) => !words.length || entry.score > 0);

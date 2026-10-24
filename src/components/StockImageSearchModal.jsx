@@ -10,7 +10,7 @@ import {
   SAMPLE_PRINT_DPI,
   formatPrintSize,
   sampleToSearchResult,
-  searchSampleArtwork
+  samplePickerResults
 } from '../data/sampleArtwork';
 
 const TABS = [
@@ -81,8 +81,8 @@ export default function StockImageSearchModal({
     []
   );
 
-  const sampleResults = useMemo(
-    () => searchSampleArtwork({ query: sampleQuery, category: sampleCategory, slotRule }),
+  const { items: sampleResults, usedFallback: sampleFilterMissed } = useMemo(
+    () => samplePickerResults({ query: sampleQuery, category: sampleCategory, slotRule }),
     [sampleQuery, sampleCategory, slotRule]
   );
 
@@ -234,7 +234,7 @@ export default function StockImageSearchModal({
             >
               <span className="flex items-center gap-1.5">
                 {item.id === 'samples' && <Sparkles className="h-3.5 w-3.5 text-amber-700" />}
-                {item.label}
+                {item.id === 'samples' ? `Free samples (${SAMPLE_ARTWORK.length})` : item.label}
               </span>
               <span className="text-[10px] font-medium text-stone-500 dark:text-stone-400">{item.hint}</span>
             </button>
@@ -293,6 +293,12 @@ export default function StockImageSearchModal({
                 </div>
               </div>
 
+              {sampleFilterMissed && (
+                <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                  No match for{sampleQuery.trim() ? ` “${sampleQuery.trim()}”` : ' this filter'} — showing all {SAMPLE_ARTWORK.length} free samples.
+                </p>
+              )}
+
               {usesSlotArt && (
                 <p className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
                   Sorted for this frame — the best-fitting images come first.
@@ -343,18 +349,8 @@ export default function StockImageSearchModal({
                   })}
                 </div>
               ) : (
-                <div className="space-y-3 rounded-2xl border border-dashed border-stone-300 px-4 py-10 text-center text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
-                  <p>
-                    Nothing matches{sampleQuery.trim() ? ` “${sampleQuery.trim()}”` : ' this category'}.
-                    {' '}Try another word, or show the whole library again.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => { setSampleQuery(''); setSampleCategory('all'); }}
-                    className="inline-flex min-h-9 items-center justify-center rounded-xl bg-amber-800 px-4 text-xs font-bold text-white hover:bg-amber-700"
-                  >
-                    Show all {SAMPLE_ARTWORK.length} free samples
-                  </button>
+                <div className="rounded-2xl border border-dashed border-stone-300 px-4 py-10 text-center text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
+                  No free artwork is installed in this copy of the app. Reinstall it, or search Pexels and Pixabay instead.
                 </div>
               )}
 

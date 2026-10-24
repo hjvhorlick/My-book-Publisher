@@ -15,6 +15,7 @@ import {
   formatPrintSize,
   sampleArtworkThumbUrl,
   sampleArtworkUrl,
+  samplePickerResults,
   searchSampleArtwork
 } from '../src/data/sampleArtwork';
 import designData from '../src/data/designData.json';
@@ -157,6 +158,27 @@ describe('bundled free sample artwork', () => {
     expect(fs.readFileSync(galleryPath, 'utf8')).toBe(gallery);
   });
 
+  it('never hands the picker an empty list', () => {
+    // Exactly the case that made the picker look broken: a filter that matches
+    // nothing must fall back to the library, with a flag so the UI can explain.
+    const miss = samplePickerResults({ query: 'zzzz nothing here' });
+    expect(miss.usedFallback).toBe(true);
+    expect(miss.items).toHaveLength(SAMPLE_ARTWORK.length);
+
+    const categoryMiss = samplePickerResults({ category: 'workbook', query: 'wedding' });
+    expect(categoryMiss.usedFallback).toBe(true);
+    expect(categoryMiss.items.length).toBeGreaterThan(0);
+
+    const plain = samplePickerResults({});
+    expect(plain.usedFallback).toBe(false);
+    expect(plain.items).toHaveLength(SAMPLE_ARTWORK.length);
+
+    const hit = samplePickerResults({ query: 'bread' });
+    expect(hit.usedFallback).toBe(false);
+    expect(hit.items.length).toBeGreaterThan(0);
+    expect(hit.items.length).toBeLessThan(SAMPLE_ARTWORK.length);
+  });
+
   it('keeps the cover quick-pick list pointing at real samples', () => {
     expect(COVER_SAMPLE_URLS.length).toBeGreaterThanOrEqual(10);
     for (const url of COVER_SAMPLE_URLS) {
@@ -175,6 +197,8 @@ describe('free samples in the image picker', () => {
     expect(markup).toContain('Free samples');
     expect(markup).toContain('Bundled · works offline');
     expect(markup).toContain('No credit needed');
+    expect(markup).toContain(`Free samples (${SAMPLE_ARTWORK.length})`);
+    expect(markup).not.toContain('Show all');
     expect(markup).toContain('Use this image');
     expect(markup).toContain('image-source-panel-samples');
 

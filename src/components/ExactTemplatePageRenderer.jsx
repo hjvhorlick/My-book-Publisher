@@ -435,12 +435,12 @@ export default function ExactTemplatePageRenderer({
             <button
               type="button"
               onClick={(event) => openStockImageSearch(targetWithRule(event))}
-              aria-label="Search Pexels and Pixabay for a book photo"
-              title="Search Pexels and Pixabay"
+              aria-label="Find an image: free samples included with the app, or stock photos"
+              title="Find an image — free samples work offline"
               className="inline-flex items-center gap-1 rounded-lg bg-amber-800/95 px-2.5 py-1 text-[10px] font-extrabold text-white shadow"
             >
               <Search className="h-3 w-3" />
-              <span>Stock photos</span>
+              <span>Find image</span>
             </button>
             <button
               type="button"
