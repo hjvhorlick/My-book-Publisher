@@ -1,7 +1,8 @@
 import React from 'react';
+import BookImage from './BookImage';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
 
-const SAMPLE_ART_BY_CATEGORY = {
+export const SAMPLE_ART_BY_CATEGORY = {
   photobook: [
     '/sample-artwork/wedding-walk.jpg',
     '/sample-artwork/nature-waterfall.jpg',
@@ -117,11 +118,7 @@ export default function PageStructureMiniPreview({
         backgroundColor: pageBg
       }}
     >
-      <img
-        src={artList[index % artList.length]}
-        alt=""
-        className="w-full h-full object-cover"
-      />
+      <BookImage src={artList[index % artList.length]} alt="" />
     </div>
   );
 

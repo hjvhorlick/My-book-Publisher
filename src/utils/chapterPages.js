@@ -122,6 +122,31 @@ export function buildChapterPagePatch(chapter, pageIndex = 0, updates = {}) {
   return patch;
 }
 
+/**
+ * Build the chapter-shaped snapshot used by the read-only page preview.
+ * The editor's unsaved draft patch (title, subtitle, content and structured
+ * data — including the currently chosen layout) is merged over the saved
+ * page so the author sees the finished page exactly as it stands right now,
+ * before anything is written to the book. With no draft patch the saved
+ * page is returned unchanged.
+ */
+export function buildChapterPagePreview(pageChapter, draftPatch = null) {
+  if (!pageChapter) return null;
+  if (!draftPatch || typeof draftPatch !== 'object') return pageChapter;
+
+  const preview = { ...pageChapter };
+  if (draftPatch.title !== undefined) preview.title = draftPatch.title;
+  if (draftPatch.subtitle !== undefined) preview.subtitle = draftPatch.subtitle;
+  if (draftPatch.contentHtml !== undefined) preview.contentHtml = draftPatch.contentHtml;
+  if (draftPatch.sectionType !== undefined) preview.sectionType = draftPatch.sectionType;
+  if (draftPatch.layoutId !== undefined) preview.layoutId = draftPatch.layoutId;
+  preview.structuredData = {
+    ...pageStructuredData(pageChapter.structuredData),
+    ...pageStructuredData(draftPatch.structuredData)
+  };
+  return preview;
+}
+
 /** Append a blank page while preserving the current chapter and its first-page title. */
 export function appendChapterPage(chapter, sourcePageIndex = 0) {
   const pages = getChapterPages(chapter);

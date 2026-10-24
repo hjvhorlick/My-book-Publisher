@@ -20,6 +20,9 @@ describe('chapter Index exploration and saving', () => {
     expect(markup).toContain('aria-label="Save the titled book and open Chapter 1 in Step 4"');
     expect((markup.match(/aria-label="Save the titled book and open Chapter/g) || []).length).toBe(5);
     expect(markup).toContain('id="new-book-title"');
+    // Empty title box flashes for attention until the book is named.
+    expect(markup).toMatch(/<input[^>]*id="new-book-title"[^>]*title-attention/);
+    expect(markup).toContain('Start here — name your book');
     expect(markup).toContain('required=""');
     expect(markup).not.toContain('Save Book &amp; Open Chapter');
     expect(markup).not.toContain('Choose Chapter 1 as the starting chapter');

@@ -611,7 +611,7 @@ export default function AiProviderSettingsModal({ open, onClose, onConfiguredCha
             <h3 className="text-xs font-extrabold text-[#FDE08D]">After entering your Gemini key</h3>
             <ol className="mt-2 list-decimal space-y-1 pl-4">
               <li>Save settings, then choose <strong className="text-[#FDE08D]">Test connection</strong>.</li>
-              <li>Return to a writing page and choose <strong className="text-[#FDE08D]">Write with AI</strong> beside a field. CreateStudio prepares the prompt from your book, chapter, page, field, template, and existing text; you review the draft before inserting it.</li>
+              <li>Return to a writing page, open any text block with its Edit button, and choose <strong className="text-[#FDE08D]">Write with AI</strong> inside the editor — drafts are written to fit that block’s space. CreateStudio prepares the prompt from your book, chapter, page, field, template, and existing text; you review the draft before inserting it.</li>
             </ol>
           </section>
 

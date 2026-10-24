@@ -1,12 +1,50 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
 import { getAiFieldProfile } from '../data/aiPromptCatalog';
+import { getImageSlotRule } from '../data/slotRules';
 import RichTextField from './RichTextField';
-import AiFieldButton from './AiFieldButton';
 import {
   normalizeRichHtml,
   richHtmlToPlainText
 } from '../utils/richText';
+
+/**
+ * Card headings are editing labels that name each designed section while
+ * the author works. Only genuinely reader-facing headings may appear on a
+ * published page, mapped here to their printed wording. Everything else
+ * ("Ribbon-Crowned Story Card", "Chapter Manuscript", …) is design
+ * vocabulary and is hidden in the clean preview and never exported.
+ */
+const PRINT_CARD_HEADINGS = {
+  Ingredients: 'Ingredients',
+  'Ingredients Scroll': 'Ingredients',
+  'Kitchen Notebook · Ingredients': 'Ingredients',
+  Method: 'Method',
+  'Preparation & Chef’s Note': 'Method',
+  'Method & Tasting Notes': 'Method',
+  'Preparation Timeline': 'Preparation',
+  'Chef’s Note': 'Chef’s Note',
+  'Kitchen Tip': 'Kitchen Tip',
+  'Dates & Highlights': 'Dates & Highlights',
+  'Sidebar & Highlights': 'Highlights',
+  'Key Takeaways': 'Key Takeaways',
+  'Overview & Procedure': 'Overview',
+  'Guide Overview': 'Overview',
+  'Reference Table': 'Reference Table',
+  'Reference Notes': 'Reference Notes',
+  'Step-by-Step Guide': 'Step-by-Step Guide',
+  'Workshop Tip': 'Workshop Tip',
+  'Action Tip / Callout': 'Tip',
+  'Three-Stage Roadmap': 'Roadmap',
+  'Roadmap / Checklist Steps': 'Roadmap',
+  'Master Checklist': 'Checklist',
+  'Decision Checklist & Reference Matrix': 'Checklist & Reference',
+  'Comparison Matrix': 'Comparison Matrix',
+  'Option A · Field Notes': 'Option A',
+  'Option B · Field Notes': 'Option B',
+  'Comparison Option A': 'Option A',
+  'Comparison Option B': 'Option B'
+};
 
 const DEFAULT_COPY = {
   photobook: { note: '' },
@@ -69,8 +107,10 @@ export default function TemplateStructurePageRenderer({
   isFlipped = false,
   editable = true,
   aiConfigured = false,
+  onOpenAiSettings,
   onSaveChapter,
   onRegisterSave,
+  onRegisterPreview,
   onUpdateTitle,
   onUpdateBlock,
   onBackToIndex,
@@ -91,6 +131,7 @@ export default function TemplateStructurePageRenderer({
   const saveCallbackRef = useRef(onSaveChapter);
   const flushPromiseRef = useRef(null);
   const flushDraftRef = useRef(null);
+  const previewPatchRef = useRef(null);
   const sd = draftData;
   const palette = {
     pageBg: visualTemplate.pageBg || '#FCF8F1',
@@ -271,6 +312,17 @@ export default function TemplateStructurePageRenderer({
     return () => onRegisterSave(null);
   }, [onRegisterSave]);
 
+  // The Preview button beside Save Page reads the page through this getter.
+  // It returns the same patch a save would send — but nothing is written —
+  // so the preview shows the current unsaved words exactly as designed.
+  previewPatchRef.current = () => buildSavePatch(draftTitle, draftSubtitle, draftData);
+
+  useEffect(() => {
+    if (!onRegisterPreview) return undefined;
+    onRegisterPreview(() => previewPatchRef.current?.() || null);
+    return () => onRegisterPreview(null);
+  }, [onRegisterPreview]);
+
   useEffect(() => {
     if (!editable || !hasDraftChanges || !onSaveChapter || !chapter?.id) return undefined;
 
@@ -332,9 +384,7 @@ export default function TemplateStructurePageRenderer({
       profile.maxWords,
       (options.rows || 4) * 12
     ));
-    const placeholder = options.placeholder || (aiConfigured
-      ? `Write ${fieldLabel.toLowerCase()} here, or click “Write with AI”.`
-      : `Write ${fieldLabel.toLowerCase()} here. Set up AI in the header to draft it automatically.`);
+    const placeholder = options.placeholder || `Tap Edit to write the ${fieldLabel.toLowerCase()}…`;
     return (
       <RichTextField
         rows={options.rows || 4}
@@ -352,6 +402,7 @@ export default function TemplateStructurePageRenderer({
         ariaLabel={options.ariaLabel || fieldLabel}
         aiConfigured={aiConfigured}
         aiContext={makeAiContext(field, { ...options, fieldLabel, maxWords })}
+        onOpenAiSettings={onOpenAiSettings}
       />
     );
   };
@@ -361,91 +412,88 @@ export default function TemplateStructurePageRenderer({
     const fieldLabel = options.fieldLabel || label || profile.label;
     const currentValue = String(value ?? '');
     const maxWords = options.maxWords || profile.maxWords;
+    if (!editable) {
+      return currentValue.trim()
+        ? (
+          <div className="min-w-0 text-xs">
+            <span className="font-bold">{label}:</span> {currentValue}
+          </div>
+        )
+        : null;
+    }
     return (
-      <label className="block min-w-0 text-[9px] font-bold uppercase tracking-wide opacity-80">
-        {label}
-        <div className="mt-1 flex min-w-0 items-center gap-1">
-          <input
-            type="text"
-            value={currentValue}
-            onChange={(event) => saveBlock(field, event.target.value)}
-            onBlur={handleDraftBlur}
-            placeholder={options.placeholder || `Add ${label.toLowerCase()}`}
-            aria-label={fieldLabel}
-            className="min-w-0 flex-1 rounded-md border px-2 py-1.5 text-xs font-normal normal-case"
-            style={{ color: palette.pageText, borderColor: `${palette.border}66`, backgroundColor: `${palette.pageBg}CC` }}
-          />
-          <AiFieldButton
-            enabled={aiConfigured && editable}
-            compact
-            context={makeAiContext(field, {
-              fieldLabel,
-              fieldContext: options.fieldContext,
-              maxWords
-            })}
-            currentValue={currentValue}
-            onInsert={(text, mode) => {
-              const generated = richHtmlToPlainText(text).replace(/\s+/g, ' ').trim();
-              saveBlock(field, mode === 'append' ? `${currentValue} ${generated}`.trim() : generated);
-            }}
-          />
-        </div>
-      </label>
+      <div className="min-w-0 pt-1">
+        <div className="text-[9px] font-bold uppercase tracking-wide opacity-80">{label}</div>
+        <RichTextField
+          rows={1}
+          plainText
+          readOnly={!editable}
+          value={currentValue}
+          onChange={(text) => saveBlock(field, text)}
+          onBlur={handleDraftBlur}
+          placeholder={options.placeholder || `Tap Edit to add ${label.toLowerCase()}…`}
+          ariaLabel={fieldLabel}
+          className="text-xs"
+          style={{ color: palette.pageText, fontFamily: palette.font }}
+          aiConfigured={aiConfigured}
+          aiContext={makeAiContext(field, {
+            fieldLabel,
+            fieldContext: options.fieldContext,
+            maxWords
+          })}
+          onOpenAiSettings={onOpenAiSettings}
+        />
+      </div>
     );
   };
 
   const titleInput = (
     <div className="space-y-1.5">
-      <textarea
-        rows={2}
+      <RichTextField
+        rows={1}
+        plainText
         readOnly={!editable}
-        aria-label={pageIndex === 0 ? 'Chapter title' : 'Page heading'}
+        ariaLabel={pageIndex === 0 ? 'Chapter title' : 'Page heading'}
         value={draftTitle}
-        onChange={(event) => updateTitle(event.target.value)}
+        onChange={updateTitle}
         onBlur={handleDraftBlur}
-        placeholder={pageIndex === 0 ? `Chapter ${chapterIndex + 1} title` : `Page ${pageIndex + 1} heading`}
-        className="w-full resize-none break-words bg-transparent font-bold focus:outline-none"
+        placeholder={pageIndex === 0 ? `Tap Edit to name Chapter ${chapterIndex + 1}…` : `Tap Edit to add a heading for page ${pageIndex + 1}…`}
+        className="w-full break-words font-bold"
         style={{
           ...fieldStyle,
           color: currentStructureIndex === 1 ? '#FFFFFF' : palette.accent
         }}
+        aiConfigured={aiConfigured}
+        aiContext={makeAiContext('chapterTitle', {
+          fieldLabel: pageIndex === 0 ? 'Chapter title' : 'Page heading',
+          maxWords: Math.min(getAiFieldProfile(categoryId, 'chapterTitle').maxWords, 10)
+        })}
+        onOpenAiSettings={onOpenAiSettings}
       />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[10px] font-medium opacity-75">{draftTitle.trim().split(/\s+/).filter(Boolean).length} words</span>
-        <AiFieldButton
-          enabled={aiConfigured && editable}
-          context={makeAiContext('chapterTitle', {
-            maxWords: Math.min(getAiFieldProfile(categoryId, 'chapterTitle').maxWords, 10)
-          })}
-          currentValue={draftTitle}
-          compact
-          onInsert={(text, mode) => {
-            const generatedTitle = richHtmlToPlainText(text).replace(/\s+/g, ' ').trim();
-            updateTitle(mode === 'append' ? `${draftTitle} ${generatedTitle}`.trim() : generatedTitle);
-          }}
-        />
-      </div>
-      <div className="mt-2 border-t pt-2" style={{ borderColor: `${palette.border}55` }}>
-        <div className="mb-1 text-left text-[9px] font-extrabold uppercase tracking-wider opacity-75">Subtitle / page deck · optional</div>
-        <RichTextField
-          rows={2}
-          value={draftSubtitle}
-          readOnly={!editable}
-          onChange={updateSubtitle}
-          onBlur={handleDraftBlur}
-          placeholder={aiConfigured
-            ? 'Add a short subtitle, or click “Write with AI”.'
-            : 'Add a short subtitle. Set up AI in the header to draft it automatically.'}
-          className="text-left text-xs"
-          style={{ ...fieldStyle, lineHeight: '1.45' }}
-          ariaLabel="Page subtitle editor"
-          aiConfigured={aiConfigured}
-          aiContext={makeAiContext('pageSubtitle', {
-            fieldLabel: 'Page subtitle or deck',
-            maxWords: Math.min(getAiFieldProfile(categoryId, 'pageSubtitle').maxWords, 30)
-          })}
-        />
-      </div>
+      {(editable || richHtmlToPlainText(draftSubtitle).trim()) && (
+        <div className={editable ? 'mt-2 border-t pt-2' : 'mt-1'} style={editable ? { borderColor: `${palette.border}55` } : undefined}>
+          {editable && (
+            <div className="mb-1 text-left text-[9px] font-extrabold uppercase tracking-wider opacity-75">Subtitle / page deck · optional</div>
+          )}
+          <RichTextField
+            rows={2}
+            value={draftSubtitle}
+            readOnly={!editable}
+            onChange={updateSubtitle}
+            onBlur={handleDraftBlur}
+            placeholder="Tap Edit to add a short subtitle…"
+            className="text-left text-xs italic"
+            style={{ ...fieldStyle, lineHeight: '1.45' }}
+            ariaLabel="Page subtitle editor"
+            aiConfigured={aiConfigured}
+            aiContext={makeAiContext('pageSubtitle', {
+              fieldLabel: 'Page subtitle or deck',
+              maxWords: Math.min(getAiFieldProfile(categoryId, 'pageSubtitle').maxWords, 30)
+            })}
+            onOpenAiSettings={onOpenAiSettings}
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -475,14 +523,13 @@ export default function TemplateStructurePageRenderer({
         updateRecipeLines('ingredients', richHtmlToPlainText(html));
       }}
       onBlur={handleDraftBlur}
-      placeholder={aiConfigured
-        ? 'Add one ingredient per line, or click “Write with AI”.'
-        : 'Add one ingredient per line. Set up AI in the header to draft them.'}
+      placeholder="Tap Edit to add ingredients — one per line…"
       className="text-xs sm:text-sm"
       style={{ ...fieldStyle, lineHeight: '1.65' }}
       ariaLabel="Recipe ingredients editor"
       aiConfigured={aiConfigured}
       aiContext={makeAiContext('ingredients', { maxWords: Math.max(20, Math.min(100, rows * 12)) })}
+      onOpenAiSettings={onOpenAiSettings}
     />
   );
 
@@ -496,14 +543,13 @@ export default function TemplateStructurePageRenderer({
         updateRecipeLines('steps', richHtmlToPlainText(html));
       }}
       onBlur={handleDraftBlur}
-      placeholder={aiConfigured
-        ? 'Add numbered preparation steps, or click “Write with AI”.'
-        : 'Add numbered preparation steps. Set up AI in the header to draft them.'}
+      placeholder="Tap Edit to add the preparation steps…"
       className="text-xs sm:text-sm"
       style={{ ...fieldStyle, lineHeight: '1.65', ...extraStyle }}
       ariaLabel="Recipe method editor"
       aiConfigured={aiConfigured}
       aiContext={makeAiContext('steps', { maxWords: Math.max(20, Math.min(180, rows * 12)) })}
+      onOpenAiSettings={onOpenAiSettings}
     />
   );
 
@@ -614,24 +660,24 @@ export default function TemplateStructurePageRenderer({
               type: 'captionSlot',
               index,
               totalCount,
+              shape,
+              slotRule: getImageSlotRule({ heightClass, shape }),
               onImageChange: (url) => saveCaption(index, 'imageUrl', url)
             },
             heightClass,
+            shape,
             frameStyle: imageFrameStyle(shape)
           })}
-        {label && (
-          <div className="mt-1.5">
+        {label && (editable || richHtmlToPlainText(slot.title || '').trim() || String(slot.location || '').trim()) && (
+          <div className="mt-1.5 space-y-1">
             <RichTextField
               rows={1}
               value={slot.title || ''}
               readOnly={!editable}
               onChange={(html) => saveCaption(index, 'title', html)}
               onBlur={handleDraftBlur}
-              placeholder={aiConfigured
-                ? `Photo ${index + 1} caption. Click “Write with AI” to draft it.`
-                : `Photo ${index + 1} caption. Set up AI in the header to draft it.`}
+              placeholder={`Tap Edit to caption photo ${index + 1}…`}
               className="text-center text-[10px] font-bold sm:text-xs"
-              compactToolbar
               style={{ color: palette.accent, fontFamily: palette.font, lineHeight: '1.35' }}
               ariaLabel={`Photo ${index + 1} caption editor`}
               aiConfigured={aiConfigured}
@@ -640,36 +686,28 @@ export default function TemplateStructurePageRenderer({
                 fieldContext: slot.location || slot.altText || slot.description || '',
                 maxWords: Math.min(getAiFieldProfile(categoryId, 'photoCaption').maxWords, 18)
               })}
+              onOpenAiSettings={onOpenAiSettings}
             />
-            {editable && (
-              <div className="mt-1 flex items-center gap-1">
-                <input
-                  type="text"
-                  value={slot.location || ''}
-                  onChange={(event) => saveCaption(index, 'location', event.target.value)}
-                  onBlur={handleDraftBlur}
-                  placeholder="Place or short photo note (optional)"
-                  aria-label={`Photo ${index + 1} place or note`}
-                  className="min-w-0 flex-1 rounded-md border px-2 py-1 text-[10px]"
-                  style={{ color: palette.pageText, borderColor: `${palette.border}66`, backgroundColor: `${palette.pageBg}CC` }}
-                />
-                <AiFieldButton
-                  enabled={aiConfigured && editable}
-                  compact
-                  context={makeAiContext('photoLocation', {
-                    fieldLabel: `Photo ${index + 1} place or note`,
-                    fieldContext: [slot.title, slot.altText, slot.description].filter(Boolean).join(' · '),
-                    maxWords: 14
-                  })}
-                  currentValue={slot.location || ''}
-                  onInsert={(text, mode) => {
-                    const generated = richHtmlToPlainText(text).replace(/\s+/g, ' ').trim();
-                    saveCaption(index, 'location', mode === 'append'
-                      ? `${slot.location || ''} ${generated}`.trim()
-                      : generated);
-                  }}
-                />
-              </div>
+            {(editable || String(slot.location || '').trim()) && (
+              <RichTextField
+                rows={1}
+                plainText
+                value={slot.location || ''}
+                readOnly={!editable}
+                onChange={(text) => saveCaption(index, 'location', text)}
+                onBlur={handleDraftBlur}
+                placeholder="Tap Edit for a place or short note…"
+                className="text-center text-[10px] italic opacity-80"
+                style={{ color: palette.pageText, fontFamily: palette.font }}
+                ariaLabel={`Photo ${index + 1} place or note`}
+                aiConfigured={aiConfigured}
+                aiContext={makeAiContext('photoLocation', {
+                  fieldLabel: `Photo ${index + 1} place or note`,
+                  fieldContext: [slot.title, slot.altText, slot.description].filter(Boolean).join(' · '),
+                  maxWords: 14
+                })}
+                onOpenAiSettings={onOpenAiSettings}
+              />
             )}
           </div>
         )}
@@ -719,23 +757,26 @@ export default function TemplateStructurePageRenderer({
     };
   };
 
-  const card = (heading, content, options = {}) => (
+  const card = (heading, content, options = {}) => {
+    const visibleHeading = editable ? heading : (heading ? PRINT_CARD_HEADINGS[heading] || '' : '');
+    return (
     <section
       className={`p-3.5 sm:p-4 overflow-hidden ${options.className || ''}`}
       style={{ ...cardStyle(options.variant), ...options.style }}
     >
-      {heading && (
+      {visibleHeading && (
         <div
           className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest mb-1.5"
           style={{ color: palette.accent }}
         >
           {currentStructureIndex === 2 || currentStructureIndex === 4 ? '✦ ' : currentStructureIndex === 3 ? '▰ ' : '❖ '}
-          {heading}
+          {visibleHeading}
         </div>
       )}
       {content}
     </section>
-  );
+    );
+  };
 
   const header = (
     <div
@@ -760,17 +801,19 @@ export default function TemplateStructurePageRenderer({
     >
       <div className="flex items-center justify-between gap-2 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.16em]">
         <span className="truncate opacity-80">
-          {currentStructureIndex === 0
-            ? 'CLASSICAL PAGE DESIGN'
-            : currentStructureIndex === 1
-            ? 'FEATURE LAYOUT'
-            : currentStructureIndex === 2
-            ? 'ILLUSTRATED EDITION'
-            : currentStructureIndex === 3
-            ? 'PANORAMA SPREAD'
-            : 'COLLECTOR’S FOLIO'}
+          {editable
+            ? (currentStructureIndex === 0
+              ? 'CLASSICAL PAGE DESIGN'
+              : currentStructureIndex === 1
+              ? 'FEATURE LAYOUT'
+              : currentStructureIndex === 2
+              ? 'ILLUSTRATED EDITION'
+              : currentStructureIndex === 3
+              ? 'PANORAMA SPREAD'
+              : 'COLLECTOR’S FOLIO')
+            : project.title}
         </span>
-        <span className="shrink-0">PAGE {pageIndex + 1}</span>
+        <span className="shrink-0">{editable ? `PAGE ${pageIndex + 1}` : ''}</span>
       </div>
       <div
         className={`mt-1 ${
@@ -910,20 +953,20 @@ export default function TemplateStructurePageRenderer({
               border: `1px solid ${palette.border}88`
             }}
           >
-            {sd.course || 'RECIPE DETAILS'}
+            {sd.course || (editable ? 'RECIPE DETAILS' : 'RECIPE')}
           </span>
           {sd.servings && <span className="text-[10px] font-bold">Serves {sd.servings}</span>}
           {sd.prepTime && <span className="text-[10px] font-bold">Prep {sd.prepTime}</span>}
           {sd.cookTime && <span className="text-[10px] font-bold">Cook {sd.cookTime}</span>}
           {sd.difficulty && <span className="text-[10px] font-bold">{sd.difficulty}</span>}
         </div>
-        <div className="grid grid-cols-2 gap-2 rounded-xl border p-2 sm:grid-cols-5" style={{ borderColor: `${palette.border}55`, backgroundColor: `${palette.accent}08` }}>
+        {editable && <div className="grid grid-cols-2 gap-2 rounded-xl border p-2 sm:grid-cols-5" style={{ borderColor: `${palette.border}55`, backgroundColor: `${palette.accent}08` }}>
           {textInputField('course', 'Course', sd.course, { placeholder: 'Main, dessert…', maxWords: 4, fieldContext: recipeDetailsContext })}
           {textInputField('servings', 'Serves', sd.servings, { placeholder: '4 people', maxWords: 6, fieldContext: recipeDetailsContext })}
           {textInputField('prepTime', 'Prep time', sd.prepTime, { placeholder: 'Approx. time', maxWords: 6, fieldContext: recipeDetailsContext })}
           {textInputField('cookTime', 'Cook time', sd.cookTime, { placeholder: 'Approx. time', maxWords: 6, fieldContext: recipeDetailsContext })}
           {textInputField('difficulty', 'Difficulty', sd.difficulty, { placeholder: 'Simple, moderate…', maxWords: 3, fieldContext: recipeDetailsContext })}
-        </div>
+        </div>}
       </div>
     );
     const recipeCards = (showPhoto = true) => (
@@ -1158,7 +1201,7 @@ export default function TemplateStructurePageRenderer({
               {card('Adventure Vignettes', textArea('storyText', storyText, { rows: 9, className: 'text-sm sm:text-base' }), { variant: 4 })}
             </div>
             <div className="md:col-span-4">
-              {card('Moral Medallion', textArea('moral', sd.moral || '', { rows: 5, className: 'text-center italic text-xs sm:text-sm', placeholder: 'Add the story takeaway here, or click “Write with AI”.' }), { variant: 4 })}
+              {card('Moral Medallion', textArea('moral', sd.moral || '', { rows: 5, className: 'text-center italic text-xs sm:text-sm', placeholder: 'Tap Edit to add the story takeaway…' }), { variant: 4 })}
             </div>
           </div>
         </div>
@@ -1347,6 +1390,14 @@ export default function TemplateStructurePageRenderer({
   const additionalPageContent = () => {
     const sections = [];
     const addTextField = (heading, field, options = {}) => {
+      // Published pages show only words the author actually wrote — never
+      // empty extra boxes, and never production notes like illustration briefs.
+      if (!editable) {
+        if (field === 'illustrationPrompt') return;
+        const raw = sd[field];
+        const plain = Array.isArray(raw) ? raw.join(' ') : richHtmlToPlainText(raw || '');
+        if (!String(plain).trim()) return;
+      }
       sections.push(card(heading, textArea(field, sd[field] || '', {
         rows: options.rows || 4,
         className: options.className || 'text-xs sm:text-sm',
@@ -1369,37 +1420,30 @@ export default function TemplateStructurePageRenderer({
       sections.push(card('Feature Kicker & Byline', (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div>
-            <div className="mb-1 text-[9px] font-bold uppercase tracking-wide opacity-70">Kicker</div>
-            {textArea('kicker', sd.kicker || '', { rows: 1, maxWords: 8, placeholder: 'Short section label' })}
+            {editable && <div className="mb-1 text-[9px] font-bold uppercase tracking-wide opacity-70">Kicker</div>}
+            {textArea('kicker', sd.kicker || '', { rows: 1, maxWords: 8, placeholder: 'Tap Edit for a short section label…' })}
           </div>
-          <div className="block text-[9px] font-bold uppercase tracking-wide opacity-70">
-            <label htmlFor="magazine-byline">Byline</label>
-            <div className="mt-1 flex items-center gap-1">
-              <input
-                id="magazine-byline"
-                type="text"
-                value={sd.byline || ''}
-                onChange={(event) => saveBlock('byline', event.target.value)}
-                onBlur={handleDraftBlur}
-                placeholder="Author credit, if supplied"
-                className="min-w-0 flex-1 rounded-md border px-2 py-2 text-xs font-normal normal-case"
-                style={{ color: palette.pageText, borderColor: `${palette.border}66`, backgroundColor: `${palette.pageBg}CC` }}
-              />
-              <AiFieldButton
-                enabled={aiConfigured && editable}
-                compact
-                context={makeAiContext('byline', {
-                  fieldLabel: 'Magazine byline',
-                  fieldContext: project.authorName || project.penName || '',
-                  maxWords: 8
-                })}
-                currentValue={sd.byline || ''}
-                onInsert={(text, mode) => {
-                  const generated = richHtmlToPlainText(text).replace(/\s+/g, ' ').trim();
-                  saveBlock('byline', mode === 'append' ? `${sd.byline || ''} ${generated}`.trim() : generated);
-                }}
-              />
-            </div>
+          <div>
+            {editable && <div className="mb-1 text-[9px] font-bold uppercase tracking-wide opacity-70">Byline</div>}
+            <RichTextField
+              rows={1}
+              plainText
+              value={sd.byline || ''}
+              readOnly={!editable}
+              onChange={(text) => saveBlock('byline', text)}
+              onBlur={handleDraftBlur}
+              placeholder="Tap Edit for the author credit…"
+              className="text-xs italic"
+              style={{ color: palette.pageText, fontFamily: palette.font }}
+              ariaLabel="Magazine byline"
+              aiConfigured={aiConfigured}
+              aiContext={makeAiContext('byline', {
+                fieldLabel: 'Magazine byline',
+                fieldContext: project.authorName || project.penName || '',
+                maxWords: 8
+              })}
+              onOpenAiSettings={onOpenAiSettings}
+            />
           </div>
         </div>
       )));
@@ -1428,7 +1472,7 @@ export default function TemplateStructurePageRenderer({
       if (currentStructureIndex !== 2) addTextField('Pull Quote', 'pullQuote', { rows: 2 });
     }
 
-    if (photoSlots.length > detailSlotCount) {
+    if (editable && photoSlots.length > detailSlotCount) {
       sections.push(card('Saved Photo Boxes Outside This Layout', (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {photoSlots.slice(detailSlotCount).map((_, offset) => {
@@ -1476,8 +1520,7 @@ export default function TemplateStructurePageRenderer({
           boxShadow: `inset 0 0 0 5px ${palette.pageBg}, inset 0 0 0 7px ${palette.accent}28`
         };
 
-  return (
-    <StudioTabletShell>
+  const pageArticle = (
       <article
         className="relative min-h-[560px] p-5 sm:p-8 md:p-10 overflow-hidden"
         style={{
@@ -1527,9 +1570,14 @@ export default function TemplateStructurePageRenderer({
           className="mt-5 pt-2 text-center text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.18em]"
           style={{ color: palette.accent, borderTop: `1px solid ${palette.border}66` }}
         >
-          Layout {currentStructureIndex + 1} · Chapter {chapterIndex + 1} · Page {pageIndex + 1} of {totalPages}
+          {editable
+            ? `Layout ${currentStructureIndex + 1} · Chapter ${chapterIndex + 1} · Page ${pageIndex + 1} of ${totalPages}`
+            : `— ${pageIndex + 1} —`}
         </div>
       </article>
-    </StudioTabletShell>
   );
+
+  return editable
+    ? <StudioTabletShell>{pageArticle}</StudioTabletShell>
+    : <div className="overflow-hidden rounded-[4px] shadow-[0_18px_45px_rgba(0,0,0,0.35)]">{pageArticle}</div>;
 }

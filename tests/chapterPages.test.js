@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   appendChapterPage,
   buildChapterPagePatch,
+  buildChapterPagePreview,
   buildChapterPagesPatch,
   deleteChapterPage,
   getChapterPageForEditor,
@@ -88,6 +89,40 @@ describe('chapter page persistence helpers', () => {
     const onlyPage = deleteChapterPage(chapter, 0);
     expect(onlyPage.deleted).toBe(false);
     expect(onlyPage.pages).toHaveLength(1);
+  });
+
+  it('builds a page preview from the unsaved draft without touching the saved page', () => {
+    const pageChapter = getChapterPageForEditor(makeChapter(), 0);
+    const preview = buildChapterPagePreview(pageChapter, {
+      title: 'Unsaved Chapter Title',
+      subtitle: 'A draft subtitle',
+      contentHtml: '<p>Unsaved words</p>',
+      structuredData: {
+        chapterText: '<p>Unsaved words</p>',
+        pageStructure: 4,
+        isFlipped: true,
+        pages: [{ id: 'must-not-leak-into-preview' }]
+      }
+    });
+
+    expect(preview).toMatchObject({
+      title: 'Unsaved Chapter Title',
+      subtitle: 'A draft subtitle',
+      contentHtml: '<p>Unsaved words</p>',
+      structuredData: {
+        chapterText: '<p>Unsaved words</p>',
+        pageStructure: 4,
+        isFlipped: true
+      }
+    });
+    expect(preview.structuredData.pages).toBeUndefined();
+    // The saved page object is never mutated by previewing.
+    expect(pageChapter.title).toBe('Chapter 1');
+    expect(pageChapter.structuredData.chapterText).toBe('Opening page');
+    expect(pageChapter.structuredData.pageStructure).toBe(2);
+    // Without a draft patch the saved page is previewed as-is.
+    expect(buildChapterPagePreview(pageChapter, null)).toBe(pageChapter);
+    expect(buildChapterPagePreview(null, { title: 'x' })).toBeNull();
   });
 
   it('keeps edits for non-first pages separate from the chapter title', () => {
