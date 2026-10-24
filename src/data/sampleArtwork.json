@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-24.3",
+  "version": "2026-10-24.4",
   "license": {
     "id": "bundled_sample",
     "name": "Bundled free sample",
@@ -187,6 +187,114 @@
       "sizeBytes": 410469
     },
     {
+      "id": "dish-breakfast",
+      "file": "dish-breakfast.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Weekend breakfast",
+      "tags": [
+        "breakfast",
+        "eggs",
+        "toast",
+        "coffee",
+        "morning"
+      ],
+      "alt": "A weekend breakfast table with soft-boiled eggs, sourdough toast, coffee and jam.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 451024
+    },
+    {
+      "id": "dish-roast",
+      "file": "dish-roast.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Roast vegetables",
+      "tags": [
+        "roast",
+        "vegetables",
+        "rosemary",
+        "pan",
+        "dinner"
+      ],
+      "alt": "A roasting pan of caramelised root vegetables with rosemary and sea salt.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 303917
+    },
+    {
+      "id": "dish-dessert",
+      "file": "dish-dessert.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Cream and raspberry cake",
+      "tags": [
+        "cake",
+        "dessert",
+        "raspberry",
+        "cream",
+        "baking"
+      ],
+      "alt": "A rustic layer cake with whipped cream and fresh raspberries on a ceramic stand.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 359966
+    },
+    {
+      "id": "dish-soup",
+      "file": "dish-soup.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Pumpkin soup",
+      "tags": [
+        "soup",
+        "pumpkin",
+        "autumn",
+        "bowl",
+        "bread"
+      ],
+      "alt": "A bowl of golden pumpkin soup with a cream swirl, pumpkin seeds and crusty bread.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 520438
+    },
+    {
+      "id": "dish-cheese",
+      "file": "dish-cheese.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Cheese board",
+      "tags": [
+        "cheese",
+        "honeycomb",
+        "figs",
+        "board",
+        "sharing"
+      ],
+      "alt": "An artisan cheeseboard with aged cheese, honeycomb, figs and walnuts.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 371311
+    },
+    {
+      "id": "dish-citrus",
+      "file": "dish-citrus.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Citrus halves",
+      "tags": [
+        "citrus",
+        "orange",
+        "lemon",
+        "fruit",
+        "fresh"
+      ],
+      "alt": "Halved blood oranges and lemons glistening on a pale wooden board.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 337971
+    },
+    {
       "id": "info-joinery",
       "file": "info-joinery.jpg",
       "category": "informational",
@@ -237,6 +345,60 @@
       "width": 2200,
       "height": 1200,
       "sizeBytes": 398432
+    },
+    {
+      "id": "info-tools",
+      "file": "info-tools.jpg",
+      "category": "informational",
+      "collection": "info",
+      "title": "Hand tools laid out",
+      "tags": [
+        "tools",
+        "chisels",
+        "workbench",
+        "craft",
+        "making"
+      ],
+      "alt": "A set of well-used hand tools arranged neatly on a wooden workbench.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 560910
+    },
+    {
+      "id": "info-books",
+      "file": "info-books.jpg",
+      "category": "informational",
+      "collection": "info",
+      "title": "Reference books",
+      "tags": [
+        "books",
+        "notes",
+        "study",
+        "research",
+        "desk"
+      ],
+      "alt": "A stack of reference books with bookmarks beside an open notebook of notes.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 319068
+    },
+    {
+      "id": "info-diagrams",
+      "file": "info-diagrams.jpg",
+      "category": "informational",
+      "collection": "info",
+      "title": "Technical sketchbook",
+      "tags": [
+        "sketchbook",
+        "diagrams",
+        "drafting",
+        "ruler",
+        "planning"
+      ],
+      "alt": "An open sketchbook of technical drawings with a ruler, compass and coffee.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 437309
     },
     {
       "id": "mag-couture",
@@ -774,6 +936,24 @@
       "width": 2200,
       "height": 1200,
       "sizeBytes": 391152
+    },
+    {
+      "id": "story-fox",
+      "file": "story-fox.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Fox in the leaves",
+      "tags": [
+        "fox",
+        "autumn",
+        "woodland",
+        "animal",
+        "leaves"
+      ],
+      "alt": "A red fox curled among autumn leaves beneath a birch tree.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 567445
     },
     {
       "id": "work-planner",
