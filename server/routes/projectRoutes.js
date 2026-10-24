@@ -657,6 +657,7 @@ router.delete('/:id', requireAuth, (req, res) => {
     return res.status(ownership.status).json({ error: ownership.error });
   }
   db.prepare('DELETE FROM projects WHERE id = ?').run(req.params.id);
+  db.prepare('UPDATE users SET last_active_project_id = NULL WHERE last_active_project_id = ?').run(req.params.id);
   return res.json({ success: true });
 });
 

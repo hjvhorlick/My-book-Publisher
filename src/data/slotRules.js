@@ -44,7 +44,7 @@
 
 import { getAiFieldProfile } from './aiPromptCatalog';
 
-export const SLOT_RULES_VERSION = '2026-10-24.1';
+export const SLOT_RULES_VERSION = '2026-10-23.1';
 
 /** Words that fit on one line of template body text (audit assumption). */
 export const WORDS_PER_LINE = 12;
@@ -95,12 +95,7 @@ export const FIELD_FORMATS = Object.freeze({
   // Story / memoir / chapter books
   chapterText: 'body',
   epigraph: 'quote',
-  marginNote: 'note',
-  // Front matter and cover wording — full pages, so they get a generous budget
-  introduction: 'body',
-  coverBlurb: 'note',
-  coverTitle: 'title',
-  coverAuthorName: 'shortLabel'
+  marginNote: 'note'
 });
 
 export const TEXT_FORMAT_RULES = Object.freeze({

@@ -1,43 +1,38 @@
 import React from 'react';
 import BookImage from './BookImage';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
-import {
-  resolveTemplateDesign,
-  getPageBorderStyle,
-  blockStyleFor,
-  pageTextureStyle,
-  headingTreatment,
-  withAlpha
-} from '../data/designSystem';
 
-import { SAMPLE_ARTWORK, SAMPLE_CATEGORIES, sampleArtworkThumbUrl } from '../data/sampleArtwork';
-
-/**
- * Miniature page mock-ups need one picture per category. They read the same
- * bundled catalogue the image picker uses, so a new sample automatically shows
- * up in the template previews instead of being trapped in a second hand-kept
- * list that drifts out of date.
- */
-const PREVIEW_ART_PER_CATEGORY = 6;
-
-function artByCategoryFromCatalog() {
-  const categoryIds = SAMPLE_CATEGORIES.filter((category) => category.id !== 'all').map((category) => category.id);
-  const grouped = Object.fromEntries(categoryIds.map((id) => [id, []]));
-  for (const item of SAMPLE_ARTWORK) {
-    if (!grouped[item.category]) grouped[item.category] = [];
-    grouped[item.category].push(sampleArtworkThumbUrl(item));
-  }
-  const fallback = grouped.photobook.length
-    ? grouped.photobook
-    : Object.values(grouped).find((list) => list.length) || [];
-  for (const id of categoryIds) {
-    if (!grouped[id].length) grouped[id] = fallback;
-    grouped[id] = grouped[id].slice(0, PREVIEW_ART_PER_CATEGORY);
-  }
-  return grouped;
-}
-
-export const SAMPLE_ART_BY_CATEGORY = artByCategoryFromCatalog();
+export const SAMPLE_ART_BY_CATEGORY = {
+  photobook: [
+    '/sample-artwork/wedding-walk.jpg',
+    '/sample-artwork/nature-waterfall.jpg',
+    '/sample-artwork/wedding-dance.jpg',
+    '/sample-artwork/nature-ferns.jpg',
+    '/sample-artwork/wedding-confetti.jpg'
+  ],
+  cookbook: [
+    '/sample-artwork/dish-bistro.jpg',
+    '/sample-artwork/nature-ferns.jpg',
+    '/sample-artwork/wedding-dance.jpg'
+  ],
+  magazine: [
+    '/sample-artwork/mag-couture.jpg',
+    '/sample-artwork/mag-runner.jpg',
+    '/sample-artwork/mag-sculpture.jpg'
+  ],
+  storybook: [
+    '/sample-artwork/story-lantern.jpg',
+    '/sample-artwork/story-squirrel.jpg'
+  ],
+  informational: [
+    '/sample-artwork/info-studio.jpg',
+    '/sample-artwork/info-joinery.jpg'
+  ],
+  book: [
+    '/sample-artwork/book-homestead.jpg',
+    '/sample-artwork/book-harbor.jpg'
+  ]
+};
 
 /**
  * A tablet-size miniature for one of the five page structures. The image count,
@@ -47,52 +42,48 @@ export default function PageStructureMiniPreview({
   categoryId = 'photobook',
   template = {},
   structureIndex = 0,
-  compact = false,
-  designOverrides = {}
+  compact = false
 }) {
   const safeIndex = ((Number(structureIndex) || 0) % 5 + 5) % 5;
   const structure = getTemplatePageStructures(categoryId, template)[safeIndex];
-  const design = resolveTemplateDesign(template, designOverrides, { fontFamily: template?.fontFamily });
-  const pageBg = design.pageBg;
-  const pageText = design.bodyText;
-  const borderColor = design.borderInk;
-  const accentColor = design.accentInk;
-  const headingStyle = headingTreatment(design);
+  const pageBg = template?.pageBg || '#FCF8F1';
+  const pageText = template?.pageText || '#1E293B';
+  const borderColor = template?.borderColor || '#D97706';
+  const accentColor = template?.accentColor || borderColor;
   const artList = SAMPLE_ART_BY_CATEGORY[categoryId] || SAMPLE_ART_BY_CATEGORY.photobook;
   const count = Math.max(1, structure?.photoSlots || 1);
-  const texture = pageTextureStyle(design);
 
-  // Thumbnails hint at the block placement: a card lifted over the artwork or
-  // stacked over the card above it. The live preview shows the real thing.
-  const overlapStyle = (() => {
-    if (design.blockOverlap === 'over-image') {
-      return { marginTop: -7, marginLeft: -4, marginRight: -4, position: 'relative', zIndex: 3 };
-    }
-    if (design.blockOverlap === 'stacked') {
-      return { marginTop: -5, marginLeft: 3, marginRight: -3, position: 'relative', zIndex: 3 };
-    }
-    if (design.blockOverlap === 'floating') {
-      return { marginTop: -4, marginLeft: 5, marginRight: 5, position: 'relative', zIndex: 3, boxShadow: '0 6px 12px rgba(15,23,42,0.25)' };
-    }
-    return null;
-  })();
-
-  // The miniature draws the same page-border ornament the finished page uses,
-  // scaled down so the five layout thumbnails stay a faithful preview.
-  const borderLayers = getPageBorderStyle(design.pageBorderId).layers || [];
-  const hasDoubleRule = borderLayers.some((layer) => layer.kind === 'border' && layer.style === 'double');
-  const hasInnerRule = borderLayers.filter((layer) => layer.kind === 'border').length > 1;
-  const hasBand = borderLayers.some((layer) => layer.kind === 'band' && layer.edge === 'top');
-  const hasCorners = borderLayers.some((layer) => layer.kind === 'corners');
-  const borderStyle = hasBand
-    ? { borderTop: `3px solid ${accentColor}`, borderBottom: `1px solid ${borderColor}`, borderLeft: 'none', borderRight: 'none' }
-    : !borderLayers.length
-    ? { border: 'none' }
-    : {
-        border: hasDoubleRule ? `2px double ${borderColor}` : `1.5px solid ${withAlpha(borderColor, 0.85)}`,
-        borderRadius: design.pageBorderId === 'soft-rounded' || design.pageBorderId === 'arch-window' ? 10 : 2,
-        boxShadow: hasInnerRule ? `inset 0 0 0 3px ${withAlpha(pageBg, 0.95)}, inset 0 0 0 4px ${withAlpha(borderColor, 0.35)}` : undefined
-      };
+  const borderStyle =
+    safeIndex === 0
+      ? {
+          border: `3px double ${borderColor}`,
+          boxShadow: `inset 0 0 0 2px ${pageBg}, inset 0 0 0 3px ${borderColor}55`
+        }
+      : safeIndex === 1
+      ? {
+          border: `3px solid ${accentColor}`,
+          boxShadow: `inset 0 0 0 4px ${borderColor}33`
+        }
+      : safeIndex === 2
+      ? {
+          borderTop: `4px double ${borderColor}`,
+          borderBottom: `4px double ${borderColor}`,
+          borderLeft: `3px solid ${accentColor}`,
+          borderRight: `3px solid ${accentColor}`,
+          boxShadow: `inset 0 0 0 2px ${borderColor}33`
+        }
+      : safeIndex === 3
+      ? {
+          borderTop: `5px solid ${accentColor}`,
+          borderBottom: `2px solid ${borderColor}`,
+          borderLeft: `2px solid ${borderColor}`,
+          borderRight: `2px solid ${borderColor}`,
+          boxShadow: `inset 0 0 0 2px ${accentColor}22`
+        }
+      : {
+          border: `2px dotted ${borderColor}`,
+          boxShadow: `inset 0 0 0 3px ${accentColor}18`
+        };
 
   const frameStyle = (index) => ({
     border:
@@ -133,10 +124,13 @@ export default function PageStructureMiniPreview({
 
   const storyCard = (className = '') => (
     <div
-      className={`min-w-0 p-1.5 ${className}`}
+      className={`min-w-0 p-1.5 rounded ${className}`}
       style={{
-        ...blockStyleFor(design, { radius: 4 }),
-        ...(overlapStyle || {}),
+        backgroundColor: `${accentColor}18`,
+        border:
+          safeIndex === 2
+            ? `2px double ${borderColor}`
+            : `1px solid ${borderColor}`,
         borderTop: safeIndex === 1 ? `3px solid ${accentColor}` : undefined
       }}
     >
@@ -174,30 +168,36 @@ export default function PageStructureMiniPreview({
       <div className={`w-full h-full rounded-xl bg-[#141619] ${compact ? 'p-1' : 'p-1.5'} shadow-inner flex flex-col`}>
         <div
           className={`w-full h-full rounded-lg ${compact ? 'p-1.5' : 'p-2.5'} relative overflow-hidden flex flex-col`}
-          data-page-border={design.pageBorderId}
-          data-page-texture={design.pageTextureId}
-          data-block-overlap={design.blockOverlap}
           style={{
             ...borderStyle,
             backgroundColor: pageBg,
             color: pageText
           }}
         >
-          {texture ? <span aria-hidden="true" style={{ ...texture, borderRadius: 8 }} /> : null}
-          {hasCorners && (
+          {safeIndex === 0 && (
             <>
               <span className="absolute top-1 left-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
               <span className="absolute top-1 right-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
-              <span className="absolute bottom-1 left-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
-              <span className="absolute bottom-1 right-1 text-[8px] font-black" style={{ color: borderColor }}>❧</span>
             </>
+          )}
+          {safeIndex === 1 && (
+            <div className="absolute top-0 inset-x-0 h-1.5" style={{ backgroundColor: accentColor }} />
+          )}
+          {safeIndex === 2 && (
+            <span className="absolute top-0.5 left-1/2 -translate-x-1/2 px-1 rounded-full text-[6px] font-bold text-white" style={{ backgroundColor: accentColor }}>✦</span>
+          )}
+          {safeIndex === 3 && (
+            <span className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 rounded-b-full" style={{ backgroundColor: accentColor }} />
+          )}
+          {safeIndex === 4 && (
+            <span className="absolute top-1 right-1 text-[7px] font-black" style={{ color: accentColor }}>✧</span>
           )}
 
           <div
             className={`relative z-10 text-center ${compact ? 'text-[5px] pb-0.5 mb-0.5' : 'text-[7px] pb-1 mb-1'} font-extrabold uppercase tracking-widest truncate`}
             style={{
-              color: headingStyle.titleStyle.color,
-              borderBottom: `1px solid ${withAlpha(borderColor, 0.55)}`
+              color: safeIndex === 1 ? '#fff' : accentColor,
+              borderBottom: `1px solid ${borderColor}88`
             }}
           >
             {structure?.shortLabel || structure?.name || template?.name || 'Matched Page Design'}

@@ -1,9 +1,24 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Image as ImageIcon, LoaderCircle, Trash2, Upload } from 'lucide-react';
+import { Check, Image as ImageIcon, LoaderCircle, Search, Trash2, Upload } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import CoverArtwork from './CoverArtwork';
 import StockImageSearchModal from './StockImageSearchModal';
 import { shrinkImageToDataUrl } from '../utils/imageResize';
+
+const SAMPLE_ARTWORK = [
+  '/sample-artwork/nature-waterfall.jpg',
+  '/sample-artwork/nature-ferns.jpg',
+  '/sample-artwork/nature-mushrooms.jpg',
+  '/sample-artwork/book-harbor.jpg',
+  '/sample-artwork/book-homestead.jpg',
+  '/sample-artwork/wedding-walk.jpg',
+  '/sample-artwork/wedding-bride.jpg',
+  '/sample-artwork/wedding-dance.jpg',
+  '/sample-artwork/story-lantern.jpg',
+  '/sample-artwork/story-rocket.jpg',
+  '/sample-artwork/dish-bistro.jpg',
+  '/sample-artwork/mag-couture.jpg'
+];
 
 const DEFAULT_WORD_ART = {
   text: '',
@@ -206,39 +221,18 @@ export default function CoverEditor({
     visualTemplateId: saved.visualTemplateId
   };
 
-  // The cover designer sits on the studio's dark navy surface. Fields use a
-  // warm paper surface with opaque ink and a visible placeholder, so the
-  // author can always see exactly what they are typing.
-  const labelStyle = 'mb-1.5 block text-[11px] font-extrabold uppercase tracking-widest';
-  const labelInk = '#F5C451';
-  const helperInk = '#F3D78B';
-  const panelStyle = {
-    borderRadius: 18,
-    border: '1px solid rgba(229, 184, 75, 0.42)',
-    background: 'rgba(6, 17, 40, 0.55)',
-    boxShadow: 'inset 0 1px 0 rgba(253, 224, 141, 0.12)'
-  };
-  const fieldVars = {
-    '--fq-field-bg': '#FFFDF7',
-    '--fq-field-bg-hover': '#FFFFFF',
-    '--fq-field-bg-focus': '#FFFFFF',
-    '--fq-field-ink': '#0F172A',
-    '--fq-field-muted': '#6B5B45',
-    '--fq-field-border': 'rgba(229, 184, 75, 0.75)',
-    '--fq-field-focus': 'rgba(245, 196, 81, 0.45)'
-  };
-  const inputClass = 'fq-page-field text-sm font-medium';
-  const coverWords = String(coverBlurb || '').trim() ? String(coverBlurb).trim().split(/\s+/).length : 0;
-  const coverBlurbLimit = 40;
+  const labelStyle = 'block text-xs font-bold uppercase tracking-widest mb-1.5';
+  const inputClass =
+    'w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:ring-2';
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm font-bold uppercase tracking-widest" style={{ color: labelInk }}>
+        <div className="text-sm font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">
           <ImageIcon className="mr-2 inline h-4 w-4" aria-hidden="true" />
           Book cover · background + word art
         </div>
-        <div className="flex items-center gap-3 text-xs" style={{ color: helperInk }}>
+        <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
           <span aria-live="polite">{saving ? 'Saving…' : hasChanges ? 'Unsaved changes' : 'Saved'}</span>
           <button
             type="button"
@@ -263,7 +257,7 @@ export default function CoverEditor({
             editable
             className="w-full shadow-2xl"
           />
-          <p className="mt-2 text-center text-[11px] uppercase tracking-widest" style={{ color: helperInk }}>
+          <p className="mt-2 text-center text-[11px] uppercase tracking-widest text-slate-500 dark:text-slate-400">
             {trimSize} cover preview
           </p>
         </div>
@@ -271,17 +265,25 @@ export default function CoverEditor({
         {/* Controls */}
         <div className="space-y-4">
           {/* Background image */}
-          <section className="p-4" style={panelStyle}>
-            <h3 className={labelStyle} style={{ color: labelInk }}>1 · Background image</h3>
+          <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+            <h3 className={labelStyle}>1 · Background image</h3>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => { setStockTarget('cover'); setStockOpen(true); }}
-                className="inline-flex items-center gap-1.5 rounded-full bg-amber-800 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700"
+                onClick={() => { fileTargetRef.current = 'cover'; coverFileRef.current?.click(); }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                 disabled={busyImage === 'cover'}
               >
                 {busyImage === 'cover' ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                Upload an image
+                Upload
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStockTarget('cover'); setStockOpen(true); }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+              >
+                <Search className="h-3.5 w-3.5" />
+                Stock photos
               </button>
               {coverImage ? (
                 <button
@@ -295,11 +297,10 @@ export default function CoverEditor({
               ) : null}
             </div>
 
-            <label className={`${labelStyle} mt-4`} style={{ color: labelInk }} htmlFor="cover-from-library">From your asset library</label>
+            <label className={`${labelStyle} mt-4`} htmlFor="cover-from-library">From your asset library</label>
             <select
               id="cover-from-library"
               className={inputClass}
-              style={fieldVars}
               defaultValue=""
               onChange={(e) => { fileTargetRef.current = 'cover'; pickFromAssets(e); }}
             >
@@ -309,7 +310,24 @@ export default function CoverEditor({
               ))}
             </select>
 
-            <label className={`${labelStyle} mt-4`} style={{ color: labelInk }} htmlFor="cover-overlay">
+            <p className={`${labelStyle} mt-4`}>Free sample artwork</p>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {SAMPLE_ARTWORK.map((path) => (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => applyImage(path, 'cover')}
+                  className={`overflow-hidden rounded-lg border-2 transition ${
+                    coverImage === path ? 'border-amber-500 ring-2 ring-amber-400/50' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'
+                  }`}
+                  title={path.split('/').pop()}
+                >
+                  <img src={path} alt="" className="h-12 w-full object-cover" />
+                </button>
+              ))}
+            </div>
+
+            <label className={`${labelStyle} mt-4`} htmlFor="cover-overlay">
               Image dim (helps the word art read) · {Math.round(coverOverlay * 100)}%
             </label>
             <input
@@ -325,9 +343,9 @@ export default function CoverEditor({
           </section>
 
           {/* Word art */}
-          <section className="p-4" style={panelStyle}>
-            <h3 className={labelStyle} style={{ color: labelInk }}>2 · Word-art heading (book name)</h3>
-            <label className="mb-1.5 block text-xs font-semibold" style={{ color: helperInk }} htmlFor="cover-title">
+          <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+            <h3 className={labelStyle}>2 · Word-art heading (book name)</h3>
+            <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400" htmlFor="cover-title">
               Title shown on the cover
             </label>
             <input
@@ -336,14 +354,13 @@ export default function CoverEditor({
               className={inputClass}
               value={wordArt.text}
               placeholder={project?.title || 'Book title'}
-              style={fieldVars}
               onChange={(e) => { setWordArt((w) => ({ ...w, text: e.target.value })); markDirty(); }}
             />
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
-                <span className={labelStyle} style={{ color: labelInk }}>Letter style</span>
-                <div className="flex rounded-full p-1" style={{ border: '1px solid rgba(229,184,75,0.5)' }} role="radiogroup" aria-label="Word art letter style">
+                <span className={labelStyle}>Letter style</span>
+                <div className="flex rounded-full border border-slate-300 p-1 dark:border-slate-600" role="radiogroup" aria-label="Word art letter style">
                   <button
                     type="button"
                     role="radio"
@@ -367,13 +384,13 @@ export default function CoverEditor({
                     Solid fill
                   </button>
                 </div>
-                <p className="mt-1.5 text-[11px]" style={{ color: helperInk }}>
+                <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                   Outline only = no background behind the letters, just a narrow border around each one.
                 </p>
               </div>
 
               <div>
-                <label className={labelStyle} style={{ color: labelInk }} htmlFor="cover-stroke-color">
+                <label className={labelStyle} htmlFor="cover-stroke-color">
                   Border colour
                 </label>
                 <input
@@ -386,7 +403,7 @@ export default function CoverEditor({
               </div>
 
               <div>
-                <label className={labelStyle} style={{ color: labelInk }} htmlFor="cover-stroke-width">
+                <label className={labelStyle} htmlFor="cover-stroke-width">
                   Border width · {wordArt.strokeWidth}px
                 </label>
                 <input
@@ -403,7 +420,7 @@ export default function CoverEditor({
 
               {wordArt.fillMode === 'solid' ? (
                 <div>
-                  <label className={labelStyle} style={{ color: labelInk }} htmlFor="cover-fill-color">Fill colour</label>
+                  <label className={labelStyle} htmlFor="cover-fill-color">Fill colour</label>
                   <input
                     id="cover-fill-color"
                     type="color"
@@ -417,38 +434,33 @@ export default function CoverEditor({
           </section>
 
           {/* Author wording + name + photo */}
-          <section className="p-4" style={panelStyle}>
-            <h3 className={labelStyle} style={{ color: labelInk }}>3 · Words from the author</h3>
-            <label className="mb-1.5 block text-xs font-semibold" style={{ color: helperInk }} htmlFor="cover-blurb">
+          <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
+            <h3 className={labelStyle}>3 · Words from the author</h3>
+            <label className="mb-1.5 block text-xs text-slate-500 dark:text-slate-400" htmlFor="cover-blurb">
               A short piece of wording shown under the title
             </label>
             <textarea
               id="cover-blurb"
               rows={3}
               className={inputClass}
-              style={{ ...fieldVars, resize: 'vertical', lineHeight: 1.55 }}
               value={coverBlurb}
               placeholder="A promise, a first line, or a note to the reader…"
               onChange={(e) => { setCoverBlurb(e.target.value); markDirty(); }}
             />
-            <div className="mt-1 flex items-center justify-between text-[11px]" style={{ color: coverWords > coverBlurbLimit ? '#FCA5A5' : helperInk }}>
-              <span>{coverWords} / {coverBlurbLimit} words — a cover line reads best when it is short.</span>
-            </div>
 
-            <label className={`${labelStyle} mt-4`} style={{ color: labelInk }} htmlFor="cover-author-name">Author name</label>
+            <label className={`${labelStyle} mt-4`} htmlFor="cover-author-name">Author name</label>
             <input
               id="cover-author-name"
               type="text"
               className={inputClass}
               value={coverAuthorName}
               placeholder={project?.authorName || project?.author_name || 'Author name'}
-              style={fieldVars}
               onChange={(e) => { setCoverAuthorName(e.target.value); markDirty(); }}
             />
 
             <fieldset className="mt-4">
-              <legend className={labelStyle} style={{ color: labelInk }}>Author photo on cover?</legend>
-              <div className="flex gap-4 text-sm font-semibold" style={{ color: '#FDE08D' }}>
+              <legend className={labelStyle}>Author photo on cover?</legend>
+              <div className="flex gap-4 text-sm">
                 <label className="inline-flex cursor-pointer items-center gap-2">
                   <input
                     type="radio"
@@ -477,12 +489,20 @@ export default function CoverEditor({
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => { setStockTarget('author'); setStockOpen(true); }}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-800 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-amber-700"
+                    onClick={() => { fileTargetRef.current = 'author'; authorFileRef.current?.click(); }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                     disabled={busyImage === 'author'}
                   >
                     {busyImage === 'author' ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                    Upload a photo
+                    Upload photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setStockTarget('author'); setStockOpen(true); }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-bold hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    Stock photos
                   </button>
                   {authorPhotoUrl ? (
                     <button
@@ -495,11 +515,10 @@ export default function CoverEditor({
                     </button>
                   ) : null}
                 </div>
-                <label className={`${labelStyle}`} style={{ color: labelInk }} htmlFor="cover-author-library">From your asset library</label>
+                <label className={`${labelStyle}`} htmlFor="cover-author-library">From your asset library</label>
                 <select
                   id="cover-author-library"
                   className={inputClass}
-                  style={fieldVars}
                   defaultValue=""
                   onChange={(e) => { fileTargetRef.current = 'author'; pickFromAssets(e); }}
                 >
@@ -546,11 +565,6 @@ export default function CoverEditor({
         }}
         onAssetsChanged={onAssetsChanged}
         onOpenProviderSettings={onOpenAiSettings}
-        onRequestUpload={() => {
-          const target = stockTarget === 'author' ? 'author' : 'cover';
-          fileTargetRef.current = target;
-          (target === 'author' ? authorFileRef : coverFileRef).current?.click();
-        }}
       />
     </div>
   );

@@ -78,7 +78,11 @@ function requireAuth(req, res, next) {
 }
 
 function verifyProjectOwnership(projectId, userId) {
-  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(projectId);
+  const cleanId = String(projectId || '').trim();
+  if (!cleanId || cleanId === 'undefined' || cleanId === 'null') {
+    return { error: 'Project not found.', status: 404 };
+  }
+  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(cleanId);
   if (!project) {
     return { error: 'Project not found.', status: 404 };
   }

@@ -2,17 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
 import { getAiFieldProfile } from '../data/aiPromptCatalog';
 import { getImageSlotRule } from '../data/slotRules';
-import {
-  resolveTemplateDesign,
-  headingTreatment,
-  getOrnament,
-  withAlpha,
-  toRoman,
-  readableInk,
-  blockOverlapStyle,
-  overlapSafeDesign
-} from '../data/designSystem';
-import { PageFrame, PageTitleFrame, BlockFrame, PageNumberLine } from './DesignFrame';
 import RichTextField from './RichTextField';
 import {
   normalizeRichHtml,
@@ -144,42 +133,16 @@ export default function TemplateStructurePageRenderer({
   const flushDraftRef = useRef(null);
   const previewPatchRef = useRef(null);
   const sd = draftData;
-  // The design spec is the single source of decoration: template palette,
-  // page border, block borders, heading treatment, ornament and page-number
-  // style. `project.coverConfig.design` carries the author's own choices.
-  const design = resolveTemplateDesign(
-    visualTemplate,
-    project?.coverConfig?.design || {},
-    { fontFamily: fontFamily || project?.coverConfig?.fontFamily || visualTemplate.fontFamily }
-  );
   const palette = {
-    pageBg: design.pageBg,
-    pageText: design.bodyText,
-    border: design.borderInk,
-    accent: design.accentInk,
-    font: design.fontStack
+    pageBg: visualTemplate.pageBg || '#FCF8F1',
+    pageText: visualTemplate.pageText || '#263142',
+    border: visualTemplate.borderColor || '#B68745',
+    accent: visualTemplate.accentColor || visualTemplate.borderColor || '#8F6534',
+    font: fontFamily || visualTemplate.fontFamily || 'Georgia, serif'
   };
-  const heading = headingTreatment(design);
-  const designOrnament = getOrnament(design.ornamentId);
-  const getDesignOrnament = () => designOrnament;
   const detailSlotCount = Math.max(structure.photoSlots || 1, 1);
   const copy = DEFAULT_COPY[categoryId] || DEFAULT_COPY.photobook;
   const textColor = palette.pageText;
-  const kickerNumber = design.pageNumbers === 'roman' ? toRoman(chapterIndex + 1) : String(chapterIndex + 1);
-  const KICKER_BY_CATEGORY = {
-    photobook: 'PLATE',
-    cookbook: 'RECIPE',
-    magazine: 'FEATURE',
-    storybook: 'STORY',
-    informational: 'PART',
-    book: 'CHAPTER',
-    workbook: 'WORKSHEET'
-  };
-  const pageKicker = (() => {
-    const custom = sd.kicker;
-    if (custom && String(custom).trim()) return String(custom).trim();
-    return `${KICKER_BY_CATEGORY[categoryId] || 'CHAPTER'} ${kickerNumber}`;
-  })();
 
   useEffect(() => {
     saveCallbackRef.current = onSaveChapter;
@@ -422,10 +385,6 @@ export default function TemplateStructurePageRenderer({
       (options.rows || 4) * 12
     ));
     const placeholder = options.placeholder || `Tap Edit to write the ${fieldLabel.toLowerCase()}…`;
-    // The first paragraph of the page's main reading block may open with an
-    // illuminated capital — a signature of the classic sample templates.
-    const MAIN_BODY_FIELDS = new Set(['chapterText', 'storyText', 'articleBody', 'overview']);
-    const useDropCap = (options.dropCap ?? MAIN_BODY_FIELDS.has(field)) && design.dropCap && !options.noDropCap;
     return (
       <RichTextField
         rows={options.rows || 4}
@@ -434,17 +393,10 @@ export default function TemplateStructurePageRenderer({
         onChange={(html) => updateText(field, html)}
         onBlur={handleDraftBlur}
         placeholder={placeholder}
-        className={`focus:outline-none break-words ${useDropCap ? 'fq-dropcap' : ''}${useDropCap && design.dropCapStyle === 'boxed' ? ' fq-dropcap--boxed' : ''} ${options.className || ''}`}
+        className={`focus:outline-none break-words ${options.className || ''}`}
         style={{
           ...fieldStyle,
           lineHeight: options.lineHeight || '1.55',
-          ...(useDropCap
-            ? {
-              '--fq-dropcap-color': design.accentInk,
-              '--fq-dropcap-bg': design.accentInk,
-              '--fq-dropcap-ink': readableInk('#FFFFFF', design.accentInk, { fallback: '#FFFFFF', min: 3 })
-            }
-            : null),
           ...options.style
         }}
         ariaLabel={options.ariaLabel || fieldLabel}
@@ -509,10 +461,7 @@ export default function TemplateStructurePageRenderer({
         className="w-full break-words font-bold"
         style={{
           ...fieldStyle,
-          color: heading.titleStyle.color,
-          fontFamily: heading.titleStyle.fontFamily,
-          textTransform: heading.titleTransform === 'uppercase' ? 'uppercase' : 'none',
-          letterSpacing: heading.titleStyle.letterSpacing
+          color: currentStructureIndex === 1 ? '#FFFFFF' : palette.accent
         }}
         aiConfigured={aiConfigured}
         aiContext={makeAiContext('chapterTitle', {
@@ -522,9 +471,9 @@ export default function TemplateStructurePageRenderer({
         onOpenAiSettings={onOpenAiSettings}
       />
       {(editable || richHtmlToPlainText(draftSubtitle).trim()) && (
-        <div className={editable ? 'mt-2 border-t pt-2' : 'mt-1'} style={editable ? { borderColor: withAlpha(palette.border, 0.35) } : undefined}>
+        <div className={editable ? 'mt-2 border-t pt-2' : 'mt-1'} style={editable ? { borderColor: `${palette.border}55` } : undefined}>
           {editable && (
-            <div className={`mb-1 text-[9px] font-extrabold uppercase tracking-wider opacity-75 ${heading.align === 'center' ? 'text-center' : 'text-left'}`}>Subtitle / page deck · optional</div>
+            <div className="mb-1 text-left text-[9px] font-extrabold uppercase tracking-wider opacity-75">Subtitle / page deck · optional</div>
           )}
           <RichTextField
             rows={2}
@@ -533,8 +482,8 @@ export default function TemplateStructurePageRenderer({
             onChange={updateSubtitle}
             onBlur={handleDraftBlur}
             placeholder="Tap Edit to add a short subtitle…"
-            className={`text-xs italic ${heading.align === 'center' ? 'text-center' : 'text-left'}`}
-            style={{ ...fieldStyle, color: palette.pageText, lineHeight: '1.45' }}
+            className="text-left text-xs italic"
+            style={{ ...fieldStyle, lineHeight: '1.45' }}
             ariaLabel="Page subtitle editor"
             aiConfigured={aiConfigured}
             aiContext={makeAiContext('pageSubtitle', {
@@ -638,34 +587,44 @@ export default function TemplateStructurePageRenderer({
   };
   const totalPhotoSlots = categoryPhotoCounts[categoryId] || detailSlotCount;
 
-  // Photo frames follow the page design: the frame rule uses the chosen
-  // border ink and the matte uses the page tint, so a placed photo lands in a
-  // frame that matches the sample instead of an unrelated generic box.
-  const frameShapeRadius = (shape = 'rect') =>
-    shape === 'arch'
-      ? '999px 999px 12px 12px'
-      : shape === 'oval'
-      ? '48% 48% 10px 10px'
-      : shape === 'square'
-      ? '3px'
-      : design.pageBorderId === 'soft-rounded' || design.pageBorderId === 'arch-window'
-      ? '12px'
-      : '6px';
-
   const imageFrameStyle = (shape = 'rect') => {
-    const ornate = ['filigree', 'corner-flourish', 'crest-corners', 'arch-window'].includes(design.pageBorderId);
+    const baseRadius =
+      visualTemplate.borderStyle?.includes('rounded') ||
+      visualTemplate.borderStyle?.includes('ornate')
+        ? '14px'
+        : visualTemplate.borderStyle?.includes('polaroid')
+        ? '4px'
+        : '8px';
+    const radius =
+      shape === 'arch'
+        ? '100px 100px 12px 12px'
+        : shape === 'oval'
+        ? '48% 48% 10px 10px'
+        : shape === 'square'
+        ? '3px'
+        : baseRadius;
+    const border =
+      currentStructureIndex === 0
+        ? `3px double ${palette.border}`
+        : currentStructureIndex === 1
+        ? `3px solid ${palette.accent}`
+        : currentStructureIndex === 2
+        ? `3px solid ${palette.border}`
+        : currentStructureIndex === 3
+        ? `5px solid ${palette.accent}`
+        : `2px dashed ${palette.border}`;
     return {
-      border: ornate
-        ? `4px double ${palette.border}`
-        : `2px solid ${withAlpha(palette.border, 0.85)}`,
-      borderRadius: frameShapeRadius(shape),
+      border,
+      borderRadius: currentStructureIndex === 4 ? '2px' : radius,
       backgroundColor: palette.pageBg,
-      boxShadow: `0 0 0 2px ${withAlpha(palette.pageBg, 0.92)}, 0 0 0 3px ${withAlpha(palette.border, 0.35)}, 0 10px 22px rgba(15, 23, 42, 0.18)`
+      boxShadow:
+        currentStructureIndex === 2 || currentStructureIndex === 4
+          ? `0 0 0 2px ${palette.pageBg}, 0 0 0 4px ${palette.border}66, 0 8px 18px rgba(0,0,0,0.2)`
+          : currentStructureIndex === 3
+          ? `0 10px 24px ${palette.accent}33`
+          : '0 7px 16px rgba(0,0,0,0.2)'
     };
   };
-
-  // Counts the text blocks laid out on this page, reset on every render.
-  let blockCounter = 0;
 
   const renderPhoto = (
     index,
@@ -685,10 +644,12 @@ export default function TemplateStructurePageRenderer({
         className="min-w-0"
         style={{
           backgroundColor: palette.pageBg,
-          border: `1px solid ${withAlpha(palette.border, 0.5)}`,
-          padding: currentStructureIndex === 0 ? '6px' : '4px',
-          boxShadow: '0 6px 16px rgba(15, 23, 42, 0.16)',
-          borderRadius: 8
+          border: `1px solid ${palette.border}88`,
+          padding: currentStructureIndex === 0 ? '5px' : '4px',
+          boxShadow:
+            currentStructureIndex === 2
+              ? '0 8px 16px rgba(0,0,0,0.24)'
+              : '0 4px 12px rgba(0,0,0,0.15)'
         }}
       >
         {renderPhotoSlot &&
@@ -754,68 +715,125 @@ export default function TemplateStructurePageRenderer({
     );
   };
 
-  // Text blocks all use the design's block treatment (border, tint, rule) so
-  // the bordered boxes the author chose match the template sample. The layout
-  // structure still changes where the blocks sit on the page.
+  const cardStyle = (variant = currentStructureIndex) => {
+    if (variant === 0) {
+      return {
+        backgroundColor: `${palette.accent}12`,
+        border: `1px solid ${palette.border}99`,
+        borderLeft: `5px solid ${palette.accent}`,
+        borderRadius: '10px'
+      };
+    }
+    if (variant === 1) {
+      return {
+        backgroundColor: `${palette.accent}10`,
+        border: `1.5px solid ${palette.border}`,
+        borderTop: `5px solid ${palette.accent}`,
+        borderRadius: '8px 8px 14px 14px'
+      };
+    }
+    if (variant === 2) {
+      return {
+        backgroundColor: `${palette.accent}12`,
+        border: `3px double ${palette.border}`,
+        borderRadius: '18px 18px 8px 8px',
+        boxShadow: `inset 0 0 0 2px ${palette.pageBg}, 0 7px 15px rgba(0,0,0,0.13)`
+      };
+    }
+    if (variant === 3) {
+      return {
+        background: `linear-gradient(110deg, ${palette.accent}20, ${palette.pageBg} 65%)`,
+        border: `1px solid ${palette.border}88`,
+        borderLeft: `7px solid ${palette.accent}`,
+        borderRadius: '3px 18px 18px 3px',
+        boxShadow: `0 8px 18px ${palette.accent}20`
+      };
+    }
+    return {
+      backgroundColor: `${palette.accent}0D`,
+      border: `2px dotted ${palette.border}`,
+      borderRadius: '4px',
+      boxShadow: `inset 0 0 0 3px ${palette.pageBg}, inset 0 0 0 4px ${palette.accent}25`
+    };
+  };
+
   const card = (heading, content, options = {}) => {
     const visibleHeading = editable ? heading : (heading ? PRINT_CARD_HEADINGS[heading] || '' : '');
-    const ornament = getDesignOrnament(design);
-    // Blocks are counted as they are laid out, so the placement knows which
-    // card is the first on the page (the one that may lift over the artwork).
-    const blockIndex = blockCounter;
-    blockCounter += 1;
-    const overlapStyle = blockOverlapStyle(design, blockIndex);
-    const blockDesign = overlapStyle ? overlapSafeDesign(design) : design;
     return (
-      <BlockFrame
-        design={blockDesign}
-        radius={options.variant === 2 || options.variant === 4 ? 14 : options.variant === 3 ? 8 : 10}
-        className={`p-3.5 sm:p-4 ${options.className || ''}`}
-        style={{ ...(overlapStyle || {}), ...(options.style || {}) }}
-        data-block-overlap={overlapStyle ? design.blockOverlap : undefined}
-      >
-        {visibleHeading && (
-          <div
-            className="mb-1.5 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest sm:text-xs"
-            style={{ color: palette.accent }}
-          >
-            {ornament.glyph ? <span aria-hidden="true">{ornament.glyph}</span> : null}
-            <span>{visibleHeading}</span>
-          </div>
-        )}
-        {content}
-      </BlockFrame>
+    <section
+      className={`p-3.5 sm:p-4 overflow-hidden ${options.className || ''}`}
+      style={{ ...cardStyle(options.variant), ...options.style }}
+    >
+      {visibleHeading && (
+        <div
+          className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest mb-1.5"
+          style={{ color: palette.accent }}
+        >
+          {currentStructureIndex === 2 || currentStructureIndex === 4 ? '✦ ' : currentStructureIndex === 3 ? '▰ ' : '❖ '}
+          {visibleHeading}
+        </div>
+      )}
+      {content}
+    </section>
     );
   };
 
-  const runningHead = editable
-    ? (currentStructureIndex === 0
-      ? 'CLASSICAL PAGE DESIGN'
-      : currentStructureIndex === 1
-      ? 'FEATURE LAYOUT'
-      : currentStructureIndex === 2
-      ? 'ILLUSTRATED EDITION'
-      : currentStructureIndex === 3
-      ? 'PANORAMA SPREAD'
-      : 'COLLECTOR’S FOLIO')
-    : project.title;
-
   const header = (
-    <div className="relative mb-4 px-1 sm:px-2">
-      <div
-        className="mb-2 flex items-center justify-between gap-2 text-[9px] font-extrabold uppercase tracking-[0.16em] sm:text-[10px]"
-        style={{ color: withAlpha(palette.pageText, 0.7) }}
-      >
-        <span className="truncate">{runningHead}</span>
+    <div
+      className={`relative mb-4 px-3 sm:px-5 py-3 ${
+        currentStructureIndex === 1
+          ? 'text-white rounded-t-2xl'
+          : currentStructureIndex === 3
+          ? 'text-left'
+          : 'text-center'
+      }`}
+      style={
+        currentStructureIndex === 1
+          ? { backgroundColor: palette.accent, borderBottom: `4px double ${palette.border}` }
+          : currentStructureIndex === 0
+          ? { borderBottom: `2px solid ${palette.border}`, color: palette.pageText }
+          : currentStructureIndex === 2
+          ? { borderBottom: `4px double ${palette.border}`, color: palette.pageText }
+          : currentStructureIndex === 3
+          ? { borderLeft: `6px solid ${palette.accent}`, borderBottom: `1px solid ${palette.border}88`, color: palette.pageText }
+          : { border: `1px dashed ${palette.border}AA`, borderRadius: '18px', color: palette.pageText }
+      }
+    >
+      <div className="flex items-center justify-between gap-2 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.16em]">
+        <span className="truncate opacity-80">
+          {editable
+            ? (currentStructureIndex === 0
+              ? 'CLASSICAL PAGE DESIGN'
+              : currentStructureIndex === 1
+              ? 'FEATURE LAYOUT'
+              : currentStructureIndex === 2
+              ? 'ILLUSTRATED EDITION'
+              : currentStructureIndex === 3
+              ? 'PANORAMA SPREAD'
+              : 'COLLECTOR’S FOLIO')
+            : project.title}
+        </span>
         <span className="shrink-0">{editable ? `PAGE ${pageIndex + 1}` : ''}</span>
       </div>
-      <PageTitleFrame
-        design={design}
-        kickerText={pageKicker}
-        pageLabel={editable ? design.templateName : project.title}
-        title={titleInput}
-        headingStyleId={design.headingStyleId}
-      />
+      <div
+        className={`mt-1 ${
+          currentStructureIndex === 0 || currentStructureIndex === 3
+            ? 'text-left text-lg sm:text-2xl'
+            : currentStructureIndex === 1
+            ? 'text-center text-xl sm:text-3xl'
+            : 'text-center text-xl sm:text-2xl'
+        } font-bold leading-tight`}
+      >
+        {titleInput}
+      </div>
+      {(currentStructureIndex === 2 || currentStructureIndex === 4) && (
+        <div
+          className={`absolute ${currentStructureIndex === 2 ? 'left-1/2 -translate-x-1/2 -bottom-3 w-6 h-6 rounded-full' : 'right-2 -bottom-2 w-5 h-5 rounded-sm'} flex items-center justify-center text-[10px] font-black text-white shadow`}
+          style={{ backgroundColor: palette.accent, border: `2px solid ${palette.pageBg}` }}
+        >
+          {currentStructureIndex === 2 ? '✦' : 'V'}
+        </div>
+      )}
     </div>
   );
 
@@ -1470,36 +1488,93 @@ export default function TemplateStructurePageRenderer({
       : null;
   };
 
-  const pageArticle = (
-    <PageFrame
-      design={design}
-      as="article"
-      className="min-h-[560px]"
-      contentStyle={{ padding: 'clamp(1.5rem, 3.2vw, 2.8rem)' }}
-      aria-label={`${project.title} — ${design.templateName} page`}
-    >
-      {backButton}
-      {header}
-      <div className="relative z-10">
-        {renderStructureContent()}
-        {additionalPageContent()}
-      </div>
+  const structureFrame =
+    currentStructureIndex === 0
+      ? {
+          border: `5px double ${palette.border}`,
+          boxShadow: `inset 0 0 0 4px ${palette.pageBg}, inset 0 0 0 6px ${palette.border}55`
+        }
+      : currentStructureIndex === 1
+      ? {
+          border: `3px solid ${palette.accent}`,
+          boxShadow: `inset 0 0 0 5px ${palette.border}44`
+        }
+      : currentStructureIndex === 2
+      ? {
+          borderTop: `5px double ${palette.border}`,
+          borderBottom: `5px double ${palette.border}`,
+          borderLeft: `4px solid ${palette.accent}`,
+          borderRight: `4px solid ${palette.accent}`,
+          boxShadow: `inset 0 0 0 3px ${palette.border}22`
+        }
+      : currentStructureIndex === 3
+      ? {
+          borderTop: `8px solid ${palette.accent}`,
+          borderBottom: `2px solid ${palette.border}`,
+          borderLeft: `2px solid ${palette.border}`,
+          borderRight: `2px solid ${palette.border}`,
+          boxShadow: `inset 0 0 0 5px ${palette.accent}12`
+        }
+      : {
+          border: `3px dotted ${palette.border}`,
+          boxShadow: `inset 0 0 0 5px ${palette.pageBg}, inset 0 0 0 7px ${palette.accent}28`
+        };
 
-      {editable ? (
-        <div
-          className="mt-5 pt-2 text-center text-[10px] font-extrabold uppercase tracking-[0.18em] sm:text-xs"
-          style={{ color: palette.accent, borderTop: `1px solid ${withAlpha(palette.border, 0.4)}` }}
-        >
-          {`Layout ${currentStructureIndex + 1} · Chapter ${chapterIndex + 1} · Page ${pageIndex + 1} of ${totalPages}`}
+  const pageArticle = (
+      <article
+        className="relative min-h-[560px] p-5 sm:p-8 md:p-10 overflow-hidden"
+        style={{
+          backgroundColor: palette.pageBg,
+          color: palette.pageText,
+          fontFamily: palette.font,
+          ...structureFrame
+        }}
+      >
+        {/* The matching template's page border, corner ornament and distinct structure details */}
+        {currentStructureIndex === 0 && (
+          <>
+            <span className="pointer-events-none absolute top-2 left-3 text-sm font-black" style={{ color: palette.border }}>❧</span>
+            <span className="pointer-events-none absolute top-2 right-3 text-sm font-black" style={{ color: palette.border }}>❧</span>
+            <span className="pointer-events-none absolute bottom-2 left-3 text-sm font-black" style={{ color: palette.border }}>❧</span>
+            <span className="pointer-events-none absolute bottom-2 right-3 text-sm font-black" style={{ color: palette.border }}>❧</span>
+          </>
+        )}
+        {currentStructureIndex === 1 && (
+          <div className="pointer-events-none absolute top-0 inset-x-0 h-2" style={{ backgroundColor: palette.accent }} />
+        )}
+        {currentStructureIndex === 2 && (
+          <>
+            <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white" style={{ backgroundColor: palette.accent, border: `2px solid ${palette.border}` }}>✦</div>
+            <span className="pointer-events-none absolute top-3 left-3 text-[9px] font-black" style={{ color: palette.border }}>◆</span>
+            <span className="pointer-events-none absolute top-3 right-3 text-[9px] font-black" style={{ color: palette.border }}>◆</span>
+          </>
+        )}
+        {currentStructureIndex === 3 && (
+          <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-20 h-2 rounded-b-full" style={{ backgroundColor: palette.accent }} />
+        )}
+        {currentStructureIndex === 4 && (
+          <>
+            <span className="pointer-events-none absolute top-3 left-3 text-xs font-black" style={{ color: palette.accent }}>✧</span>
+            <span className="pointer-events-none absolute bottom-3 right-3 text-xs font-black" style={{ color: palette.accent }}>✧</span>
+          </>
+        )}
+
+        {backButton}
+        {header}
+        <div className="relative z-10">
+          {renderStructureContent()}
+          {additionalPageContent()}
         </div>
-      ) : (
-        <PageNumberLine
-          design={design}
-          pageIndex={pageIndex}
-          className="mt-6"
-        />
-      )}
-    </PageFrame>
+
+        <div
+          className="mt-5 pt-2 text-center text-[10px] sm:text-xs font-extrabold uppercase tracking-[0.18em]"
+          style={{ color: palette.accent, borderTop: `1px solid ${palette.border}66` }}
+        >
+          {editable
+            ? `Layout ${currentStructureIndex + 1} · Chapter ${chapterIndex + 1} · Page ${pageIndex + 1} of ${totalPages}`
+            : `— ${pageIndex + 1} —`}
+        </div>
+      </article>
   );
 
   return editable

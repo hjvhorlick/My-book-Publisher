@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Crop, FlipHorizontal, LoaderCircle, Upload } from 'lucide-react';
+import { Crop, FlipHorizontal, LoaderCircle, Search, Upload } from 'lucide-react';
 import { getVisualTemplateForProject } from '../data/visualTemplatesCatalog';
 import { getTemplatePageStructures } from '../data/templatePageStructures';
 import { apiRequest } from '../api/client';
@@ -11,70 +11,62 @@ import { preloadImages } from '../utils/preloadImages';
 import StockImageSearchModal from './StockImageSearchModal';
 import ImageCropEditor from './ImageCropEditor';
 import { getImageSlotRule } from '../data/slotRules';
-import { sampleUrlForId } from '../data/sampleArtwork';
-
-// Template artwork goes through the catalogue so every URL carries the current
-// cache tag; a regenerated image can never be served from an old cache entry.
-const art = (...ids) => ids.map((id) => sampleUrlForId(id)).filter(Boolean);
 
 const DEFAULT_ARTWORK_BY_TEMPLATE = {
   // Photo Books
-  'photo-warm-family': art('family-picnic', 'family-beach', 'family-birthday', 'family-child', 'family-garden', 'family-dog'),
-  'photo-modern-minimal': art('nature-lake', 'travel-cottage', 'travel-desert', 'nature-waterfall', 'nature-stones'),
-  'photo-gallery-frame': art('travel-road', 'nature-aurora', 'travel-mountains', 'nature-lake', 'travel-desert'),
-  'photo-vintage-polaroid': art('family-beach', 'family-grandparents', 'family-birthday', 'wedding-walk', 'travel-desert'),
-  'photo-botanical-sage': art('dish-herbs', 'nature-lake', 'nature-ferns', 'nature-stones', 'nature-mushrooms'),
-  'photo-wedding-ivory': art('wedding-walk', 'wedding-table', 'wedding-bride', 'wedding-dance', 'wedding-confetti'),
-  'photo-monochrome-noir': art('mag-architecture', 'mag-sculpture', 'travel-mountains', 'book-harbor', 'mag-portrait'),
-  'photo-sunset-terracotta': art('travel-desert', 'travel-road', 'nature-lake', 'family-beach', 'travel-coast'),
+  'photo-warm-family': ['/sample-artwork/wedding-walk.jpg', '/sample-artwork/nature-ferns.jpg', '/sample-artwork/wedding-dance.jpg', '/sample-artwork/wedding-confetti.jpg'],
+  'photo-modern-minimal': ['/sample-artwork/nature-waterfall.jpg', '/sample-artwork/nature-ferns.jpg', '/sample-artwork/wedding-walk.jpg', '/sample-artwork/mag-couture.jpg', '/sample-artwork/nature-mushrooms.jpg'],
+  'photo-gallery-frame': ['/sample-artwork/nature-waterfall.jpg', '/sample-artwork/book-harbor.jpg', '/sample-artwork/nature-ferns.jpg', '/sample-artwork/nature-mushrooms.jpg'],
+  'photo-vintage-polaroid': ['/sample-artwork/wedding-walk.jpg', '/sample-artwork/wedding-confetti.jpg', '/sample-artwork/nature-waterfall.jpg', '/sample-artwork/wedding-dance.jpg'],
+  'photo-botanical-sage': ['/sample-artwork/nature-waterfall.jpg', '/sample-artwork/nature-ferns.jpg', '/sample-artwork/nature-mushrooms.jpg', '/sample-artwork/story-squirrel.jpg'],
+  'photo-wedding-ivory': ['/sample-artwork/wedding-walk.jpg', '/sample-artwork/wedding-bride.jpg', '/sample-artwork/wedding-dance.jpg', '/sample-artwork/wedding-confetti.jpg'],
+  'photo-monochrome-noir': ['/sample-artwork/mag-sculpture.jpg', '/sample-artwork/book-harbor.jpg', '/sample-artwork/book-homestead.jpg', '/sample-artwork/nature-ferns.jpg'],
+  'photo-sunset-terracotta': ['/sample-artwork/mag-runner.jpg', '/sample-artwork/nature-waterfall.jpg', '/sample-artwork/nature-mushrooms.jpg', '/sample-artwork/wedding-confetti.jpg'],
   // Cookbooks
-  'cook-warm-border': art('dish-roast', 'dish-soup', 'dish-pasta', 'dish-bistro', 'dish-market'),
-  'cook-modern-spread': art('dish-citrus', 'dish-breakfast', 'dish-market', 'dish-bistro'),
-  'cook-mediterranean-sun': art('dish-mediterranean', 'dish-citrus', 'dish-herbs'),
-  'cook-rustic-farmhouse': art('dish-bakehouse', 'dish-cheese', 'dish-roast', 'dish-market', 'dish-pasta'),
-  'cook-plant-botanical': art('dish-herbs', 'dish-citrus', 'nature-ferns'),
-  'cook-french-bistro': art('dish-cheese', 'dish-pasta', 'dish-bistro'),
-  'cook-fiesta-spice': art('dish-roast', 'dish-market', 'dish-mediterranean'),
-  'cook-cozy-bakehouse': art('dish-dessert', 'dish-breakfast', 'dish-bakehouse', 'dish-pasta'),
+  'cook-warm-border': ['/sample-artwork/dish-bistro.jpg'],
+  'cook-modern-spread': ['/sample-artwork/dish-bistro.jpg'],
+  'cook-cozy-bakehouse': ['/sample-artwork/dish-bistro.jpg'],
+  'cook-mediterranean-sun': ['/sample-artwork/dish-bistro.jpg'],
+  'cook-rustic-farmhouse': ['/sample-artwork/dish-bistro.jpg'],
+  'cook-plant-botanical': ['/sample-artwork/nature-ferns.jpg'],
+  'cook-french-bistro': ['/sample-artwork/dish-bistro.jpg'],
+  'cook-fiesta-spice': ['/sample-artwork/dish-bistro.jpg'],
   // Magazines
-  'mag-bold-editorial': art('mag-chef', 'mag-architecture', 'mag-portrait'),
-  'mag-lifestyle-minimal': art('mag-interior', 'mag-chef', 'mag-dance'),
-  'mag-indigo-digest': art('mag-streetfood', 'info-studio', 'wedding-confetti'),
-  'mag-art-culture': art('mag-dance', 'mag-music', 'mag-sculpture', 'mag-couture'),
-  'mag-tech-future': art('work-desk', 'mag-architecture', 'info-studio'),
-  'mag-travel-wanderlust': art('travel-mountains', 'travel-coast', 'mag-portrait'),
-  'mag-fashion-vogue': art('mag-couture', 'mag-interior', 'mag-portrait'),
-  'mag-sports-action': art('mag-runner', 'mag-music'),
+  'mag-bold-editorial': ['/sample-artwork/mag-sculpture.jpg'],
+  'mag-lifestyle-minimal': ['/sample-artwork/nature-ferns.jpg'],
+  'mag-indigo-digest': ['/sample-artwork/info-studio.jpg', '/sample-artwork/wedding-confetti.jpg'],
+  'mag-art-culture': ['/sample-artwork/mag-sculpture.jpg'],
+  'mag-tech-future': ['/sample-artwork/info-studio.jpg'],
+  'mag-travel-wanderlust': ['/sample-artwork/nature-waterfall.jpg'],
+  'mag-fashion-vogue': ['/sample-artwork/mag-couture.jpg', '/sample-artwork/wedding-bride.jpg'],
+  'mag-sports-action': ['/sample-artwork/mag-runner.jpg'],
   // Children's Picture Books
-  'story-starlight-frame': art('story-snow', 'story-lantern', 'story-castle', 'story-sea'),
-  'story-sunny-adventure': art('story-balloon', 'story-castle'),
-  'story-ocean-treasure': art('story-turtle'),
-  'story-woodland-friends': art('story-woodland', 'story-fox', 'story-squirrel'),
-  'story-cosmic-rocket': art('story-rocket', 'story-snow'),
-  'story-fairy-castle': art('story-castle', 'story-garden', 'story-dragon'),
-  'story-dino-jungle': art('story-dragon', 'story-woodland', 'story-fox'),
-  'story-pastel-lullaby': art('story-garden', 'story-lantern', 'story-sea'),
+  'story-starlight-frame': ['/sample-artwork/story-lantern.jpg'],
+  'story-sunny-adventure': ['/sample-artwork/story-balloon.jpg'],
+  'story-ocean-treasure': ['/sample-artwork/story-turtle.jpg'],
+  'story-woodland-friends': ['/sample-artwork/story-squirrel.jpg'],
+  'story-cosmic-rocket': ['/sample-artwork/story-rocket.jpg'],
+  'story-fairy-castle': ['/sample-artwork/story-dragon.jpg'],
+  'story-dino-jungle': ['/sample-artwork/story-dragon.jpg'],
+  'story-pastel-lullaby': ['/sample-artwork/story-lantern.jpg'],
   // How-To & Guide Books
-  'info-blue-guide': art('info-tools', 'info-diagrams', 'work-desk', 'info-workshop'),
-  'info-emerald-handbook': art('info-books', 'dish-herbs', 'nature-ferns'),
-  'info-amber-workshop': art('info-workshop', 'info-tools', 'info-joinery'),
-  'info-purple-masterclass': art('info-diagrams', 'work-journal', 'info-studio'),
-  'info-teal-wellness': art('nature-waterfall', 'mag-runner'),
-  'info-slate-business': art('info-books', 'work-desk', 'info-studio'),
-  'info-coral-parenting': art('family-beach', 'family-child', 'family-garden'),
-  'info-indigo-tech': art('info-diagrams', 'info-studio', 'info-workshop'),
+  'info-blue-guide': ['/sample-artwork/info-studio.jpg'],
+  'info-emerald-handbook': ['/sample-artwork/nature-ferns.jpg'],
+  'info-amber-workshop': ['/sample-artwork/info-joinery.jpg'],
+  'info-purple-masterclass': ['/sample-artwork/info-studio.jpg'],
+  'info-teal-wellness': ['/sample-artwork/mag-runner.jpg'],
+  'info-slate-business': ['/sample-artwork/info-studio.jpg'],
+  'info-coral-parenting': ['/sample-artwork/info-studio.jpg'],
+  'info-indigo-tech': ['/sample-artwork/nature-waterfall.jpg'],
   // Story, Memoir & Chapter Books
-  'book-modern-clean': art('nature-lake', 'travel-coast', 'book-harbor'),
-  'book-warm-classic': art('book-homestead', 'book-typewriter', 'book-reading', 'family-grandparents'),
-  'book-vintage-memoir': art('book-letter', 'book-flowers', 'book-typewriter', 'family-grandparents'),
-  'book-thriller-noir': art('book-city', 'book-harbor', 'travel-desert', 'mag-architecture'),
-  'book-romance-blush': art('book-letter', 'book-flowers', 'wedding-bride'),
-  'book-scifi-cosmos': art('book-harbor', 'travel-mountains'),
-  'book-poetry-ivory': art('book-flowers', 'book-letter', 'nature-ferns', 'dish-herbs'),
-  'book-historical-crest': art('book-homestead', 'book-typewriter', 'book-desk'),
-  // Workbooks
-  'work-teal-planner': art('work-planner', 'work-goals', 'work-notes', 'work-desk', 'work-journal'),
-  'work-indigo-journal': art('work-journal', 'work-review', 'work-desk', 'work-planner', 'work-notes')
+  'book-modern-clean': ['/sample-artwork/nature-waterfall.jpg'],
+  'book-warm-classic': ['/sample-artwork/book-homestead.jpg'],
+  'book-vintage-memoir': ['/sample-artwork/book-homestead.jpg'],
+  'book-thriller-noir': ['/sample-artwork/book-harbor.jpg'],
+  'book-romance-blush': ['/sample-artwork/wedding-bride.jpg'],
+  'book-scifi-cosmos': ['/sample-artwork/book-harbor.jpg'],
+  'book-poetry-ivory': ['/sample-artwork/nature-ferns.jpg'],
+  'book-historical-crest': ['/sample-artwork/book-homestead.jpg']
 };
 
 export default function ExactTemplatePageRenderer({
@@ -126,7 +118,7 @@ export default function ExactTemplatePageRenderer({
     () => getTemplatePageStructures(categoryId, visualTemplate),
     [categoryId, visualTemplate]
   );
-  const defaultArtList = DEFAULT_ARTWORK_BY_TEMPLATE[visualTemplate.id] || art('nature-waterfall');
+  const defaultArtList = DEFAULT_ARTWORK_BY_TEMPLATE[visualTemplate.id] || ['/sample-artwork/nature-waterfall.jpg'];
   const pageForEditor = useMemo(
     () => chapter ? { ...chapter, structuredData: pageData } : null,
     [chapter, pageData]
@@ -345,6 +337,13 @@ export default function ExactTemplatePageRenderer({
     closeCropSession();
   };
 
+  const triggerPhotoUpload = (target) => {
+    if (!editable) return;
+    activePhotoTargetRef.current = target;
+    setUploadError('');
+    fileInputRef.current?.click();
+  };
+
   const openStockImageSearch = (target) => {
     if (!editable) return;
     activePhotoTargetRef.current = target;
@@ -404,7 +403,7 @@ export default function ExactTemplatePageRenderer({
   };
 
   const renderPhotoSlot = ({ imageUrl, fallbackIndex = 0, target, heightClass = 'h-48', frameStyle = {} }) => {
-    const resolvedUrl = imageUrl || defaultArtList[fallbackIndex % defaultArtList.length] || sampleUrlForId('nature-waterfall');
+    const resolvedUrl = imageUrl || defaultArtList[fallbackIndex % defaultArtList.length] || '/sample-artwork/nature-waterfall.jpg';
     const targetWithRule = (event) => ({ ...target, slotRule: refineSlotRule(event, target, heightClass) });
     return (
       <div data-image-slot="true" className={`relative w-full ${heightClass} overflow-hidden group`} style={frameStyle}>
@@ -419,13 +418,21 @@ export default function ExactTemplatePageRenderer({
           <div className="absolute right-2 top-2 flex items-center gap-1 opacity-95">
             <button
               type="button"
-              onClick={(event) => openStockImageSearch(targetWithRule(event))}
-              aria-label="Upload an image: search photo sites, upload your own, or use a free sample"
-              title="Upload an image"
+              onClick={(event) => triggerPhotoUpload(targetWithRule(event))}
               className="inline-flex items-center gap-1 rounded-lg bg-slate-900/90 px-2.5 py-1 text-[10px] font-extrabold text-white shadow"
             >
               {uploadingPhoto ? <LoaderCircle className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
               <span>{uploadingPhoto ? 'Uploading…' : 'Upload'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={(event) => openStockImageSearch(targetWithRule(event))}
+              aria-label="Search Pexels and Pixabay for a book photo"
+              title="Search Pexels and Pixabay"
+              className="inline-flex items-center gap-1 rounded-lg bg-amber-800/95 px-2.5 py-1 text-[10px] font-extrabold text-white shadow"
+            >
+              <Search className="h-3 w-3" />
+              <span>Stock photos</span>
             </button>
             <button
               type="button"
@@ -494,9 +501,7 @@ export default function ExactTemplatePageRenderer({
             <div className="min-w-0">
               <h2 className="text-sm font-bold sm:text-base">One page editor for every template</h2>
               <p className="text-[11px] text-[#F3D78B] sm:text-xs">
-                Choose a layout for this page. The page border, text-block borders, heading treatment and colours come from
-                your page design (change them under <strong>Photos, page design, template &amp; font</strong> above);
-                writing tools and AI work the same in every category.
+                Choose a layout for this page. Its colors, borders, and type follow the selected book template; writing tools and AI work the same in every category.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -543,13 +548,7 @@ export default function ExactTemplatePageRenderer({
                     ? { background: 'linear-gradient(180deg, #FCE38A 0%, #E5B84B 100%)', color: '#061128', border: '1px solid #FFF3B8' }
                     : { backgroundColor: 'rgba(6, 17, 40, 0.9)', color: '#FDE08D', border: '1px solid rgba(229, 184, 75, 0.48)' }}
                 >
-                  <PageStructureMiniPreview
-                    categoryId={categoryId}
-                    template={visualTemplate}
-                    designOverrides={project?.coverConfig?.design || {}}
-                    structureIndex={structure.index}
-                    compact
-                  />
+                  <PageStructureMiniPreview categoryId={categoryId} template={visualTemplate} structureIndex={structure.index} compact />
                   <span className="mt-1 block text-[10px] font-extrabold uppercase tracking-wide">Layout {structure.index + 1}</span>
                   <span className="line-clamp-2 block text-[10px] leading-tight opacity-80">{structure.shortLabel.replace(/^Structure [IV]+ • /, '')}</span>
                 </button>
@@ -606,7 +605,6 @@ export default function ExactTemplatePageRenderer({
         }}
         onAssetsChanged={onAssetsChanged}
         onOpenProviderSettings={onOpenAiSettings}
-        onRequestUpload={() => fileInputRef.current?.click()}
       />
       {cropSession && (
         <ImageCropEditor

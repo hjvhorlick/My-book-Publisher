@@ -48,38 +48,61 @@ export default function App() {
   }, []);
 
   const loadProjects = useCallback(async () => {
-    const projRes = await apiRequest('/api/projects');
-    const list = projRes.projects || [];
-    setProjects(list);
-    return list;
+    try {
+      const projRes = await apiRequest('/api/projects');
+      const list = projRes.projects || [];
+      setProjects(list);
+      return list;
+    } catch (err) {
+      console.warn('Failed to fetch projects list:', err);
+      return [];
+    }
   }, []);
 
   const loadActiveProjectDetails = useCallback(async (projectId) => {
     if (!projectId) return null;
-    const [detailRes, assetsRes] = await Promise.all([
-      apiRequest(`/api/projects/${projectId}`),
-      apiRequest(`/api/projects/${projectId}/assets`)
-    ]);
-    setActiveProject(detailRes.project);
-    setChapters(detailRes.chapters || []);
-    setFormatting(detailRes.formatting || null);
-    setAssets(assetsRes.assets || []);
+    try {
+      const [detailRes, assetsRes] = await Promise.all([
+        apiRequest(`/api/projects/${projectId}`),
+        apiRequest(`/api/projects/${projectId}/assets`)
+      ]);
+      setActiveProject(detailRes.project);
+      setChapters(detailRes.chapters || []);
+      setFormatting(detailRes.formatting || null);
+      setAssets(assetsRes.assets || []);
 
-    setActiveChapterId((prev) => {
-      const exists = (detailRes.chapters || []).some((c) => c.id === prev);
-      if (exists) return prev;
-      return (
-        detailRes.project?.lastOpenedChapterId ||
-        detailRes.chapters?.[0]?.id ||
-        null
-      );
-    });
+      setActiveChapterId((prev) => {
+        const exists = (detailRes.chapters || []).some((c) => c.id === prev);
+        if (exists) return prev;
+        return (
+          detailRes.project?.lastOpenedChapterId ||
+          detailRes.chapters?.[0]?.id ||
+          null
+        );
+      });
 
-    apiRequest('/api/projects')
-      .then((r) => setProjects(r.projects || []))
-      .catch(() => {});
+      apiRequest('/api/projects')
+        .then((r) => setProjects(r.projects || []))
+        .catch(() => {});
 
-    return detailRes;
+      return detailRes;
+    } catch (err) {
+      console.warn(`Could not load project details for ${projectId}:`, err?.message || err);
+      // Clean up active project state so the UI is not left in an inconsistent/broken view
+      setActiveProject(null);
+      setChapters([]);
+      setFormatting(null);
+      setAssets([]);
+      setActiveChapterId(null);
+      // Resync project list to remove any stale project from UI
+      try {
+        const fresh = await apiRequest('/api/projects');
+        setProjects(fresh.projects || []);
+      } catch {
+        // ignore
+      }
+      return null;
+    }
   }, []);
 
   // Automatically enter the studio on startup without blocking behind a login screen
@@ -88,11 +111,15 @@ export default function App() {
       .then(async (data) => {
         setUser(data.user);
         setShowAuthScreen(false);
-        const projs = await loadProjects();
-        const initialProj =
-          projs.find((p) => p.id === data.user?.lastActiveProjectId) || projs[0];
-        if (initialProj) {
-          await loadActiveProjectDetails(initialProj.id);
+        try {
+          const projs = await loadProjects();
+          const initialProj =
+            projs.find((p) => p.id === data.user?.lastActiveProjectId) || projs[0];
+          if (initialProj) {
+            await loadActiveProjectDetails(initialProj.id);
+          }
+        } catch (loadErr) {
+          console.warn('Startup project load error:', loadErr);
         }
       })
       .catch(() => {
@@ -122,9 +149,13 @@ export default function App() {
   const handleAuthenticated = async (loggedInUser) => {
     setUser(loggedInUser);
     setShowAuthScreen(false);
-    const projs = await loadProjects();
-    if (projs[0]) {
-      await loadActiveProjectDetails(projs[0].id);
+    try {
+      const projs = await loadProjects();
+      if (projs[0]) {
+        await loadActiveProjectDetails(projs[0].id);
+      }
+    } catch (err) {
+      console.warn('Post-auth project load error:', err);
     }
     setCurrentView('dashboard');
   };
@@ -139,41 +170,65 @@ export default function App() {
 
   // Step 3 -> Step 4 (Creates the Index pages and opens the page chosen in the Index list)
   const handleCreateProject = async (payload) => {
-    const { startChapterIndex = 0, ...projectPayload } = payload || {};
-    const res = await apiRequest('/api/projects', {
-      method: 'POST',
-      body: projectPayload
-    });
-    if (res.project) {
-      await loadProjects();
-      const details = await loadActiveProjectDetails(res.project.id);
-      const createdChapters = details?.chapters || res.chapters || [];
-      const requestedIndex = Number.isInteger(Number(startChapterIndex))
-        ? Number(startChapterIndex)
-        : 0;
-      const chapterIndex = Math.max(
-        0,
-        Math.min(requestedIndex, createdChapters.length - 1)
-      );
-      if (createdChapters[chapterIndex]?.id) {
-        setActiveChapterId(createdChapters[chapterIndex].id);
+    try {
+      const { startChapterIndex = 0, ...projectPayload } = payload || {};
+      const res = await apiRequest('/api/projects', {
+        method: 'POST',
+        body: projectPayload
+      });
+      if (res?.project) {
+        await loadProjects();
+        const details = await loadActiveProjectDetails(res.project.id);
+        const createdChapters = details?.chapters || res.chapters || [];
+        const requestedIndex = Number.isInteger(Number(startChapterIndex))
+          ? Number(startChapterIndex)
+          : 0;
+        const chapterIndex = Math.max(
+          0,
+          Math.min(requestedIndex, createdChapters.length - 1)
+        );
+        if (createdChapters[chapterIndex]?.id) {
+          setActiveChapterId(createdChapters[chapterIndex].id);
+        }
+        setActivePageIndex(0);
+        setWizardMode('create');
+        setCurrentView('writing');
       }
-      setActivePageIndex(0);
-      setWizardMode('create');
-      setCurrentView('writing');
+    } catch (err) {
+      notify(err.message || 'Failed to create project.', 'error');
     }
   };
 
   // Open an existing saved book directly into Step 4
   const handleSelectProject = async (projectId, targetView = 'writing') => {
+    if (!projectId) return;
     setActivePageIndex(0);
     setWizardMode('edit');
-    await loadActiveProjectDetails(projectId);
-    setCurrentView(targetView);
+    try {
+      const details = await loadActiveProjectDetails(projectId);
+      if (details?.project) {
+        setCurrentView(targetView);
+      } else {
+        notify('This book could not be found. Returning to dashboard.', 'error');
+        await loadProjects();
+        setCurrentView('dashboard');
+      }
+    } catch (err) {
+      console.warn('handleSelectProject error:', err);
+      notify('This book could not be opened. Returning to dashboard.', 'error');
+      await loadProjects();
+      setCurrentView('dashboard');
+    }
   };
 
   const handleDeleteProject = async (projectId) => {
-    await apiRequest(`/api/projects/${projectId}`, { method: 'DELETE' });
+    if (!projectId) return;
+    try {
+      await apiRequest(`/api/projects/${projectId}`, { method: 'DELETE' });
+      notify('Book removed.');
+    } catch (err) {
+      notify(err.message || 'Could not delete book.', 'error');
+    }
     const remaining = await loadProjects();
     if (activeProject?.id === projectId) {
       if (remaining[0]) {
@@ -181,6 +236,10 @@ export default function App() {
       } else {
         setActiveProject(null);
         setChapters([]);
+        setFormatting(null);
+        setAssets([]);
+        setActiveChapterId(null);
+        setCurrentView('dashboard');
       }
     }
   };
