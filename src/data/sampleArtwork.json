@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-24.2",
+  "version": "2026-10-24.3",
   "license": {
     "id": "bundled_sample",
     "name": "Bundled free sample",
@@ -60,6 +60,24 @@
       "width": 2200,
       "height": 933,
       "sizeBytes": 410333
+    },
+    {
+      "id": "book-reading",
+      "file": "book-reading.jpg",
+      "category": "book",
+      "collection": "book",
+      "title": "Reading by the window",
+      "tags": [
+        "book",
+        "reading",
+        "tea",
+        "blanket",
+        "window"
+      ],
+      "alt": "An open book and a cup of tea on a knitted blanket beside a rainy window.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 376044
     },
     {
       "id": "dish-bakehouse",
@@ -293,6 +311,24 @@
       "sizeBytes": 282713
     },
     {
+      "id": "mag-interior",
+      "file": "mag-interior.jpg",
+      "category": "magazine",
+      "collection": "mag",
+      "title": "Calm interior",
+      "tags": [
+        "interior",
+        "design",
+        "linen",
+        "minimalist",
+        "home"
+      ],
+      "alt": "A minimal living room with limewashed walls, a linen sofa and soft daylight.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 382899
+    },
+    {
       "id": "nature-ferns",
       "file": "nature-ferns.jpg",
       "category": "photobook",
@@ -486,8 +522,8 @@
       ],
       "alt": "Guests throwing confetti over a newly married couple.",
       "width": 2200,
-      "height": 1062,
-      "sizeBytes": 247948
+      "height": 1200,
+      "sizeBytes": 514266
     },
     {
       "id": "wedding-dance",
@@ -504,8 +540,8 @@
       ],
       "alt": "A first dance under strings of warm evening lights.",
       "width": 2200,
-      "height": 1044,
-      "sizeBytes": 222323
+      "height": 1200,
+      "sizeBytes": 486094
     },
     {
       "id": "wedding-walk",
@@ -521,8 +557,62 @@
       ],
       "alt": "A bride walking down a flower-lined aisle towards the ceremony.",
       "width": 2200,
-      "height": 874,
-      "sizeBytes": 223641
+      "height": 1200,
+      "sizeBytes": 507530
+    },
+    {
+      "id": "travel-cottage",
+      "file": "travel-cottage.jpg",
+      "category": "photobook",
+      "collection": "travel",
+      "title": "Lakeside cottage at dawn",
+      "tags": [
+        "lake",
+        "cottage",
+        "mist",
+        "dawn",
+        "travel"
+      ],
+      "alt": "A stone cottage beside a still lake at dawn with mist drifting over the water.",
+      "width": 2200,
+      "height": 1228,
+      "sizeBytes": 330601
+    },
+    {
+      "id": "family-garden",
+      "file": "family-garden.jpg",
+      "category": "photobook",
+      "collection": "family",
+      "title": "Garden helpers",
+      "tags": [
+        "garden",
+        "child",
+        "watering can",
+        "tomatoes",
+        "summer"
+      ],
+      "alt": "A child’s hands watering tomato plants in a sunlit kitchen garden.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 550754
+    },
+    {
+      "id": "nature-stones",
+      "file": "nature-stones.jpg",
+      "category": "photobook",
+      "collection": "nature",
+      "title": "River stones",
+      "tags": [
+        "river",
+        "stones",
+        "water",
+        "pebbles",
+        "calm"
+      ],
+      "alt": "Smooth river stones beneath clear, rippling shallow water.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 429146
     },
     {
       "id": "story-balloon",
@@ -668,6 +758,24 @@
       "sizeBytes": 567086
     },
     {
+      "id": "story-sea",
+      "file": "story-sea.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Lighthouse at dusk",
+      "tags": [
+        "lighthouse",
+        "sea",
+        "dusk",
+        "beam",
+        "coast"
+      ],
+      "alt": "A striped lighthouse sweeping its warm beam over a calm sea at dusk.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 391152
+    },
+    {
       "id": "work-planner",
       "file": "work-planner.jpg",
       "category": "workbook",
@@ -720,6 +828,24 @@
       "width": 2200,
       "height": 1200,
       "sizeBytes": 132299
+    },
+    {
+      "id": "work-notes",
+      "file": "work-notes.jpg",
+      "category": "workbook",
+      "collection": "work",
+      "title": "Planning wall",
+      "tags": [
+        "sticky notes",
+        "planner",
+        "stationery",
+        "planning",
+        "desk"
+      ],
+      "alt": "A wall of blank sticky notes beside a weekly planner board and pens.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 256139
     }
   ]
 }
