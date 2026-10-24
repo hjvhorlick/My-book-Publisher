@@ -45,7 +45,12 @@ export default function StockImageSearchModal({
   onOpenProviderSettings
 }) {
   const [tab, setTab] = useState('samples');
-  const [query, setQuery] = useState('');
+  // Two separate queries on purpose. The stock tab inherits the chapter's text
+  // (title, synopsis, central idea) because that is a useful Pexels search. The
+  // free-sample tab must never inherit it: a whole sentence matches no sample,
+  // which would open the tab on an empty grid and hide the library.
+  const [sampleQuery, setSampleQuery] = useState('');
+  const [stockQuery, setStockQuery] = useState('');
   const [sampleCategory, setSampleCategory] = useState('all');
   const [provider, setProvider] = useState('all');
   const [images, setImages] = useState([]);
@@ -58,7 +63,8 @@ export default function StockImageSearchModal({
   useEffect(() => {
     if (!open) return;
     setTab('samples');
-    setQuery(initialQuery || '');
+    setSampleQuery('');
+    setStockQuery(initialQuery || '');
     setSampleCategory('all');
     setProvider('all');
     setImages([]);
@@ -76,8 +82,8 @@ export default function StockImageSearchModal({
   );
 
   const sampleResults = useMemo(
-    () => searchSampleArtwork({ query, category: sampleCategory, slotRule }),
-    [query, sampleCategory, slotRule]
+    () => searchSampleArtwork({ query: sampleQuery, category: sampleCategory, slotRule }),
+    [sampleQuery, sampleCategory, slotRule]
   );
 
   if (!open) return null;
@@ -89,7 +95,7 @@ export default function StockImageSearchModal({
     setMessage('');
     setImages([]);
     try {
-      const params = new URLSearchParams({ q: query.trim(), provider });
+      const params = new URLSearchParams({ q: stockQuery.trim(), provider });
       // Fetch photos shaped for the frame they must fill (portrait frame → portrait photos).
       if (slotRule?.orientation) params.set('orientation', slotRule.orientation);
       const result = await apiRequest(`/api/projects/${projectId}/assets/search?${params.toString()}`);
@@ -256,8 +262,8 @@ export default function StockImageSearchModal({
                   <input
                     id="sample-image-query"
                     autoFocus
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
+                    value={sampleQuery}
+                    onChange={(event) => setSampleQuery(event.target.value)}
                     placeholder="Filter free samples — e.g. bread, forest, wedding, desk"
                     maxLength={160}
                     className="min-h-11 w-full rounded-xl border border-stone-300 bg-stone-50 pl-9 pr-3 text-sm text-stone-900 outline-none focus:border-amber-700 dark:border-stone-600 dark:bg-stone-900 dark:text-white"
@@ -337,8 +343,18 @@ export default function StockImageSearchModal({
                   })}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-stone-300 px-4 py-10 text-center text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
-                  No free sample matches “{query.trim()}”. Try another word, pick a different category, or search Pexels and Pixabay.
+                <div className="space-y-3 rounded-2xl border border-dashed border-stone-300 px-4 py-10 text-center text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
+                  <p>
+                    Nothing matches{sampleQuery.trim() ? ` “${sampleQuery.trim()}”` : ' this category'}.
+                    {' '}Try another word, or show the whole library again.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setSampleQuery(''); setSampleCategory('all'); }}
+                    className="inline-flex min-h-9 items-center justify-center rounded-xl bg-amber-800 px-4 text-xs font-bold text-white hover:bg-amber-700"
+                  >
+                    Show all {SAMPLE_ARTWORK.length} free samples
+                  </button>
                 </div>
               )}
 
@@ -357,8 +373,8 @@ export default function StockImageSearchModal({
                 <label className="sr-only" htmlFor="stock-image-query">Search images</label>
                 <input
                   id="stock-image-query"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  value={stockQuery}
+                  onChange={(event) => setStockQuery(event.target.value)}
                   placeholder="e.g. misty forest, sourdough bread, city at night"
                   maxLength={160}
                   className="min-h-11 rounded-xl border border-stone-300 bg-stone-50 px-3 text-sm text-stone-900 outline-none focus:border-amber-700 dark:border-stone-600 dark:bg-stone-900 dark:text-white"
@@ -376,7 +392,7 @@ export default function StockImageSearchModal({
                 </select>
                 <button
                   type="submit"
-                  disabled={searching || Boolean(importingId) || query.trim().length < 2}
+                  disabled={searching || Boolean(importingId) || stockQuery.trim().length < 2}
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-800 px-4 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-50"
                 >
                   {searching ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}

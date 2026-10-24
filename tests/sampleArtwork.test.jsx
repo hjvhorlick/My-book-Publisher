@@ -124,8 +124,16 @@ describe('bundled free sample artwork', () => {
     expect(cookbook.length).toBeGreaterThanOrEqual(2);
     expect(cookbook.every((item) => item.category === 'cookbook')).toBe(true);
 
-    // Two words must both match, so a bad query returns nothing instead of everything.
-    expect(searchSampleArtwork({ query: 'bread wedding' })).toHaveLength(0);
+    // Multi-word filters are forgiving: any matching word keeps the image, and
+    // the images matching more words come first. A filter box that empties the
+    // grid reads as a broken library.
+    const mixed = searchSampleArtwork({ query: 'bread wedding' });
+    expect(mixed.length).toBeGreaterThan(0);
+    expect(mixed.some((item) => item.collection === 'wedding')).toBe(true);
+    expect(mixed.some((item) => item.category === 'cookbook')).toBe(true);
+
+    const twoWords = searchSampleArtwork({ query: 'forest mushrooms' });
+    expect(twoWords[0].id).toBe('nature-mushrooms');
 
     const portrait = searchSampleArtwork({ slotRule: { aspectRatio: 0.75 } });
     expect(portrait.length).toBe(SAMPLE_ARTWORK.length);
@@ -177,6 +185,26 @@ describe('free samples in the image picker', () => {
     expect(markup).not.toMatch(/src="\/sample-artwork\/[a-z0-9-]+\.jpg"/);
     expect(markup).toContain('prints to');
     expect(markup).toContain('300 dpi');
+  });
+
+  it('never opens on an empty grid, even when the page supplies a long search', () => {
+    // Template pages pass the chapter title, synopsis and central idea as the
+    // stock query. Those words match no sample, so the samples tab must ignore
+    // them — this is the bug that made the picker look empty.
+    const markup = renderToStaticMarkup(
+      <StockImageSearchModal
+        open
+        projectId="project-1"
+        onClose={() => {}}
+        initialQuery="The Winter Conservatory A Novel of Memory Exploring how a family reconciles after decades of silence"
+      />
+    );
+
+    const thumbnails = markup.match(/\/sample-artwork\/thumbs\/[a-z0-9-]+\.jpg/g) || [];
+    expect(new Set(thumbnails).size).toBeGreaterThanOrEqual(20);
+    expect(markup).not.toContain('Nothing matches');
+    // The inherited text is not silently applied to the sample filter.
+    expect(markup).not.toContain('value="The Winter Conservatory');
   });
 
   it('shows the frame-fit badge and a Pexels/Pixabay tab when a slot is known', () => {

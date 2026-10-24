@@ -164,24 +164,31 @@ function rankForSlot(item, slotRule) {
 export function searchSampleArtwork({ query = '', category = 'all', slotRule = null, items = SAMPLE_ARTWORK } = {}) {
   const needle = String(query || '').trim().toLowerCase();
   const words = needle ? needle.split(/\s+/).filter(Boolean) : [];
-  const matches = items.filter((item) => {
-    if (category && category !== 'all' && item.category !== category) return false;
-    if (!words.length) return true;
-    const haystack = [
-      item.title,
-      item.alt,
-      item.collection,
-      sampleCategoryLabel(item.category),
-      ...(item.tags || [])
-    ].join(' ').toLowerCase();
-    return words.every((word) => haystack.includes(word));
-  });
 
-  // When the picker was opened for a specific frame, the images that need the
-  // least cropping come first — the same promise the stock results make.
-  if (!slotRule) return matches;
-  return matches
-    .map((item, index) => ({ item, index, rank: rankForSlot(item, slotRule) }))
-    .sort((a, b) => (a.rank - b.rank) || (b.item.width * b.item.height - a.item.width * a.item.height) || (a.index - b.index))
-    .map((entry) => entry.item);
+  const scored = items
+    .filter((item) => !category || category === 'all' || item.category === category)
+    .map((item, index) => {
+      if (!words.length) return { item, index, score: 0 };
+      const haystack = [
+        item.title,
+        item.alt,
+        item.collection,
+        sampleCategoryLabel(item.category),
+        ...(item.tags || [])
+      ].join(' ').toLowerCase();
+      // Forgiving on purpose: a filter box that returns nothing looks broken.
+      // Any matching word keeps the image, and images matching more words rank
+      // first ("forest mushrooms" shows mushrooms before ferns).
+      const score = words.reduce((total, word) => total + (haystack.includes(word) ? 1 : 0), 0);
+      return { item, index, score };
+    })
+    .filter((entry) => !words.length || entry.score > 0);
+
+  const ranked = slotRule
+    ? scored.sort((a, b) => b.score - a.score
+      || rankForSlot(a.item, slotRule) - rankForSlot(b.item, slotRule)
+      || a.index - b.index)
+    : scored.sort((a, b) => b.score - a.score || a.index - b.index);
+
+  return ranked.map((entry) => entry.item);
 }
