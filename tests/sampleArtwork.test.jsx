@@ -9,6 +9,7 @@ import {
   SAMPLE_ARTWORK,
   SAMPLE_CATEGORIES,
   COVER_SAMPLE_URLS,
+  SAMPLE_ARTWORK_VERSION,
   SAMPLE_PRINT_DPI,
   formatPrintSize,
   sampleArtworkThumbUrl,
@@ -19,6 +20,11 @@ import designData from '../src/data/designData.json';
 import StockImageSearchModal from '../src/components/StockImageSearchModal.jsx';
 
 const ARTWORK_DIR = path.join(process.cwd(), 'public', 'sample-artwork');
+
+/** Public URLs carry a version query; the filesystem does not. */
+function stripQuery(url) {
+  return String(url || '').split('?')[0];
+}
 
 function jpegSize(buffer) {
   let offset = 2;
@@ -70,7 +76,9 @@ describe('bundled free sample artwork', () => {
       expect(item.title.trim().length, `${item.id} needs a title`).toBeGreaterThan(2);
       expect(item.alt.trim().length, `${item.id} needs alt text`).toBeGreaterThan(20);
       expect(item.tags.length, `${item.id} needs search tags`).toBeGreaterThanOrEqual(3);
-      expect(sampleArtworkUrl(item)).toBe(`/sample-artwork/${item.file}`);
+      // Every URL carries the cache tag so a regenerated file is never served
+      // from an old immutable cache entry.
+      expect(sampleArtworkUrl(item)).toBe(`/sample-artwork/${item.file}?v=${SAMPLE_ARTWORK_VERSION}`);
 
       const filePath = path.join(ARTWORK_DIR, item.file);
       expect(fs.existsSync(filePath), `missing artwork file ${item.file}`).toBe(true);
@@ -85,7 +93,7 @@ describe('bundled free sample artwork', () => {
       const longEdge = Math.max(item.width, item.height);
       expect(longEdge, `${item.id} is too small for a full page`).toBeGreaterThanOrEqual(2200);
 
-      const thumbPath = path.join(process.cwd(), 'public', sampleArtworkThumbUrl(item));
+      const thumbPath = path.join(process.cwd(), 'public', stripQuery(sampleArtworkThumbUrl(item)));
       expect(fs.existsSync(thumbPath), `missing thumbnail for ${item.id}`).toBe(true);
       const thumb = fs.readFileSync(thumbPath);
       const thumbSize = jpegSize(thumb);
@@ -129,7 +137,7 @@ describe('bundled free sample artwork', () => {
     expect(COVER_SAMPLE_URLS.length).toBeGreaterThanOrEqual(10);
     for (const url of COVER_SAMPLE_URLS) {
       expect(SAMPLE_ARTWORK.map(sampleArtworkUrl)).toContain(url);
-      expect(fs.existsSync(path.join(process.cwd(), 'public', url))).toBe(true);
+      expect(fs.existsSync(path.join(process.cwd(), 'public', stripQuery(url)))).toBe(true);
     }
   });
 });

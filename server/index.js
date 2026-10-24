@@ -27,12 +27,21 @@ function createApp() {
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-  // Built-in artwork never changes under a given filename. Serve it with
-  // long-lived immutable caching so each template/page photo downloads
-  // once per browser instead of trickling in on every layout switch.
-  const immutableStatic = { immutable: true, maxAge: '1y', etag: false, fallthrough: true };
-  app.use('/sample-artwork', express.static(path.join(__dirname, '..', 'public', 'sample-artwork'), immutableStatic));
-  app.use('/template-previews', express.static(path.join(__dirname, '..', 'public', 'template-previews'), immutableStatic));
+  // Built-in artwork is cached hard so each template/page photo downloads once
+  // per browser. A one-year immutable cache is only safe for a URL whose bytes
+  // can never change, so the app versions its artwork URLs with ?v=<catalogue>.
+  // Unversioned requests (an old bookmark, a hand-written path) must revalidate:
+  // otherwise a browser keeps a stale copy of a file that was regenerated in place.
+  const artworkStatic = { etag: true, lastModified: true, fallthrough: true };
+  const artworkCache = (req, res, next) => {
+    const versioned = Boolean(req.query && req.query.v);
+    res.setHeader('Cache-Control', versioned
+      ? 'public, max-age=31536000, immutable'
+      : 'no-cache, must-revalidate');
+    next();
+  };
+  app.use('/sample-artwork', artworkCache, express.static(path.join(__dirname, '..', 'public', 'sample-artwork'), artworkStatic));
+  app.use('/template-previews', artworkCache, express.static(path.join(__dirname, '..', 'public', 'template-previews'), artworkStatic));
 
   // Health endpoint
   app.get('/api/health', (_req, res) => {
