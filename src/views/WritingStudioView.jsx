@@ -14,6 +14,8 @@ import {
 } from '../data/visualTemplatesCatalog';
 import ExactTemplatePageRenderer from '../components/ExactTemplatePageRenderer';
 import BookAppearanceControls from '../components/BookAppearanceControls';
+import IntroductionPageEditor from '../components/IntroductionPageEditor';
+import CoverEditor from '../components/CoverEditor';
 import PagePreviewModal from '../components/PagePreviewModal';
 import {
   appendChapterPage,
@@ -74,6 +76,12 @@ export default function WritingStudioView({
   const activePageSaveRef = useRef(null);
   const activePagePreviewRef = useRef(null);
   const pendingPageSavesRef = useRef(new Map());
+
+  // Three studio sections: chapter pages, the full Introduction page, and the cover designer.
+  const [studioSection, setStudioSection] = useState('pages'); // 'pages' | 'intro' | 'cover'
+  const studioSectionRef = useRef('pages');
+  const introFlushRef = useRef(null);
+  const coverFlushRef = useRef(null);
 
   const pubType = project?.publicationType || project?.bookType || 'photobook';
   const activeCategory =
@@ -148,11 +156,36 @@ export default function WritingStudioView({
     if (pending) await pending;
   }, [activeChapter?.id, safePageIndex]);
 
+  // Flush whichever studio section is active before navigation leaves the view.
+  const flushActiveSection = useCallback(async () => {
+    if (studioSectionRef.current === 'intro') {
+      await introFlushRef.current?.();
+      return;
+    }
+    if (studioSectionRef.current === 'cover') {
+      await coverFlushRef.current?.();
+      return;
+    }
+    await flushActivePage(activeChapter?.id, safePageIndex);
+  }, [flushActivePage, activeChapter?.id, safePageIndex]);
+
   useEffect(() => {
     if (!onRegisterPageFlush) return undefined;
-    onRegisterPageFlush(() => flushActivePage(activeChapter?.id, safePageIndex));
+    onRegisterPageFlush(() => flushActiveSection());
     return () => onRegisterPageFlush(null);
-  }, [onRegisterPageFlush, flushActivePage, activeChapter?.id, safePageIndex]);
+  }, [onRegisterPageFlush, flushActiveSection]);
+
+  const handleSectionChange = async (nextSection) => {
+    if (nextSection === studioSectionRef.current) return;
+    try {
+      // Persist pending edits of the outgoing section before switching.
+      await flushActiveSection();
+      studioSectionRef.current = nextSection;
+      setStudioSection(nextSection);
+    } catch (error) {
+      notify(error.message || 'Could not save before switching. Please try again.', 'error');
+    }
+  };
 
   const handleManualSave = async () => {
     if (!activeChapter?.id) return;
@@ -301,10 +334,69 @@ export default function WritingStudioView({
         project={project}
         categoryId={activeCategory.id}
         onUpdateProject={onUpdateProject}
-        onBeforeChange={() => flushActivePage(activeChapter?.id, safePageIndex)}
+        onBeforeChange={() => flushActiveSection()}
         notify={notify}
       />
 
+      {/* Studio sections: chapter pages · Introduction page · book cover */}
+      <div
+        className="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="Book editing sections"
+        style={{ fontFamily: CLASSICAL_SERIF }}
+      >
+        {[
+          { key: 'pages', label: 'Chapter pages' },
+          { key: 'intro', label: 'Introduction page' },
+          { key: 'cover', label: 'Book cover' }
+        ].map((tab) => {
+          const selected = studioSection === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-label={tab.label}
+              onClick={() => handleSectionChange(tab.key)}
+              className="min-h-11 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all hover:brightness-110"
+              style={selected ? GOLD_BTN_STYLE : NAVY_BTN_STYLE}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {studioSection === 'intro' ? (
+        <IntroductionPageEditor
+          project={project}
+          visualTemplate={visualTpl}
+          fontFamily={coverCfg.fontFamily || visualTpl.fontFamily || ''}
+          aiConfigured={aiConfigured}
+          introduction={project?.introduction}
+          onUpdateProject={onUpdateProject}
+          onRegisterFlush={(fn) => { introFlushRef.current = fn; }}
+          notify={notify}
+        />
+      ) : null}
+
+      {studioSection === 'cover' ? (
+        <CoverEditor
+          project={project}
+          visualTemplate={visualTpl}
+          categoryId={activeCategory.id}
+          trimSize={activeCategory.trimSize || '6x9'}
+          assets={assets}
+          onUpdateProject={onUpdateProject}
+          onRegisterFlush={(fn) => { coverFlushRef.current = fn; }}
+          onAssetsChanged={onAssetsChanged}
+          onOpenAiSettings={onOpenAiSettings}
+          notify={notify}
+        />
+      ) : null}
+
+      {studioSection === 'pages' ? (
       <div className="grid grid-cols-1 gap-5 items-start">
         <div className="space-y-4">
           {activeChapter && activePageChapter ? (
@@ -432,6 +524,7 @@ export default function WritingStudioView({
           )}
         </div>
       </div>
+      ) : null}
 
       <PagePreviewModal
         open={Boolean(pagePreview)}

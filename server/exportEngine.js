@@ -335,6 +335,23 @@ function collectOrderedSections({ project, chapters = [], metadata = {} }) {
   const bm = metadata?.backMatter || {};
 
   const frontSections = [];
+
+  // Full-page Introduction (the author's words of expression / dedication page).
+  // Stored on the project row and always leads the front sections so DOCX/PDF/EPUB
+  // open with it before Dedication/Epigraph/etc.
+  let intro = {};
+  try { intro = typeof project?.introduction_json === 'object' && project?.introduction_json
+    ? project.introduction_json
+    : JSON.parse(project?.introduction_json || '{}'); } catch { intro = {}; }
+  const introContentHtml = sanitizeRichHtmlServer(String(intro.contentHtml || ''));
+  if (introContentHtml.trim()) {
+    frontSections.push({
+      title: String(intro.title || '').trim() || 'Introduction',
+      contentHtml: introContentHtml,
+      kind: 'front'
+    });
+  }
+
   if (fm.dedication?.enabled && fm.dedication?.content?.trim()) {
     frontSections.push({ title: 'Dedication', contentHtml: `<p>${fm.dedication.content}</p>`, kind: 'front' });
   }
@@ -1121,6 +1138,44 @@ async function generateEpubExport({ project, chapters = [], formatting = {}, met
   } catch {
     coverConfig = {};
   }
+
+  // Embed the designed cover image (data URL or bundled sample artwork) so the
+  // EPUB carries a real cover-image manifest entry and opening cover page.
+  const embedCoverAsset = (source, nameStem) => {
+    const value = String(source || '');
+    if (!value) return null;
+    try {
+      const dataMatch = value.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+      if (dataMatch) {
+        const mime = dataMatch[1];
+        const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : mime === 'image/gif' ? 'gif' : 'jpg';
+        const href = `images/${nameStem}.${ext}`;
+        oebps.file(href, Buffer.from(dataMatch[2], 'base64'));
+        return { href, mime };
+      }
+      if (value.startsWith('/sample-artwork/')) {
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const publicPath = path.join(__dirname, '..', 'public', value.replace(/^\/+/, ''));
+        if (!fs.existsSync(publicPath)) return null;
+        const rawExt = path.extname(publicPath).slice(1).toLowerCase() || 'jpg';
+        const ext = ['png', 'webp', 'gif', 'jpg', 'jpeg'].includes(rawExt) ? rawExt : 'jpg';
+        const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+        const href = `images/${nameStem}.${ext === 'jpeg' ? 'jpg' : ext}`;
+        oebps.file(href, fs.readFileSync(publicPath));
+        return { href, mime };
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  };
+
+  const embeddedCover = embedCoverAsset(coverConfig.coverImage, 'cover');
+  const embeddedAuthorPhoto = coverConfig.showAuthorPhoto
+    ? embedCoverAsset(coverConfig.authorPhotoUrl, 'cover-author')
+    : null;
+
   const epubPageBg = coverConfig.pageBg || '#FFFFFF';
   const epubPageText = coverConfig.pageText || '#1a1a1a';
   const epubBorderColor = coverConfig.borderColor || '#4F46E5';
@@ -1202,6 +1257,82 @@ a {
   text-indent: 0;
   text-align: center;
 }
+/* Designed cover page (word art = outline letters, no background box) */
+.cover-page {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+.cover-page .cover-bg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.cover-page .cover-dim {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,${coverConfig.coverOverlay != null ? Number(coverConfig.coverOverlay) : 0.3});
+}
+.cover-page .cover-body {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8%;
+  box-sizing: border-box;
+}
+.cover-page .cover-word-art {
+  font-size: 2.6em;
+  line-height: 1.08;
+  margin: 0.3em 0;
+  text-transform: uppercase;
+  color: ${epubAccentColor};
+  text-shadow: 0 2px 8px rgba(0,0,0,0.55);
+}
+@supports (-webkit-text-stroke: 1px #000) {
+  .cover-page .cover-word-art.outline-only {
+    color: transparent;
+    -webkit-text-stroke: ${coverConfig.wordArt?.strokeWidth ?? 1.5}px ${coverConfig.wordArt?.strokeColor || '#FDE08D'};
+  }
+}
+.cover-page .cover-blurb {
+  font-style: italic;
+  font-size: 1em;
+  margin: 0.4em auto;
+  max-width: 80%;
+  text-indent: 0;
+  text-align: center;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+.cover-page .cover-author {
+  font-size: 0.95em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0.5em 0;
+  text-indent: 0;
+  text-align: center;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+.cover-page .cover-author-photo {
+  width: 22%;
+  height: auto;
+  border-radius: 50%;
+  border: 2px solid ${epubAccentColor};
+}
+.cover-page.no-image {
+  background-color: ${coverConfig.pageBg || '#111827'};
+  color: ${coverConfig.pageText || '#FFFFFF'};
+  padding: 12% 8%;
+  min-height: 60vh;
+  box-sizing: border-box;
+}
+.cover-page.no-image .cover-body {
+  position: static;
+  min-height: 55vh;
+}
 figure.page-photo {
   margin: 1em 0;
   text-align: center;
@@ -1267,6 +1398,36 @@ figure.page-photo figcaption {
   manifestItems.push(`<item id="title-page" href="title.xhtml" media-type="application/xhtml+xml"/>`);
   spineItems.push(`<itemref idref="title-page"/>`);
   navLinks.push({ id: 'title-page', href: 'title.xhtml', title: 'Title Page' });
+
+  // Designed front cover as the very first page of the book, using the embedded
+  // cover image (if any) plus word-art title, author wording, name and photo.
+  const coverWordArtText = String(coverConfig.wordArt?.text || '').trim() || project.title;
+  const coverBlurb = String(coverConfig.coverBlurb || '').trim();
+  const coverAuthorName = String(coverConfig.coverAuthorName || project.author_name || '').trim();
+  const wordArtOutlineClass = coverConfig.wordArt?.fillMode === 'solid' ? '' : ' outline-only';
+  const coverBodyInner = `
+      <div class="cover-body">
+        <div aria-hidden="true"></div>
+        <h1 class="cover-word-art${wordArtOutlineClass}">${escapeXml(coverWordArtText)}</h1>
+        <div>
+          ${coverBlurb ? `<p class="cover-blurb">${escapeXml(coverBlurb)}</p>` : ''}
+          ${coverAuthorName ? `<p class="cover-author">${escapeXml(coverAuthorName)}</p>` : ''}
+          ${embeddedAuthorPhoto ? `<img class="cover-author-photo" src="${escapeXml(embeddedAuthorPhoto.href)}" alt="${escapeXml(coverAuthorName || 'Author photo')}"/>` : ''}
+        </div>
+      </div>`;
+  const coverXhtml = embeddedCover
+    ? `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${escapeXml(metadata?.language || 'en')}">\n<head>\n  <title>Cover</title>\n  <link rel="stylesheet" type="text/css" href="styles.css"/>\n</head>\n<body>\n  <section class="cover-page">\n    <img class="cover-bg" src="${escapeXml(embeddedCover.href)}" alt="Cover of ${escapeXml(project.title)}"/>\n    <div class="cover-dim" aria-hidden="true"></div>${coverBodyInner}\n  </section>\n</body>\n</html>`
+    : `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${escapeXml(metadata?.language || 'en')}">\n<head>\n  <title>Cover</title>\n  <link rel="stylesheet" type="text/css" href="styles.css"/>\n</head>\n<body>\n  <section class="cover-page no-image">${coverBodyInner}\n  </section>\n</body>\n</html>`;
+  oebps.file('cover.xhtml', coverXhtml);
+  manifestItems.push(`<item id="cover-page" href="cover.xhtml" media-type="application/xhtml+xml"/>`);
+  spineItems.unshift(`<itemref idref="cover-page"/>`);
+  navLinks.unshift({ id: 'cover-page', href: 'cover.xhtml', title: 'Front Cover' });
+  if (embeddedCover) {
+    manifestItems.push(`<item id="cover-image" href="${embeddedCover.href}" media-type="${embeddedCover.mime}" properties="cover-image"/>`);
+  }
+  if (embeddedAuthorPhoto) {
+    manifestItems.push(`<item id="cover-author-photo" href="${embeddedAuthorPhoto.href}" media-type="${embeddedAuthorPhoto.mime}"/>`);
+  }
 
   const allOrdered = [
     ...frontSections.map((s, i) => ({ kind: 'front', file: `front-${i + 1}.xhtml`, id: `front-${i + 1}`, anchor: `start-front-${i + 1}`, title: s.title, subtitle: '', html: s.contentHtml, images: [] })),
@@ -1384,7 +1545,7 @@ figure.page-photo figcaption {
     <dc:language>${escapeXml(metadata?.language || 'en')}</dc:language>
     <dc:description>${escapeXml(metadata?.longDescription || project.description || '')}</dc:description>
     <dc:publisher>${escapeXml(metadata?.publisherName || 'Independent')}</dc:publisher>
-    <meta property="dcterms:modified">${modifiedIso}</meta>
+    <meta property="dcterms:modified">${modifiedIso}</meta>${embeddedCover ? '\n    <meta name="cover" content="cover-image"/>' : ''}
   </metadata>
   <manifest>
     ${manifestItems.join('\n    ')}

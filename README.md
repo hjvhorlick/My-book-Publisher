@@ -8,7 +8,9 @@ A full-stack writing and publishing app built with React, Vite, Express, and SQL
 2. **Style** — choose from eight visual templates in the selected category. The style is applied automatically; page layout choices do not require manual typesetting.
 3. **Index** — plan 5, 10, 20, or 30 chapter entries. The chapter title entered on the first writing page supplies its Index label.
 4. **Pages** — each chapter contains one or more pages. Next Page adds a page to the current chapter; Delete Page keeps at least one page and preserves the chapter. The designed page itself stays clean: every text block shows the author's words exactly as they will print, with one small **Edit** button (including a tiny fit counter, e.g. `18/36`). All tools live inside the editor that the button opens.
-5. **Export** — preview and download the manuscript as DOCX, PDF, EPUB 3, or a JSON archive.
+5. **Introduction page** — beside Chapter pages, the writing studio offers a full-page Introduction editor for the author's words of expression, dedications, and opening notes. The page uses the chosen template's palette, heading treatment, and border, supports the same rich-text toolbar and Write with AI, and is saved on the project. Exports place it first among the front sections (before Dedication/Epigraph), in DOCX, PDF, and EPUB.
+6. **Book cover** — also beside Chapter pages, the cover designer composes the cover: a background image (upload, asset library, free sample artwork, or stock photos, with a dim slider) plus word art of the book name. Word art defaults to outline-only letters — no background behind them, just a narrow border around each letter — with controls for border colour and width and an optional solid-fill mode. Editable sections cover the short wording from the author and the author's name, and an optional author photo is a yes/no choice. The cover preview follows the book's template theme and trim size and appears in the Export preview's Front Cover reader; cover settings persist as sibling keys in `coverConfig`.
+7. **Export** — preview the front cover, Introduction, and Chapter Index, then download the manuscript as DOCX, PDF, EPUB 3, or a JSON archive.
 
 ## Writing and AI
 
@@ -65,7 +67,7 @@ npm test
 npm run build
 ```
 
-Tests cover the six category prompt profiles, the slot-rule registry for every field and frame, fit enforcement and crop geometry, the Edit-button page workflow, clean previews, clean exports (embedded photos, linked Indexes, page numbers, excluded production notes), legacy-page migration and preservation, nested chapter pages, encrypted AI and image-provider routes, mocked Pexels/Pixabay search and asset import metadata, all 48 visual templates, and all five page structures per template.
+Tests cover the six category prompt profiles, the slot-rule registry for every field and frame, fit enforcement and crop geometry, the Edit-button page workflow, clean previews, clean exports (embedded photos, linked Indexes, page numbers, excluded production notes), legacy-page migration and preservation, nested chapter pages, the Introduction page and book-cover design persistence, encrypted AI and image-provider routes, mocked Pexels/Pixabay search and asset import metadata, all 48 visual templates, and all five page structures per template.
 
 ## Credential and database configuration
 
