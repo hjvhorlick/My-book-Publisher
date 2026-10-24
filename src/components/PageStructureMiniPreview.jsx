@@ -19,25 +19,31 @@ export const SAMPLE_ART_BY_CATEGORY = {
   ],
   cookbook: [
     '/sample-artwork/dish-bistro.jpg',
+    '/sample-artwork/dish-mediterranean.jpg',
+    '/sample-artwork/dish-bakehouse.jpg',
     '/sample-artwork/nature-ferns.jpg',
     '/sample-artwork/wedding-dance.jpg'
   ],
   magazine: [
     '/sample-artwork/mag-couture.jpg',
     '/sample-artwork/mag-runner.jpg',
-    '/sample-artwork/mag-sculpture.jpg'
+    '/sample-artwork/mag-sculpture.jpg',
+    '/sample-artwork/mag-portrait.jpg'
   ],
   storybook: [
     '/sample-artwork/story-lantern.jpg',
+    '/sample-artwork/story-woodland.jpg',
     '/sample-artwork/story-squirrel.jpg'
   ],
   informational: [
     '/sample-artwork/info-studio.jpg',
-    '/sample-artwork/info-joinery.jpg'
+    '/sample-artwork/info-joinery.jpg',
+    '/sample-artwork/info-workshop.jpg'
   ],
   book: [
     '/sample-artwork/book-homestead.jpg',
-    '/sample-artwork/book-harbor.jpg'
+    '/sample-artwork/book-harbor.jpg',
+    '/sample-artwork/book-desk.jpg'
   ]
 };
 
