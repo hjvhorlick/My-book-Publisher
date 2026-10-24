@@ -4,21 +4,7 @@ import { apiRequest } from '../api/client';
 import CoverArtwork from './CoverArtwork';
 import StockImageSearchModal from './StockImageSearchModal';
 import { shrinkImageToDataUrl } from '../utils/imageResize';
-
-const SAMPLE_ARTWORK = [
-  '/sample-artwork/nature-waterfall.jpg',
-  '/sample-artwork/nature-ferns.jpg',
-  '/sample-artwork/nature-mushrooms.jpg',
-  '/sample-artwork/book-harbor.jpg',
-  '/sample-artwork/book-homestead.jpg',
-  '/sample-artwork/wedding-walk.jpg',
-  '/sample-artwork/wedding-bride.jpg',
-  '/sample-artwork/wedding-dance.jpg',
-  '/sample-artwork/story-lantern.jpg',
-  '/sample-artwork/story-rocket.jpg',
-  '/sample-artwork/dish-bistro.jpg',
-  '/sample-artwork/mag-couture.jpg'
-];
+import { COVER_SAMPLES } from '../data/sampleArtwork';
 
 const DEFAULT_WORD_ART = {
   text: '',
@@ -334,17 +320,17 @@ export default function CoverEditor({
 
             <p className={`${labelStyle} mt-4`} style={{ color: labelInk }}>Free sample artwork</p>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {SAMPLE_ARTWORK.map((path) => (
+              {COVER_SAMPLES.map((sample) => (
                 <button
-                  key={path}
+                  key={sample.id}
                   type="button"
-                  onClick={() => applyImage(path, 'cover')}
+                  onClick={() => applyImage(sample.url, 'cover')}
                   className={`overflow-hidden rounded-lg border-2 transition ${
-                    coverImage === path ? 'border-amber-500 ring-2 ring-amber-400/50' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'
+                    coverImage === sample.url ? 'border-amber-500 ring-2 ring-amber-400/50' : 'border-transparent hover:border-slate-300 dark:hover:border-slate-600'
                   }`}
-                  title={path.split('/').pop()}
+                  title={sample.title}
                 >
-                  <img src={path} alt="" className="h-12 w-full object-cover" />
+                  <img src={sample.thumbUrl} alt={sample.title} className="h-12 w-full object-cover" />
                 </button>
               ))}
             </div>

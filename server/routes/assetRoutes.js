@@ -1,5 +1,7 @@
 const express = require('express');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
 const multer = require('multer');
 const { db } = require('../db');
 const { requireAuth, verifyProjectOwnership } = require('../auth');
@@ -10,8 +12,14 @@ const {
   validateProviderImageUrl,
   fetchStockImage
 } = require('../imageProviders');
+const sampleArtworkCatalog = require('../../src/data/sampleArtwork.json');
 
 const router = express.Router({ mergeParams: true });
+
+// Free artwork that ships with the app: no network, no API key, no clearance.
+const SAMPLE_ARTWORK_PROVIDER = 'sample';
+const SAMPLE_ARTWORK_DIR = path.join(__dirname, '..', '..', 'public', 'sample-artwork');
+const SAMPLE_ARTWORK_BY_ID = new Map(sampleArtworkCatalog.items.map((item) => [item.id, item]));
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -94,6 +102,58 @@ router.get('/search', requireAuth, async (req, res) => {
   }
 });
 
+// Write an asset row and return it in the same API shape as the asset list.
+function insertAssetRow({
+  projectId,
+  userId,
+  id = `asset-${crypto.randomUUID()}`,
+  mimeType,
+  extension,
+  originalName,
+  buffer,
+  dataUrl,
+  caption = '',
+  altText = '',
+  sourceUrl = '',
+  creatorAttribution = '',
+  licenseUrl = '',
+  licenseType = 'own_work',
+  placementNotes = '',
+  alignment = 'center',
+  widthPercent = 80
+}) {
+  const filename = `${id}.${extension}`;
+  const storedDataUrl = dataUrl || `data:${mimeType};base64,${buffer.toString('base64')}`;
+
+  db.prepare(`
+    INSERT INTO assets (id, project_id, user_id, filename, original_name, mime_type, size_bytes, data_url, caption, alt_text, source_url, creator_attribution, license_url, license_type, placement_notes, alignment, width_percent, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id,
+    projectId,
+    userId,
+    filename,
+    originalName,
+    mimeType,
+    buffer.length,
+    storedDataUrl,
+    caption,
+    altText,
+    sourceUrl,
+    creatorAttribution,
+    licenseUrl,
+    licenseType,
+    placementNotes,
+    alignment,
+    widthPercent,
+    new Date().toISOString()
+  );
+
+  const chapters = db.prepare('SELECT id, title, content_html FROM chapters WHERE project_id = ?').all(projectId);
+  const row = db.prepare('SELECT * FROM assets WHERE id = ?').get(id);
+  return formatAssetRow(row, chapters);
+}
+
 // Import a search result as a normal book asset, preserving provider and creator details.
 router.post('/import-stock', requireAuth, async (req, res) => {
   const ownership = verifyProjectOwnership(req.params.projectId, req.user.id);
@@ -102,8 +162,11 @@ router.post('/import-stock', requireAuth, async (req, res) => {
   }
 
   const providerId = String(req.body?.provider || '').toLowerCase();
+  if (providerId === SAMPLE_ARTWORK_PROVIDER) {
+    return importSampleArtwork(req, res);
+  }
   if (!Object.prototype.hasOwnProperty.call(IMAGE_PROVIDERS, providerId)) {
-    return res.status(400).json({ error: 'Choose a valid Pexels or Pixabay search result.' });
+    return res.status(400).json({ error: 'Choose a valid Pexels, Pixabay or free-sample image.' });
   }
 
   let imageUrl;
@@ -134,48 +197,86 @@ router.post('/import-stock', requireAuth, async (req, res) => {
     const photoId = receivedPhotoId.startsWith(`${providerId}-`) ? receivedPhotoId.slice(providerId.length + 1) : receivedPhotoId;
     const extension = mimeType === 'image/jpeg' ? 'jpg' : (mimeType.split('/')[1] || 'img').replace(/[^a-z0-9]/gi, '');
     const originalName = `${providerId}-${photoId || 'stock-image'}.${extension}`;
-    const filename = `${id}.${extension}`;
     const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
-    const now = new Date().toISOString();
     const altText = String(req.body?.altText || '').trim().slice(0, 500);
     const creatorAttribution = String(req.body?.creatorAttribution || `${IMAGE_PROVIDERS[providerId].name} contributor`).trim().slice(0, 200);
-    const licenseUrl = IMAGE_PROVIDERS[providerId].licenseUrl;
     const caption = String(req.body?.caption || '').trim().slice(0, 500);
-    const placementNotes = `Stock image imported from ${IMAGE_PROVIDERS[providerId].name}. Review the provider’s current license terms before publication.`;
 
-    db.prepare(`
-      INSERT INTO assets (id, project_id, user_id, filename, original_name, mime_type, size_bytes, data_url, caption, alt_text, source_url, creator_attribution, license_url, license_type, placement_notes, alignment, width_percent, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    const asset = insertAssetRow({
+      projectId: req.params.projectId,
+      userId: req.user.id,
       id,
-      req.params.projectId,
-      req.user.id,
-      filename,
-      originalName,
       mimeType,
-      buffer.length,
+      extension,
+      originalName,
+      buffer,
       dataUrl,
       caption,
       altText,
       sourceUrl,
       creatorAttribution,
-      licenseUrl,
-      'stock_provider_license',
-      placementNotes,
-      'center',
-      80,
-      now
-    );
-
-    const chapters = db.prepare('SELECT id, title, content_html FROM chapters WHERE project_id = ?').all(req.params.projectId);
-    const row = db.prepare('SELECT * FROM assets WHERE id = ?').get(id);
-    return res.status(201).json({ asset: formatAssetRow(row, chapters) });
+      licenseUrl: IMAGE_PROVIDERS[providerId].licenseUrl,
+      licenseType: 'stock_provider_license',
+      placementNotes: `Stock image imported from ${IMAGE_PROVIDERS[providerId].name}. Review the provider’s current license terms before publication.`,
+      alignment: 'center',
+      widthPercent: 80
+    });
+    return res.status(201).json({ asset });
   } catch (error) {
     const message = error.message || 'Could not import this stock image.';
     const status = /8 MB book-asset limit/i.test(message) ? 413 : 502;
     return res.status(status).json({ error: message });
   }
 });
+
+// Import one of the artwork files that ships inside the app. This is the
+// offline path: it reads bytes from public/sample-artwork instead of the network.
+async function importSampleArtwork(req, res) {
+  const sample = SAMPLE_ARTWORK_BY_ID.get(String(req.body?.id || '').trim());
+  if (!sample) {
+    return res.status(400).json({ error: 'That free sample is not in the bundled library.' });
+  }
+
+  const resolvedPath = path.resolve(SAMPLE_ARTWORK_DIR, sample.file);
+  if (!resolvedPath.startsWith(SAMPLE_ARTWORK_DIR + path.sep)) {
+    return res.status(400).json({ error: 'That free sample is not in the bundled library.' });
+  }
+
+  let buffer;
+  try {
+    buffer = await fs.promises.readFile(resolvedPath);
+  } catch {
+    return res.status(404).json({ error: 'That free sample is missing from this installation. Reinstall the app to restore it.' });
+  }
+
+  const mimeType = path.extname(resolvedPath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
+  const extension = mimeType === 'image/png' ? 'png' : 'jpg';
+  const altText = String(req.body?.altText || sample.alt || '').trim().slice(0, 500);
+  const caption = String(req.body?.caption || sample.title || '').trim().slice(0, 500);
+
+  try {
+    const asset = insertAssetRow({
+      projectId: req.params.projectId,
+      userId: req.user.id,
+      mimeType,
+      extension,
+      originalName: sample.file,
+      buffer,
+      caption,
+      altText,
+      sourceUrl: '',
+      creatorAttribution: sampleArtworkCatalog.license.attribution,
+      licenseUrl: '',
+      licenseType: 'public_domain',
+      placementNotes: `Bundled free sample artwork (${sample.file}). Included with the app — free for personal and commercial use, no credit line required.`,
+      alignment: 'center',
+      widthPercent: 80
+    });
+    return res.status(201).json({ asset });
+  } catch (error) {
+    return res.status(500).json({ error: error.message || 'Could not import this free sample.' });
+  }
+}
 
 // List project assets
 router.get('/', requireAuth, (req, res) => {

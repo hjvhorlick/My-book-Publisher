@@ -1,0 +1,725 @@
+{
+  "version": "2026-10-24.2",
+  "license": {
+    "id": "bundled_sample",
+    "name": "Bundled free sample",
+    "summary": "Original artwork included with My Book Publisher. Free for personal and commercial use in your books — no credit line required.",
+    "attribution": "My Book Publisher sample library"
+  },
+  "items": [
+    {
+      "id": "book-desk",
+      "file": "book-desk.jpg",
+      "category": "book",
+      "collection": "book",
+      "title": "Writer’s desk by lamplight",
+      "tags": [
+        "desk",
+        "writing",
+        "lamp",
+        "notebook",
+        "study"
+      ],
+      "alt": "A wooden writer’s desk with an open notebook, fountain pen and the warm glow of a reading lamp.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 329456
+    },
+    {
+      "id": "book-harbor",
+      "file": "book-harbor.jpg",
+      "category": "book",
+      "collection": "book",
+      "title": "Harbour in morning light",
+      "tags": [
+        "harbour",
+        "boats",
+        "sea",
+        "calm",
+        "morning"
+      ],
+      "alt": "Small boats resting on still harbour water in soft morning light.",
+      "width": 2200,
+      "height": 1197,
+      "sizeBytes": 236710
+    },
+    {
+      "id": "book-homestead",
+      "file": "book-homestead.jpg",
+      "category": "book",
+      "collection": "book",
+      "title": "Homestead in the hills",
+      "tags": [
+        "house",
+        "countryside",
+        "hills",
+        "home",
+        "farm"
+      ],
+      "alt": "A lone homestead on rolling green hills under a wide open sky.",
+      "width": 2200,
+      "height": 933,
+      "sizeBytes": 410333
+    },
+    {
+      "id": "dish-bakehouse",
+      "file": "dish-bakehouse.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Bakehouse loaves",
+      "tags": [
+        "bread",
+        "baking",
+        "sourdough",
+        "oven"
+      ],
+      "alt": "Freshly baked sourdough loaves cooling on a bakery rack.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 403334
+    },
+    {
+      "id": "dish-bistro",
+      "file": "dish-bistro.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Bistro table",
+      "tags": [
+        "cafe",
+        "bistro",
+        "table",
+        "paris",
+        "coffee"
+      ],
+      "alt": "A small bistro table set for two on a quiet city pavement.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 549790
+    },
+    {
+      "id": "dish-herbs",
+      "file": "dish-herbs.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Windowsill herbs",
+      "tags": [
+        "herbs",
+        "rosemary",
+        "thyme",
+        "kitchen",
+        "garden"
+      ],
+      "alt": "Potted rosemary, sage and thyme on a bright kitchen windowsill.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 454567
+    },
+    {
+      "id": "dish-market",
+      "file": "dish-market.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Market stall produce",
+      "tags": [
+        "market",
+        "tomatoes",
+        "vegetables",
+        "bread",
+        "basil"
+      ],
+      "alt": "A farmers’ market stall of ripe tomatoes, lemons, basil and crusty bread.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 561556
+    },
+    {
+      "id": "dish-mediterranean",
+      "file": "dish-mediterranean.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Mediterranean table",
+      "tags": [
+        "mediterranean",
+        "olives",
+        "lemon",
+        "seafood",
+        "table"
+      ],
+      "alt": "A sunlit Mediterranean table spread with olives, lemon and fresh seafood.",
+      "width": 2200,
+      "height": 1228,
+      "sizeBytes": 548425
+    },
+    {
+      "id": "dish-pasta",
+      "file": "dish-pasta.jpg",
+      "category": "cookbook",
+      "collection": "dish",
+      "title": "Fresh pasta",
+      "tags": [
+        "pasta",
+        "flour",
+        "italian",
+        "handmade",
+        "rolling pin"
+      ],
+      "alt": "Nests of fresh tagliatelle dusted with flour beside a brass rolling pin.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 410469
+    },
+    {
+      "id": "info-joinery",
+      "file": "info-joinery.jpg",
+      "category": "informational",
+      "collection": "info",
+      "title": "Joinery detail",
+      "tags": [
+        "joinery",
+        "woodwork",
+        "craft",
+        "workshop"
+      ],
+      "alt": "A close detail of a hand-cut dovetail joint in pale timber.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 338735
+    },
+    {
+      "id": "info-studio",
+      "file": "info-studio.jpg",
+      "category": "informational",
+      "collection": "info",
+      "title": "Artist’s studio",
+      "tags": [
+        "studio",
+        "artist",
+        "creative",
+        "workspace"
+      ],
+      "alt": "An artist’s studio with brushes, paint pots and a half-finished canvas.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 526955
+    },
+    {
+      "id": "info-workshop",
+      "file": "info-workshop.jpg",
+      "category": "informational",
+      "collection": "info",
+      "title": "Workshop bench",
+      "tags": [
+        "workshop",
+        "tools",
+        "bench",
+        "craft",
+        "making"
+      ],
+      "alt": "A tidy workshop bench with hand tools laid out for the next job.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 398432
+    },
+    {
+      "id": "mag-couture",
+      "file": "mag-couture.jpg",
+      "category": "magazine",
+      "collection": "mag",
+      "title": "Couture detail",
+      "tags": [
+        "fashion",
+        "couture",
+        "fabric",
+        "editorial",
+        "style"
+      ],
+      "alt": "A close editorial detail of folded couture fabric and hand stitching.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 392053
+    },
+    {
+      "id": "mag-portrait",
+      "file": "mag-portrait.jpg",
+      "category": "magazine",
+      "collection": "mag",
+      "title": "Studio portrait",
+      "tags": [
+        "portrait",
+        "studio",
+        "editorial",
+        "light",
+        "profile"
+      ],
+      "alt": "A moody studio portrait lit from one side against a deep background.",
+      "width": 1228,
+      "height": 2200,
+      "sizeBytes": 200358
+    },
+    {
+      "id": "mag-runner",
+      "file": "mag-runner.jpg",
+      "category": "magazine",
+      "collection": "mag",
+      "title": "Track runner",
+      "tags": [
+        "sport",
+        "running",
+        "athlete",
+        "motion",
+        "track"
+      ],
+      "alt": "A sprinter mid-stride on a running track, shot with motion blur.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 363548
+    },
+    {
+      "id": "mag-sculpture",
+      "file": "mag-sculpture.jpg",
+      "category": "magazine",
+      "collection": "mag",
+      "title": "Gallery sculpture",
+      "tags": [
+        "art",
+        "sculpture",
+        "gallery",
+        "museum",
+        "exhibition"
+      ],
+      "alt": "A pale stone sculpture standing in a quiet gallery of white walls.",
+      "width": 2103,
+      "height": 2200,
+      "sizeBytes": 282713
+    },
+    {
+      "id": "nature-ferns",
+      "file": "nature-ferns.jpg",
+      "category": "photobook",
+      "collection": "nature",
+      "title": "Unfurling ferns",
+      "tags": [
+        "fern",
+        "forest",
+        "green",
+        "botanical",
+        "leaves"
+      ],
+      "alt": "Tight green fern fronds unfurling on the forest floor.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 466221
+    },
+    {
+      "id": "nature-mushrooms",
+      "file": "nature-mushrooms.jpg",
+      "category": "photobook",
+      "collection": "nature",
+      "title": "Forest mushrooms",
+      "tags": [
+        "mushroom",
+        "forest",
+        "fungi",
+        "woodland",
+        "autumn"
+      ],
+      "alt": "A cluster of small mushrooms pushing up through damp woodland moss.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 406452
+    },
+    {
+      "id": "nature-waterfall",
+      "file": "nature-waterfall.jpg",
+      "category": "photobook",
+      "collection": "nature",
+      "title": "Forest waterfall",
+      "tags": [
+        "waterfall",
+        "river",
+        "forest",
+        "mist",
+        "water"
+      ],
+      "alt": "A narrow waterfall spilling into a fern-lined forest pool.",
+      "width": 2200,
+      "height": 598,
+      "sizeBytes": 208006
+    },
+    {
+      "id": "family-picnic",
+      "file": "family-picnic.jpg",
+      "category": "photobook",
+      "collection": "family",
+      "title": "Summer picnic",
+      "tags": [
+        "picnic",
+        "family",
+        "meadow",
+        "summer",
+        "blanket"
+      ],
+      "alt": "A family picnic on a checked blanket in a sunlit summer meadow.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 568617
+    },
+    {
+      "id": "family-child",
+      "file": "family-child.jpg",
+      "category": "photobook",
+      "collection": "family",
+      "title": "Building blocks",
+      "tags": [
+        "child",
+        "play",
+        "toys",
+        "home",
+        "hands"
+      ],
+      "alt": "A child’s hands stacking wooden blocks on a sunlit living-room floor.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 307101
+    },
+    {
+      "id": "family-grandparents",
+      "file": "family-grandparents.jpg",
+      "category": "photobook",
+      "collection": "family",
+      "title": "Tea for two",
+      "tags": [
+        "grandparents",
+        "hands",
+        "tea",
+        "memory",
+        "kitchen"
+      ],
+      "alt": "An elderly couple’s hands resting together beside a pot of tea.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 414082
+    },
+    {
+      "id": "family-dog",
+      "file": "family-dog.jpg",
+      "category": "photobook",
+      "collection": "family",
+      "title": "Porch dog",
+      "tags": [
+        "dog",
+        "pet",
+        "home",
+        "garden",
+        "porch"
+      ],
+      "alt": "A golden retriever dozing on a warm wooden porch.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 490077
+    },
+    {
+      "id": "travel-coast",
+      "file": "travel-coast.jpg",
+      "category": "photobook",
+      "collection": "travel",
+      "title": "Low-tide coast",
+      "tags": [
+        "coast",
+        "sea",
+        "rocks",
+        "travel",
+        "shore"
+      ],
+      "alt": "Wet rocks and gentle surf along a quiet coast at low tide.",
+      "width": 2200,
+      "height": 1228,
+      "sizeBytes": 503217
+    },
+    {
+      "id": "travel-mountains",
+      "file": "travel-mountains.jpg",
+      "category": "photobook",
+      "collection": "travel",
+      "title": "Mountain valley at dawn",
+      "tags": [
+        "mountains",
+        "dawn",
+        "mist",
+        "travel",
+        "valley"
+      ],
+      "alt": "Layered mountain ridgelines rising out of low dawn mist.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 356216
+    },
+    {
+      "id": "wedding-bride",
+      "file": "wedding-bride.jpg",
+      "category": "photobook",
+      "collection": "wedding",
+      "title": "Bridal detail",
+      "tags": [
+        "bride",
+        "wedding",
+        "dress",
+        "detail",
+        "lace"
+      ],
+      "alt": "A close detail of lace and pearl buttons on a bridal gown.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 284788
+    },
+    {
+      "id": "wedding-confetti",
+      "file": "wedding-confetti.jpg",
+      "category": "photobook",
+      "collection": "wedding",
+      "title": "Confetti moment",
+      "tags": [
+        "wedding",
+        "confetti",
+        "celebration",
+        "guests"
+      ],
+      "alt": "Guests throwing confetti over a newly married couple.",
+      "width": 2200,
+      "height": 1062,
+      "sizeBytes": 247948
+    },
+    {
+      "id": "wedding-dance",
+      "file": "wedding-dance.jpg",
+      "category": "photobook",
+      "collection": "wedding",
+      "title": "First dance",
+      "tags": [
+        "wedding",
+        "dance",
+        "evening",
+        "celebration",
+        "lights"
+      ],
+      "alt": "A first dance under strings of warm evening lights.",
+      "width": 2200,
+      "height": 1044,
+      "sizeBytes": 222323
+    },
+    {
+      "id": "wedding-walk",
+      "file": "wedding-walk.jpg",
+      "category": "photobook",
+      "collection": "wedding",
+      "title": "Down the aisle",
+      "tags": [
+        "wedding",
+        "aisle",
+        "walk",
+        "ceremony"
+      ],
+      "alt": "A bride walking down a flower-lined aisle towards the ceremony.",
+      "width": 2200,
+      "height": 874,
+      "sizeBytes": 223641
+    },
+    {
+      "id": "story-balloon",
+      "file": "story-balloon.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Balloon over the valley",
+      "tags": [
+        "balloon",
+        "sky",
+        "adventure",
+        "valley",
+        "flight"
+      ],
+      "alt": "A hot-air balloon drifting above a patchwork valley at sunrise.",
+      "width": 1615,
+      "height": 2200,
+      "sizeBytes": 338276
+    },
+    {
+      "id": "story-castle",
+      "file": "story-castle.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Castle at dusk",
+      "tags": [
+        "castle",
+        "fairytale",
+        "dusk",
+        "hill",
+        "kingdom"
+      ],
+      "alt": "A fairytale castle on a hill with warm windows glowing at dusk.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 563730
+    },
+    {
+      "id": "story-dragon",
+      "file": "story-dragon.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Friendly dragon",
+      "tags": [
+        "dragon",
+        "fantasy",
+        "mountain",
+        "friend"
+      ],
+      "alt": "A round, friendly dragon curled up on a rocky mountain ledge.",
+      "width": 1721,
+      "height": 2200,
+      "sizeBytes": 504504
+    },
+    {
+      "id": "story-lantern",
+      "file": "story-lantern.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Lantern in the woods",
+      "tags": [
+        "lantern",
+        "night",
+        "forest",
+        "glow",
+        "path"
+      ],
+      "alt": "A small lantern glowing on a night-time forest path.",
+      "width": 1602,
+      "height": 2200,
+      "sizeBytes": 506573
+    },
+    {
+      "id": "story-rocket",
+      "file": "story-rocket.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Rocket to the stars",
+      "tags": [
+        "rocket",
+        "space",
+        "stars",
+        "adventure",
+        "launch"
+      ],
+      "alt": "A little rocket climbing through a sky full of stars.",
+      "width": 2200,
+      "height": 1881,
+      "sizeBytes": 430131
+    },
+    {
+      "id": "story-squirrel",
+      "file": "story-squirrel.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Squirrel with an acorn",
+      "tags": [
+        "squirrel",
+        "autumn",
+        "woodland",
+        "animal",
+        "acorn"
+      ],
+      "alt": "A red squirrel clutching an acorn in an autumn wood.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 565407
+    },
+    {
+      "id": "story-turtle",
+      "file": "story-turtle.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Sea turtle",
+      "tags": [
+        "turtle",
+        "ocean",
+        "sea",
+        "animal",
+        "reef"
+      ],
+      "alt": "A sea turtle gliding over a sunlit reef.",
+      "width": 1810,
+      "height": 2200,
+      "sizeBytes": 554355
+    },
+    {
+      "id": "story-woodland",
+      "file": "story-woodland.jpg",
+      "category": "storybook",
+      "collection": "story",
+      "title": "Woodland path",
+      "tags": [
+        "woodland",
+        "forest",
+        "path",
+        "trees",
+        "walk"
+      ],
+      "alt": "A soft woodland path winding between tall trees and dappled light.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 567086
+    },
+    {
+      "id": "work-planner",
+      "file": "work-planner.jpg",
+      "category": "workbook",
+      "collection": "work",
+      "title": "Weekly planner spread",
+      "tags": [
+        "planner",
+        "checklist",
+        "teal",
+        "organisation",
+        "desk"
+      ],
+      "alt": "An open teal planner with a month grid, checklist and pen on a cream desk beside a cup of coffee.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 127165
+    },
+    {
+      "id": "work-journal",
+      "file": "work-journal.jpg",
+      "category": "workbook",
+      "collection": "work",
+      "title": "Indigo journal",
+      "tags": [
+        "journal",
+        "notebook",
+        "gold",
+        "leather",
+        "writing"
+      ],
+      "alt": "A closed indigo journal with gold foil corners, an amber elastic band and a pencil on a warm desk.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 122201
+    },
+    {
+      "id": "work-desk",
+      "file": "work-desk.jpg",
+      "category": "workbook",
+      "collection": "work",
+      "title": "Notebook and laptop",
+      "tags": [
+        "desk",
+        "laptop",
+        "notes",
+        "planning",
+        "workspace"
+      ],
+      "alt": "A spiral notebook, open laptop and sticky notes arranged on a light desk.",
+      "width": 2200,
+      "height": 1200,
+      "sizeBytes": 132299
+    }
+  ]
+}

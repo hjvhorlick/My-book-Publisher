@@ -10,43 +10,34 @@ import {
   withAlpha
 } from '../data/designSystem';
 
-export const SAMPLE_ART_BY_CATEGORY = {
-  photobook: [
-    '/sample-artwork/wedding-walk.jpg',
-    '/sample-artwork/nature-waterfall.jpg',
-    '/sample-artwork/wedding-dance.jpg',
-    '/sample-artwork/nature-ferns.jpg',
-    '/sample-artwork/wedding-confetti.jpg'
-  ],
-  cookbook: [
-    '/sample-artwork/dish-bistro.jpg',
-    '/sample-artwork/dish-mediterranean.jpg',
-    '/sample-artwork/dish-bakehouse.jpg',
-    '/sample-artwork/nature-ferns.jpg',
-    '/sample-artwork/wedding-dance.jpg'
-  ],
-  magazine: [
-    '/sample-artwork/mag-couture.jpg',
-    '/sample-artwork/mag-runner.jpg',
-    '/sample-artwork/mag-sculpture.jpg',
-    '/sample-artwork/mag-portrait.jpg'
-  ],
-  storybook: [
-    '/sample-artwork/story-lantern.jpg',
-    '/sample-artwork/story-woodland.jpg',
-    '/sample-artwork/story-squirrel.jpg'
-  ],
-  informational: [
-    '/sample-artwork/info-studio.jpg',
-    '/sample-artwork/info-joinery.jpg',
-    '/sample-artwork/info-workshop.jpg'
-  ],
-  book: [
-    '/sample-artwork/book-homestead.jpg',
-    '/sample-artwork/book-harbor.jpg',
-    '/sample-artwork/book-desk.jpg'
-  ]
-};
+import { SAMPLE_ARTWORK, SAMPLE_CATEGORIES, sampleArtworkThumbUrl } from '../data/sampleArtwork';
+
+/**
+ * Miniature page mock-ups need one picture per category. They read the same
+ * bundled catalogue the image picker uses, so a new sample automatically shows
+ * up in the template previews instead of being trapped in a second hand-kept
+ * list that drifts out of date.
+ */
+const PREVIEW_ART_PER_CATEGORY = 6;
+
+function artByCategoryFromCatalog() {
+  const categoryIds = SAMPLE_CATEGORIES.filter((category) => category.id !== 'all').map((category) => category.id);
+  const grouped = Object.fromEntries(categoryIds.map((id) => [id, []]));
+  for (const item of SAMPLE_ARTWORK) {
+    if (!grouped[item.category]) grouped[item.category] = [];
+    grouped[item.category].push(sampleArtworkThumbUrl(item));
+  }
+  const fallback = grouped.photobook.length
+    ? grouped.photobook
+    : Object.values(grouped).find((list) => list.length) || [];
+  for (const id of categoryIds) {
+    if (!grouped[id].length) grouped[id] = fallback;
+    grouped[id] = grouped[id].slice(0, PREVIEW_ART_PER_CATEGORY);
+  }
+  return grouped;
+}
+
+export const SAMPLE_ART_BY_CATEGORY = artByCategoryFromCatalog();
 
 /**
  * A tablet-size miniature for one of the five page structures. The image count,
